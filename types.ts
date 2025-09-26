@@ -90,6 +90,7 @@ export interface User {
   id: string;
   name: string;
   pairedWith?: string | null;
+  password?: string;
 }
 
 export interface PairingRequest {

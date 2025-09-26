@@ -22,8 +22,8 @@ import { PrintableView } from './components/PrintableView';
 import { GoalsPanel } from './components/GoalsPanel';
 
 const EXAMPLE_USERS: User[] = [
-  { id: 'user-1', name: 'Vicki', pairedWith: null },
-  { id: 'user-2', name: 'Lucas', pairedWith: null },
+  { id: 'user-1', name: 'Vicki', pairedWith: null, password: 'password123' },
+  { id: 'user-2', name: 'Lucas', pairedWith: null, password: 'password456' },
 ];
 
 const getNextDayOfWeek = (dayOfWeek: number, fromDate: Date = new Date()): string => {
@@ -290,17 +290,31 @@ function App() {
   const generateId = () => uuidv4();
 
   // User and Pairing Logic
-  const handleLogin = (userId: string) => {
+  const handleLogin = (userId: string, password: string): boolean => {
     const user = users.find(u => u.id === userId);
-    if (user) setCurrentUser(user);
+    if (!user) return false;
+
+    // Allow login if user has no password set (legacy users)
+    if (!user.password) {
+      setCurrentUser(user);
+      return true;
+    }
+
+    // Check password if it exists
+    if (user.password === password) {
+      setCurrentUser(user);
+      return true;
+    }
+
+    return false; // Password incorrect
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
   };
   
-  const handleCreateUser = (name: string) => {
-    const newUser: User = { id: generateId(), name, pairedWith: null };
+  const handleCreateUser = (name: string, password: string) => {
+    const newUser: User = { id: generateId(), name, pairedWith: null, password };
     setUsers([...users, newUser]);
     setCurrentUser(newUser);
   };
