@@ -44,7 +44,7 @@ const PinInput: React.FC<{
   }, [length]);
 
   return (
-    <div className={`flex justify-center gap-3 ${error ? 'animate-shake' : ''}`}>
+    <div className={`flex justify-center gap-2 sm:gap-3 ${error ? 'animate-shake' : ''}`}>
         <style>{`
             @keyframes shake {
                 10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -66,7 +66,7 @@ const PinInput: React.FC<{
           value={pinArray[index] || ''}
           onChange={(e) => handleChange(e, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
-          className="w-14 h-16 text-center text-3xl font-bold border-2 border-zinc-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+          className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold border-2 border-zinc-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
         />
       ))}
     </div>
@@ -152,7 +152,7 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
   const renderPinScreen = (isSetup: boolean) => (
     <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-zinc-800">Hola, {selectedUser?.name}</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-zinc-800">Hola, {selectedUser?.name}</h1>
             <p className="text-zinc-600 mt-2">
                 {isSetup ? 'Crea un PIN de 4 dígitos para proteger tu cuenta.' : 'Ingresa tu PIN para continuar.'}
             </p>
@@ -199,8 +199,8 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
   const renderSelectUserScreen = () => (
      <div className="w-full max-w-md">
         <div className="text-center mb-8">
-            <img src="https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png" alt="ConectaMente Logo" className="h-32 w-auto mb-6 mx-auto shadow-lg rounded-full drop-shadow-lg" />
-            <h1 className="text-3xl font-bold text-zinc-800">Bienvenido/a a ConectaMente</h1>
+            <img src="https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png" alt="ConectaMente Logo" className="h-24 sm:h-32 w-auto mb-6 mx-auto shadow-lg rounded-full drop-shadow-lg" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-800">Bienvenido/a a ConectaMente</h1>
             <p className="text-zinc-600 mt-2">Selecciona un perfil para continuar o crea uno nuevo.</p>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-md">
@@ -235,7 +235,7 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
   const renderCreateUserScreen = () => (
      <div className="w-full max-w-md">
         <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-zinc-800">Crear Perfil</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-zinc-800">Crear Perfil</h1>
             <p className="text-zinc-600 mt-2">Introduce tu nombre. Configurarás tu PIN en el siguiente paso.</p>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-md">
@@ -306,7 +306,7 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
               }
             `}</style>
             <div className="torn-edge-clip bg-[#fdfaf6] pt-12 pb-6">
-                <blockquote className="max-w-prose mx-auto text-stone-700 font-handwriting text-xl text-center text-shadow-subtle px-4">
+                <blockquote className="max-w-prose mx-auto text-stone-700 font-handwriting text-lg sm:text-xl text-center text-shadow-subtle px-4">
                     <p>"Nunca te olvides que solo existe el hoy. ¿Por qué dejar todo para mañana? Viví la vida que querés y que merecés. Por ende, una vida hermosa, llena de disfrute, felicidad y aprendizaje."</p>
                     <footer className="text-right mt-2 font-bold">- V.C</footer>
                 </blockquote>

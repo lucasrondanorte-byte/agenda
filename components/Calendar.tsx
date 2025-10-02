@@ -92,7 +92,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
           return eventDay < todayDay && !event.completed;
       });
 
-      let dayClass = 'relative p-2 h-24 border-r border-b border-zinc-100 flex flex-col cursor-pointer transition-colors duration-200';
+      let dayClass = 'relative p-2 h-20 sm:h-24 border-r border-b border-zinc-100 flex flex-col cursor-pointer transition-colors duration-200';
       if (isSelected) {
         dayClass += ' bg-teal-100';
       } else if(isToday) {

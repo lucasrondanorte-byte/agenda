@@ -227,18 +227,18 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
 
 
   return (
-    <div id="printable-view-container" className="fixed inset-0 bg-white z-50 p-8 flex flex-col">
+    <div id="printable-view-container" className="fixed inset-0 bg-white z-50 p-4 sm:p-8 flex flex-col">
         {/* Header */}
-        <header className="flex justify-between items-center mb-6 no-print">
-            <h1 className="text-3xl font-bold text-zinc-800">
+        <header className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 no-print">
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-800">
                 Vista de Impresión
             </h1>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
                 <div className="flex items-center space-x-2">
                     <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
                         <ChevronLeftIcon className="w-6 h-6 text-zinc-600" />
                     </button>
-                    <h2 className="text-2xl font-semibold text-zinc-700 w-48 text-center">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-zinc-700 w-48 text-center">
                         {currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                     </h2>
                     <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
@@ -256,14 +256,16 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
         </header>
 
         {/* Calendar Grid */}
-        <div className="flex-grow flex flex-col border-t border-l border-zinc-300 max-w-6xl mx-auto w-full">
-            <div className="grid grid-cols-7">
-                {daysOfWeek.map(day => (
-                    <div key={day} className="text-center py-2 text-sm font-bold text-zinc-600 bg-zinc-100 border-r border-b border-zinc-300">{day}</div>
-                ))}
-            </div>
-             <div className="grid grid-cols-7 flex-grow" style={{ gridTemplateRows: `repeat(${Math.ceil((new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() + new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()) / 7)}, 1fr)`}}>
-                {renderDaysForView()}
+        <div className="flex-grow overflow-auto max-w-full">
+            <div className="min-w-[1024px] h-full flex flex-col border-t border-l border-zinc-300">
+                <div className="grid grid-cols-7">
+                    {daysOfWeek.map(day => (
+                        <div key={day} className="text-center py-2 text-sm font-bold text-zinc-600 bg-zinc-100 border-r border-b border-zinc-300">{day}</div>
+                    ))}
+                </div>
+                <div className="grid grid-cols-7 flex-grow" style={{ gridTemplateRows: `repeat(${Math.ceil((new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() + new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()) / 7)}, 1fr)`}}>
+                    {renderDaysForView()}
+                </div>
             </div>
         </div>
     </div>

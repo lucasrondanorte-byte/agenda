@@ -46,7 +46,7 @@ const ListItem: React.FC<{ listId: string; item: ShoppingListItem; onUpdate: Hom
                     <p onDoubleClick={() => setIsEditing(true)} className={`text-sm cursor-pointer ${item.completed ? 'line-through text-zinc-400' : 'text-zinc-700'}`}>{item.text}</p>
                 )}
             </div>
-            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+            <div className="flex items-center space-x-1 sm:opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                 <button onClick={() => setIsEditing(true)} className="p-1 text-zinc-400 hover:text-teal-600 rounded"><PencilIcon className="w-4 h-4"/></button>
                 <button onClick={() => onDelete(listId, item.id)} className="p-1 text-zinc-400 hover:text-red-600 rounded"><TrashIcon className="w-4 h-4"/></button>
             </div>
@@ -138,10 +138,10 @@ export const HomePanel: React.FC<HomePanelProps> = (props) => {
     };
 
     return (
-        <div className="bg-stone-50/50 p-6 rounded-xl shadow-inner">
-            <div className="flex justify-between items-center mb-6">
+        <div className="bg-stone-50/50 p-4 sm:p-6 rounded-xl shadow-inner">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h3 className="text-2xl font-bold text-zinc-800">Mi Hogar: Listas y Tareas</h3>
-                <button onClick={() => handleOpenForm()} className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium shadow-sm hover:bg-teal-700">
+                <button onClick={() => handleOpenForm()} className="flex-shrink-0 flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium shadow-sm hover:bg-teal-700">
                     <PlusIcon className="w-5 h-5"/>
                     <span>Crear Nueva Lista</span>
                 </button>

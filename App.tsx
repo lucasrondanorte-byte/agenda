@@ -66,7 +66,7 @@ const PinInput: React.FC<{ length: number; value: string; onChange: (pin: string
   }, [length]);
 
   return (
-    <div className={`flex justify-center gap-3 ${error ? 'animate-shake' : ''}`}>
+    <div className={`flex justify-center gap-2 sm:gap-3 ${error ? 'animate-shake' : ''}`}>
         <style>{`
             @keyframes shake {
                 10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -88,7 +88,7 @@ const PinInput: React.FC<{ length: number; value: string; onChange: (pin: string
           value={pinArray[index] || ''}
           onChange={(e) => handleChange(e, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
-          className="w-14 h-16 text-center text-3xl font-bold border-2 border-zinc-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+          className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold border-2 border-zinc-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
         />
       ))}
     </div>
@@ -1222,12 +1222,12 @@ function App() {
               activeSection={activeSection}
             />
         </div>
-        <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <main className="max-w-7xl mx-auto p-2 sm:p-6 lg:p-8">
             {activeSection === 'planner' && (
                 <>
                     {pairedUser && (
                         <div className="mb-6 border-b border-zinc-200">
-                            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                            <nav className="-mb-px flex space-x-4 sm:space-x-8" aria-label="Tabs">
                             <button
                                 onClick={() => setMainView(MainView.Personal)}
                                 className={`${
@@ -1256,7 +1256,7 @@ function App() {
                         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
                             {/* Columna Principal */}
                             <div className="xl:col-span-3 space-y-8">
-                                <div className="bg-white p-6 rounded-xl shadow-md">
+                                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
                                     <SchedulePanel
                                     selectedDate={selectedDate}
                                     events={events}
@@ -1288,7 +1288,7 @@ function App() {
 
                             {/* Columna Lateral */}
                             <div className="xl:col-span-2 space-y-8">
-                                <div className="bg-white p-6 rounded-xl shadow-md">
+                                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
                                     <Calendar
                                     currentDate={currentDate}
                                     setCurrentDate={setCurrentDate}

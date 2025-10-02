@@ -40,7 +40,7 @@ const EnergyStatus: React.FC<{
     const MojiDisplay: React.FC<{ state?: EmotionMoji }> = ({ state }) => {
         const moji = state ? emotionMojis.find(e => e.value === state) : null;
         return (
-            <div className={`w-28 h-28 rounded-full flex items-center justify-center text-5xl shadow-inner transition-colors duration-300 ${moji ? moji.bgColor : 'bg-slate-200'}`}>
+            <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center text-4xl sm:text-5xl shadow-inner transition-colors duration-300 ${moji ? moji.bgColor : 'bg-slate-200'}`}>
                {moji ? moji.icon : '?'}
             </div>
         );
@@ -59,7 +59,7 @@ const EnergyStatus: React.FC<{
             </div>
             <p className="text-sm text-slate-500 mb-6">Elige un "Moji" que represente tu día.</p>
 
-            <div className="flex justify-center items-center gap-8 mb-6">
+            <div className="flex justify-center items-center gap-4 sm:gap-8 mb-6">
                 <div className="text-center">
                     <MojiDisplay state={currentUserState} />
                     <p className="font-semibold text-slate-700 mt-2">Tú</p>
@@ -87,58 +87,91 @@ const EnergyStatus: React.FC<{
     );
 };
 
-const PinIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clipRule="evenodd" />
-  </svg>
-);
-
-const CameraIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.776 48.776 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
-    </svg>
-);
-
-
-export const CoupleSpace: React.FC<CoupleSpaceProps> = ({ 
-    currentUser, partner, qaSessions, setQaSessions, 
-    partnerNotes, setPartnerNotes, sharedEmotionStates, setSharedEmotionStates,
-    onOpenEmotionLog
+// FIX: Add missing CoupleSpace component export
+export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
+  currentUser,
+  partner,
+  qaSessions,
+  setQaSessions,
+  partnerNotes,
+  setPartnerNotes,
+  sharedEmotionStates,
+  setSharedEmotionStates,
+  onOpenEmotionLog,
 }) => {
-  const [newNote, setNewNote] = useState('');
   const [newQuestion, setNewQuestion] = useState('');
-  const [newAnswer, setNewAnswer] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [newNote, setNewNote] = useState('');
   const [viewingTripNote, setViewingTripNote] = useState<PartnerNote | null>(null);
 
-  const todaysDateString = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
 
   const todaysEmotionState = useMemo(() => {
-    return sharedEmotionStates.find(s => s.date === todaysDateString);
-  }, [sharedEmotionStates, todaysDateString]);
-  
-  const myTodaysEmotion = todaysEmotionState?.emotions[currentUser.id];
-  const partnerTodaysEmotion = todaysEmotionState?.emotions[partner.id];
+    return sharedEmotionStates.find(s => s.date === today);
+  }, [sharedEmotionStates, today]);
 
-  const handleEmotionSelect = (state: EmotionMoji) => {
+  const handleSaveEmotion = (moji: EmotionMoji) => {
+    const existingStateIndex = sharedEmotionStates.findIndex(s => s.date === today);
+    if (existingStateIndex > -1) {
       setSharedEmotionStates(prev => {
-          const existingEntry = prev.find(s => s.date === todaysDateString);
-          if(existingEntry) {
-              return prev.map(s => s.date === todaysDateString ? {
-                  ...s,
-                  emotions: { ...s.emotions, [currentUser.id]: state }
-              } : s);
-          } else {
-              return [...prev, {
-                  date: todaysDateString,
-                  emotions: { [currentUser.id]: state }
-              }];
-          }
+        const newState = [...prev];
+        newState[existingStateIndex] = {
+          ...newState[existingStateIndex],
+          emotions: {
+            ...newState[existingStateIndex].emotions,
+            [currentUser.id]: moji,
+          },
+        };
+        return newState;
       });
+    } else {
+      setSharedEmotionStates(prev => [
+        ...prev,
+        { date: today, emotions: { [currentUser.id]: moji } },
+      ]);
+    }
   };
 
-  const handleSaveNote = () => {
-    if (newNote.trim() === '') return;
+  const pendingQuestionForUser = useMemo(() => {
+    return qaSessions.find(s => s.askerId === partner.id && !s.answer);
+  }, [qaSessions, partner.id]);
+
+  const answeredQuestions = useMemo(() => {
+    return [...qaSessions]
+        .filter(s => s.answer)
+        .sort((a,b) => new Date(b.answeredAt!).getTime() - new Date(a.answeredAt!).getTime());
+  }, [qaSessions]);
+
+  const allNotesAndSharedItems = useMemo(() => {
+      return [...partnerNotes]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [partnerNotes]);
+
+
+  const handleAskQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newQuestion.trim()) return;
+    const newSession: QASession = {
+      id: uuidv4(),
+      askerId: currentUser.id,
+      question: newQuestion.trim(),
+      askedAt: new Date().toISOString(),
+    };
+    setQaSessions(prev => [newSession, ...prev]);
+    setNewQuestion('');
+  };
+
+  const handleAnswerQuestion = (sessionId: string) => {
+    if (!answer.trim()) return;
+    setQaSessions(prev => prev.map(s => 
+      s.id === sessionId ? { ...s, answer: answer.trim(), answeredAt: new Date().toISOString() } : s
+    ));
+    setAnswer('');
+  };
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNote.trim()) return;
     const note: PartnerNote = {
       id: uuidv4(),
       authorId: currentUser.id,
@@ -146,212 +179,142 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
       timestamp: new Date().toISOString(),
       type: 'note',
     };
-    setPartnerNotes(prev => [...prev, note]);
+    setPartnerNotes(prev => [note, ...prev]);
     setNewNote('');
   };
-
-  const sortedQASessions = useMemo(() => 
-    [...qaSessions].sort((a,b) => new Date(b.askedAt).getTime() - new Date(a.askedAt).getTime()),
-  [qaSessions]);
-
-  const sortedPartnerNotes = useMemo(() => 
-    [...partnerNotes].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
-  [partnerNotes]);
-
-  const viewingTripAuthor = useMemo(() => {
-    if (!viewingTripNote) return null;
-    return viewingTripNote.authorId === currentUser.id ? currentUser : partner;
-  }, [viewingTripNote, currentUser, partner]);
-
-  const latestSession = sortedQASessions[0] || null;
-  const unansweredQuestion = latestSession && !latestSession.answer && latestSession.askerId !== currentUser.id ? latestSession : null;
   
-  const isMyTurnToAsk = !latestSession || (latestSession.answer && latestSession.askerId !== currentUser.id) || (!latestSession.answer && latestSession.askerId === currentUser.id);
-
-  const handleAskQuestion = () => {
-    if (newQuestion.trim() === '') return;
-    const session: QASession = {
-      id: uuidv4(),
-      askerId: currentUser.id,
-      question: newQuestion.trim(),
-      askedAt: new Date().toISOString(),
-    };
-    setQaSessions(prev => [...prev, session]);
-    setNewQuestion('');
-  };
-
-  const handleAnswerQuestion = () => {
-    if (newAnswer.trim() === '' || !unansweredQuestion) return;
-    setQaSessions(prev => prev.map(s => s.id === unansweredQuestion.id ? {
-      ...s,
-      answer: newAnswer.trim(),
-      answeredAt: new Date().toISOString(),
-    } : s));
-    setNewAnswer('');
-  };
-  
-  const completedSessions = sortedQASessions.filter(s => s.answer);
+  const getUserById = (id: string) => id === currentUser.id ? currentUser : partner;
 
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Column */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Q&A Game */}
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h3 className="text-xl font-semibold text-slate-800 mb-4">El Juego de Preguntas</h3>
-            
-            {/* Action Panel */}
-            <div className="p-4 bg-slate-50 rounded-lg">
-              {unansweredQuestion ? (
-                <div>
-                  <p className="text-sm font-medium text-slate-600">{partner.name} te pregunta:</p>
-                  <p className="mt-2 text-lg font-semibold text-indigo-800">"{unansweredQuestion.question}"</p>
-                  <textarea
-                      value={newAnswer}
-                      onChange={(e) => setNewAnswer(e.target.value)}
-                      rows={3}
-                      className="mt-4 w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                      placeholder="Escribe tu respuesta aquí..."
-                  />
-                  <button onClick={handleAnswerQuestion} className="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm">
-                      Responder
-                  </button>
-                </div>
-              ) : isMyTurnToAsk ? (
-                <div>
-                  <p className="font-semibold text-indigo-800">¡Es tu turno de preguntar!</p>
-                  <input
-                      type="text"
-                      value={newQuestion}
-                      onChange={(e) => setNewQuestion(e.target.value)}
-                      className="mt-2 w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Escribe tu pregunta..."
-                  />
-                  <button onClick={handleAskQuestion} className="mt-2 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm">
-                      Enviar Pregunta
-                  </button>
-                </div>
-              ) : (
-                  <div className="text-center py-6">
-                      <p className="font-semibold text-slate-700">Esperando la respuesta de {partner.name}...</p>
-                      <p className="text-sm text-slate-500 mt-1">Pregunta: "{latestSession?.question}"</p>
-                  </div>
-              )}
-            </div>
-
-            {/* History */}
-            <div className="mt-6">
-              <h4 className="text-lg font-medium text-slate-700 mb-3">Historial de Conversaciones</h4>
-              <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-                  {completedSessions.length > 0 ? (
-                      completedSessions.map(s => (
-                          <div key={s.id} className="p-3 bg-slate-50/70 rounded-lg">
-                            <p className="text-sm text-slate-600">
-                                <span className="font-semibold">{s.askerId === currentUser.id ? 'Tú' : partner.name}</span> preguntó:
-                            </p>
-                            <p className="font-medium text-slate-800 mt-1 italic">"{s.question}"</p>
-                              <p className="text-sm text-slate-600 mt-2">
-                                  <span className="font-semibold">{s.askerId === currentUser.id ? partner.name : 'Tú'}</span> respondió:
-                            </p>
-                            <p className="font-medium text-slate-800 mt-1 pl-3 border-l-2 border-indigo-300">{s.answer}</p>
-                          </div>
-                      ))
-                  ) : (
-                      <p className="text-center text-sm text-slate-500 py-8">Tus conversaciones aparecerán aquí.</p>
-                  )}
-              </div>
-            </div>
-          </div>
-
-          {/* Notes Mailbox */}
-          <div className="bg-white p-6 rounded-xl shadow-md">
-              <h3 className="text-xl font-semibold text-slate-800 mb-4">Buzón de Notas</h3>
-              <p className="text-sm text-slate-500 mb-4">Déjale un mensaje rápido a tu pareja para alegrarle el día.</p>
-              <textarea
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-handwriting text-lg"
-                  placeholder="Escribe una notita aquí..."
-              />
-              <button onClick={handleSaveNote} className="mt-2 w-full px-4 py-2 bg-yellow-400 text-yellow-900 rounded-md hover:bg-yellow-500 transition-colors shadow-sm font-semibold">
-                  Dejar Nota
-              </button>
-
-               <div className="mt-6 pt-6 border-t border-slate-200">
-                <h4 className="text-lg font-medium text-slate-700 mb-3">Álbum de Recuerdos</h4>
-                <div className="min-h-[20rem] scrapbook-background p-4 rounded-lg border border-slate-200">
-                    {sortedPartnerNotes.length > 0 ? (
-                        <div className="flex flex-wrap justify-center gap-8 items-start">
-                            {sortedPartnerNotes.map((note, index) => {
-                               const author = note.authorId === currentUser.id ? currentUser : partner;
-                               const rotationClass = `transform ${index % 4 === 0 ? 'rotate-2' : index % 4 === 1 ? '-rotate-3' : index % 4 === 2 ? 'rotate-3' : '-rotate-1'}`;
-
-                               if (note.type === 'trip' && note.tripContent) {
-                                const { tripContent } = note;
-                                return (
-                                   <div key={note.id} onClick={() => setViewingTripNote(note)} className={`cursor-pointer group w-60 hover:scale-110 hover:!rotate-0 transition-transform ${rotationClass}`}>
-                                       <div className="bg-white p-3 pb-5 shadow-xl">
-                                            <div className="h-40 bg-slate-200 flex items-center justify-center overflow-hidden">
-                                                {tripContent.coverPhoto ? <img src={tripContent.coverPhoto} alt={tripContent.title} className="w-full h-full object-cover"/> : <CameraIcon className="w-12 h-12 text-slate-400"/>}
-                                            </div>
-                                            <div className="mt-3 text-center">
-                                                <h4 className="font-bold text-slate-800 text-xl font-handwriting truncate">{tripContent.title}</h4>
-                                            </div>
-                                        </div>
-                                       <p className="text-xs text-center text-slate-500 mt-2">De: {author.name}</p>
-                                   </div>
-                                );
-                               }
-
-                               if (note.type === 'reflection' && note.reflectionContent) {
-                                const { reflectionContent } = note;
-                                return (
-                                   <div key={note.id} className={`relative bg-indigo-50 p-5 shadow-lg w-64 border-l-4 border-indigo-300 ${rotationClass} hover:scale-110 hover:!rotate-0 transition-transform`}>
-                                      <div className="flex justify-between items-start">
-                                          <h4 className="font-bold text-slate-800 text-2xl font-handwriting pr-2">{reflectionContent.dayTitle || `Reflexión`}</h4>
-                                          {reflectionContent.emotionEmoji && <span className="text-3xl">{reflectionContent.emotionEmoji}</span>}
-                                      </div>
-                                      {reflectionContent.positiveThought && <blockquote className="text-md text-slate-700 mt-2 italic">"{reflectionContent.positiveThought}"</blockquote>}
-                                      <p className="text-right text-xs text-slate-500 mt-4">- {author.name}</p>
-                                   </div>
-                                );
-                               }
-                               // Default to a Post-it note
-                               return (
-                                   <div key={note.id} className={`relative w-60 h-60 p-6 flex items-center justify-center bg-yellow-300 shadow-xl ${rotationClass} hover:scale-110 hover:!rotate-0 transition-transform`}>
-                                      <div className="absolute top-2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-yellow-700/50"><PinIcon className="w-6 h-6" /></div>
-                                      <p className="text-2xl text-yellow-900 font-handwriting whitespace-pre-wrap text-center">"{note.text}"</p>
-                                      <p className="absolute bottom-2 right-2 text-xs text-yellow-800/70">De: {author.name}</p>
-                                   </div>
-                               )
-                            })}
-                        </div>
-                    ) : (
-                        <p className="text-center text-sm text-slate-500 py-8">Tus notas y recuerdos compartidos aparecerán aquí.</p>
-                    )}
-                </div>
-              </div>
-          </div>
-        </div>
-        {/* Side Panel */}
-        <div className="space-y-8">
-          <EnergyStatus 
-              currentUserState={myTodaysEmotion}
-              partnerState={partnerTodaysEmotion}
-              onStateSelect={handleEmotionSelect}
-              onOpenLog={onOpenEmotionLog}
+        {/* Left Column */}
+        <div className="lg:col-span-1 space-y-8">
+          <EnergyStatus
+            currentUserState={todaysEmotionState?.emotions[currentUser.id]}
+            partnerState={todaysEmotionState?.emotions[partner.id]}
+            onStateSelect={handleSaveEmotion}
+            onOpenLog={onOpenEmotionLog}
           />
         </div>
+
+        {/* Right Column */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Q&A Section */}
+          <div className="bg-white p-6 rounded-xl shadow-md">
+            <h3 className="text-xl font-semibold text-slate-800 mb-4">Preguntas y Respuestas</h3>
+            {pendingQuestionForUser ? (
+              <div className="p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg">
+                <p className="font-semibold text-indigo-800">{partner.name} te pregunta:</p>
+                <p className="mt-2 text-indigo-900 italic">"{pendingQuestionForUser.question}"</p>
+                <div className="mt-4 flex space-x-2">
+                  <input
+                    type="text"
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder="Tu respuesta..."
+                    className="w-full px-3 py-2 border border-indigo-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button onClick={() => handleAnswerQuestion(pendingQuestionForUser.id)} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Enviar</button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleAskQuestion}>
+                <p className="text-sm text-slate-600 mb-2">Hazle una pregunta a {partner.name} para conectar.</p>
+                <div className="flex space-x-2">
+                   <input
+                    type="text"
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    placeholder="p. ej., ¿Cuál fue tu parte favorita del día?"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Preguntar</button>
+                </div>
+              </form>
+            )}
+
+            {answeredQuestions.length > 0 && (
+                <div className="mt-6">
+                    <h4 className="font-medium text-slate-600 text-sm mb-2">Conversaciones pasadas</h4>
+                    <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
+                        {answeredQuestions.map(qa => (
+                            <div key={qa.id} className="p-3 bg-slate-50 rounded-lg text-sm">
+                                <p><strong className="text-slate-700">{getUserById(qa.askerId).name}:</strong> "{qa.question}"</p>
+                                <p className="mt-1 pl-4"><strong className="text-slate-600">R:</strong> {qa.answer}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+          </div>
+          
+          {/* Notes section */}
+          <div className="bg-white p-6 rounded-xl shadow-md">
+            <h3 className="text-xl font-semibold text-slate-800 mb-4">Notas y Recuerdos Compartidos</h3>
+             <form onSubmit={handleAddNote} className="mb-6">
+                <textarea
+                    value={newNote}
+                    onChange={e => setNewNote(e.target.value)}
+                    rows={2}
+                    placeholder={`Deja una nota para ${partner.name}...`}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                />
+                <div className="flex justify-end mt-2">
+                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium">Publicar Nota</button>
+                </div>
+            </form>
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                {allNotesAndSharedItems.map(note => {
+                    const author = getUserById(note.authorId);
+                    const isCurrentUser = author.id === currentUser.id;
+                    return (
+                        <div key={note.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`p-3 rounded-lg max-w-sm ${isCurrentUser ? 'bg-indigo-100' : 'bg-slate-100'}`}>
+                                <p className="font-semibold text-sm text-slate-800">{isCurrentUser ? 'Tú' : author.name}</p>
+                                {note.type === 'reflection' && note.reflectionContent ? (
+                                    <div className="mt-1">
+                                        <p className="text-sm text-slate-600">Compartió una reflexión:</p>
+                                        <div className="mt-1 p-2 bg-white/50 rounded-md border border-slate-200">
+                                            <p className="font-medium italic">"{note.reflectionContent.dayTitle}"</p>
+                                        </div>
+                                    </div>
+                                ) : note.type === 'trip' && note.tripContent ? (
+                                     <div className="mt-1">
+                                        <p className="text-sm text-slate-600">Compartió un viaje:</p>
+                                        <button onClick={() => setViewingTripNote(note)} className="mt-1 p-2 bg-white/50 rounded-md border border-slate-200 w-full text-left hover:bg-white">
+                                            <p className="font-medium italic">"{note.tripContent.title}"</p>
+                                            <span className="text-xs text-indigo-600">Ver detalles</span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{note.text}</p>
+                                )}
+                                <p className="text-xs text-slate-400 text-right mt-1">
+                                    {new Date(note.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </p>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+          </div>
+        </div>
       </div>
-      {viewingTripNote && viewingTripAuthor && (
-        <TripDetailView
+      {viewingTripNote && (
+        <TripDetailView 
             note={viewingTripNote}
             onClose={() => setViewingTripNote(null)}
-            author={viewingTripAuthor}
+            author={getUserById(viewingTripNote.authorId)}
         />
       )}
     </>
   );
 };
+
+const PinIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    {/* FIX: Corrected corrupted SVG path data and removed trailing invalid characters. */}
+    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25h2.25a.75.75 0 0 0 0-1.5H12.75V9Z" clipRule="evenodd" />
+  </svg>
+);

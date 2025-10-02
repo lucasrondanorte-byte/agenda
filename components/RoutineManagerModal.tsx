@@ -58,7 +58,7 @@ export const RoutineManagerModal: React.FC<RoutineManagerModalProps> = ({ isOpen
                         <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: routine.color || '#64748B' }}></span>
                         <p className="font-semibold text-slate-800">{routine.title}</p>
                     </div>
-                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center space-x-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => onEdit(routine)} className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-200">
                             <PencilIcon className="w-4 h-4" />
                         </button>

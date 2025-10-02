@@ -114,19 +114,19 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto py-3 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto py-3 px-2 sm:px-6 lg:px-8 flex justify-between items-center">
         <div 
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer group"
           onClick={onNavigateToPlanner}
           title="Ir al planificador"
         >
-          <img src="https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png" alt="ConectaMente Logo" className="h-12 transition-transform duration-300 group-hover:scale-105" />
-          <h1 className="text-2xl font-bold text-zinc-800 tracking-tight">ConectaMente</h1>
+          <img src="https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png" alt="ConectaMente Logo" className="h-10 sm:h-12 transition-transform duration-300 group-hover:scale-105" />
+          <h1 className="hidden sm:block text-xl sm:text-2xl font-bold text-zinc-800 tracking-tight">ConectaMente</h1>
         </div>
-        <div className="flex items-center space-x-2 sm:space-x-4">
+        <div className="flex items-center space-x-1 sm:space-x-2">
              <button 
               onClick={onNavigateToHome}
-              className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+              className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                   activeSection === 'home' 
                   ? 'bg-teal-100 text-teal-700 border-teal-200'
                   : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
@@ -137,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
              <button 
               onClick={onNavigateToGoals}
-              className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+              className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                   activeSection === 'goals' 
                   ? 'bg-teal-100 text-teal-700 border-teal-200'
                   : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
@@ -148,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
              <button 
               onClick={onNavigateToTravelLog}
-              className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+              className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                   activeSection === 'travel' 
                   ? 'bg-teal-100 text-teal-700 border-teal-200'
                   : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'

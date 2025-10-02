@@ -160,12 +160,12 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             placeholder="p. ej., Un día de calma inesperada, Misión cumplida..."
           />
         </div>
-        <div className="flex justify-end pt-2 space-x-3">
+        <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-2">
              <button
                 onClick={() => onOpenShareModal(currentJournalEntry!)}
                 disabled={isShareDisabled}
                 title={isShareDisabled ? (partner ? 'Guarda tu reflexión para poder compartirla' : 'Conecta con una pareja para compartir') : 'Compartir reflexión'}
-                className="flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-zinc-300 bg-white rounded-md text-sm font-medium text-zinc-700 shadow-sm transition-colors duration-200 hover:bg-zinc-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center justify-center space-x-2 px-4 py-2 w-full sm:w-40 border border-zinc-300 bg-white rounded-md text-sm font-medium text-zinc-700 shadow-sm transition-colors duration-200 hover:bg-zinc-50 disabled:opacity-60 disabled:cursor-not-allowed"
             >
                 <ShareIcon className="w-5 h-5" />
                 <span>Compartir</span>
@@ -173,7 +173,7 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             <button
                 onClick={handleSave}
                 disabled={isSaveDisabled}
-                className={`flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-transparent rounded-md text-sm font-medium text-white shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500
+                className={`flex items-center justify-center space-x-2 px-4 py-2 w-full sm:w-40 border border-transparent rounded-md text-sm font-medium text-white shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500
                     ${isSaved ? 'bg-green-500' : 'bg-teal-600'}
                     ${isSaveDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-700'}
                 `}

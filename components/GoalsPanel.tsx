@@ -58,7 +58,7 @@ const TaskItem: React.FC<{ task: Task; onUpdateTask: GoalsPanelProps['onUpdateTa
             ) : (
                 <p onDoubleClick={() => setIsEditing(true)} className="flex-grow cursor-pointer">{task.text}</p>
             )}
-            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+            <div className="flex items-center space-x-1 sm:opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                 <button onClick={() => setIsEditing(true)} className="p-1 text-slate-400 hover:text-indigo-600 rounded"><PencilIcon className="w-4 h-4"/></button>
                 <button onClick={() => onDeleteTask(task.id)} className="p-1 text-slate-400 hover:text-red-600 rounded"><TrashIcon className="w-4 h-4"/></button>
             </div>
@@ -212,7 +212,7 @@ export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddPr
     const [expandedProjectId, setExpandedProjectId] = useState<string | null>(projects[0]?.id || null);
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-md">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-slate-700">Mis Proyectos y Metas</h3>
                 <button onClick={onAddProject} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">

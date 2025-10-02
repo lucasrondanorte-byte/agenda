@@ -86,9 +86,9 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
       
       <div className="mt-6">
         <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h3 className="text-lg font-medium text-zinc-800">Eventos de Hoy</h3>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                  <button onClick={onManageRoutines} className="flex items-center space-x-2 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
                     <RepeatIcon className="w-5 h-5"/>
                     <span>Rutinas</span>
@@ -140,7 +140,7 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                                <div className="flex items-center space-x-2 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
                                     {event.description && (
                                         <button onClick={() => toggleExpand(event.id)} className="p-1.5 text-zinc-500 rounded-md">
                                             <ChevronDownIcon className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />

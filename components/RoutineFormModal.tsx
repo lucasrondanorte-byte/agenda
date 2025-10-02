@@ -145,7 +145,7 @@ export const RoutineFormModal: React.FC<RoutineFormModalProps> = ({ isOpen, onCl
               className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="routine-time" className="block text-sm font-medium text-slate-700 mb-1">Hora</label>
               <input type="time" id="routine-time" value={time} onChange={(e) => setTime(e.target.value)}
@@ -164,7 +164,7 @@ export const RoutineFormModal: React.FC<RoutineFormModalProps> = ({ isOpen, onCl
           {frequency === 'weekly' && (
             <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Repetir los días</label>
-                <div className="flex justify-between gap-1">
+                <div className="flex flex-wrap justify-center gap-2">
                     {daysOfWeekMap.map(day => (
                         <button key={day.value} type="button" onClick={() => toggleDayOfWeek(day.value)}
                             className={`w-10 h-10 rounded-full text-sm font-semibold transition-colors ${
@@ -186,7 +186,7 @@ export const RoutineFormModal: React.FC<RoutineFormModalProps> = ({ isOpen, onCl
              </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div>
                 <label htmlFor="startDate" className="block text-sm font-medium text-slate-700 mb-1">Fecha de Inicio</label>
                 <input type="date" id="startDate" value={startDate} onChange={e => setStartDate(e.target.value)}
