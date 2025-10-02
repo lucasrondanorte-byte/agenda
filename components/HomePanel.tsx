@@ -70,7 +70,7 @@ const ListCard: React.FC<Omit<HomePanelProps, 'shoppingLists' | 'onSaveList' | '
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col">
+        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col">
             <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-3">
                     <span className="text-2xl">{list.icon}</span>

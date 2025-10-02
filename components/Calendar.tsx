@@ -121,7 +121,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
             <div className="mt-1 flex-grow overflow-hidden">
               {dayEvents.length > 2 ? (
                 // Dot view for 3+ events
-                <div className="flex flex-wrap gap-1" aria-label={`${dayEvents.length} events`}>
+                <div className="flex flex-wrap gap-1" aria-label={`${dayEvents.length} eventos`}>
                   {dayEvents.map(event => (
                     <div
                       key={event.id}

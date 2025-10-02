@@ -88,7 +88,7 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
 
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm">
+    <div className="bg-white p-6 rounded-xl shadow-md">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <JournalIcon className="w-6 h-6 text-teal-500"/>

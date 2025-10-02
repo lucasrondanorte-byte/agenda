@@ -70,7 +70,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({ isOpen, onCl
                 <XMarkIcon className="w-6 h-6 text-zinc-500" />
             </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-2">Icono del Proyecto</label>
             <div className="flex flex-wrap gap-2 bg-stone-50 p-3 rounded-lg">

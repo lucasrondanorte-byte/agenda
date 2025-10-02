@@ -130,7 +130,7 @@ const PinManagementModal: React.FC<{
           return;
       }
       if (newPin !== confirmNewPin) {
-          setError('Los nuevos PINs no coinciden.');
+          setError('Los nuevos PIN no coinciden.');
           return;
       }
       onSave(newPin);
@@ -337,7 +337,7 @@ const EXAMPLE_JOURNAL_ENTRIES_DATA: JournalEntry[] = [
     {
         date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
         timestamp: new Date(Date.now() - 86400000).toISOString(),
-        positiveThought: 'Hoy agradezco por la conversación que tuve con un viejo amigo. Me hizo darme cuenta de lo importante que es mantener esas conexiones.',
+        positiveThought: 'Hoy doy gracias por la conversación que tuve con un viejo amigo. Me hizo darme cuenta de lo importante que es mantener esas conexiones.',
         lessonLearned: 'Aprendí que a veces, tomarse un descanso de 5 minutos puede cambiar completamente mi productividad por la tarde.',
         dayTitle: 'Una llamada que alegra el alma',
         emotionEmoji: '😊'
@@ -1256,7 +1256,7 @@ function App() {
                         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
                             {/* Columna Principal */}
                             <div className="xl:col-span-3 space-y-8">
-                                <div className="bg-white p-6 rounded-xl shadow-sm">
+                                <div className="bg-white p-6 rounded-xl shadow-md">
                                     <SchedulePanel
                                     selectedDate={selectedDate}
                                     events={events}
@@ -1288,7 +1288,7 @@ function App() {
 
                             {/* Columna Lateral */}
                             <div className="xl:col-span-2 space-y-8">
-                                <div className="bg-white p-6 rounded-xl shadow-sm">
+                                <div className="bg-white p-6 rounded-xl shadow-md">
                                     <Calendar
                                     currentDate={currentDate}
                                     setCurrentDate={setCurrentDate}

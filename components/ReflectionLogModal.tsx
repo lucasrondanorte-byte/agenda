@@ -147,16 +147,16 @@ export const ReflectionLogModal: React.FC<ReflectionLogModalProps> = ({ isOpen, 
         
         <div className="flex-grow overflow-y-auto max-h-[60vh] pr-4">
             {filteredEntries.length > 0 ? (
-                <div className="relative border-l-2 border-zinc-200 pl-6 space-y-8">
+                <div className="relative border-l-2 border-zinc-200 pl-6 space-y-6">
                     {filteredEntries.map(entry => (
                         <div key={entry.timestamp} className="relative">
                             <div className="absolute -left-[33px] top-1 w-4 h-4 bg-white border-2 border-teal-500 rounded-full"></div>
-                            <div className="p-4 bg-stone-50 rounded-lg border border-zinc-200">
+                            <div className="p-3 bg-stone-50 rounded-lg border border-zinc-200">
                                 <div className="flex justify-between items-baseline mb-3">
                                     <p className="text-md font-semibold text-teal-700">{formatDate(entry.timestamp)}</p>
                                     <p className="text-sm font-medium text-zinc-500">{formatTime(entry.timestamp)}</p>
                                 </div>
-                                <div className="space-y-4 text-sm">
+                                <div className="space-y-3 text-sm">
                                     {(entry.dayTitle || entry.emotionEmoji) && (
                                         <div className="flex items-center gap-3 p-3 bg-white rounded-md">
                                             {entry.emotionEmoji && <span className="text-3xl">{entry.emotionEmoji}</span>}

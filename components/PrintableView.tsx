@@ -69,6 +69,8 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
     const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     const daysInMonth = lastDayOfMonth.getDate();
     const startDay = firstDayOfMonth.getDay();
+    
+    const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
 
     const days = [];
     for (let i = 0; i < startDay; i++) {
@@ -80,7 +82,7 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
       const dayEvents = (eventsByDate[dateString] || []).sort((a,b) => a.time.localeCompare(b.time));
 
       days.push(
-        <div key={i} className="relative p-2 h-40 border-r border-b border-zinc-300 flex flex-col">
+        <div key={i} className="relative p-2 border-r border-b border-zinc-300 flex flex-col">
           <span className="font-semibold text-zinc-700">{i}</span>
           {dayEvents.length > 0 && (
             <div className="mt-1 space-y-1 overflow-auto">
@@ -98,6 +100,10 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
         </div>
       );
     }
+    const remainingCells = totalCells - (startDay + daysInMonth);
+    for (let i = 0; i < remainingCells; i++) {
+        days.push(<div key={`empty-end-${i}`} className="border-r border-b border-zinc-300"></div>);
+    }
     return days;
   };
 
@@ -107,6 +113,9 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
     const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     const daysInMonth = lastDayOfMonth.getDate();
     const startDay = firstDayOfMonth.getDay();
+
+    const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
+    const numRows = totalCells / 7;
 
     let daysHtml = '';
     for (let i = 0; i < startDay; i++) {
@@ -126,9 +135,14 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
       daysHtml += `
         <div class="day-cell">
           <div class="day-number">${i}</div>
-          ${eventsHtml}
+          <div class="events-container">${eventsHtml}</div>
         </div>
       `;
+    }
+    // Add empty cells to complete the grid
+    const remainingCells = totalCells - (startDay + daysInMonth);
+    for (let i = 0; i < remainingCells; i++) {
+        daysHtml += `<div class="day-cell empty-cell"></div>`;
     }
 
     const printContent = `
@@ -136,21 +150,65 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
         <head>
           <title>Calendario Mensual - ${monthName}</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            h1 { text-align: center; color: #0f766e; font-size: 1.8em; text-transform: capitalize; }
-            .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #ccc; border-left: 1px solid #ccc; }
-            .day-header { text-align: center; padding: 8px; font-weight: bold; background-color: #f1f5f9; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; font-size: 0.9em; }
-            .day-cell { border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 5px; height: 120px; vertical-align: top; }
-            .day-number { font-weight: bold; font-size: 0.9em; color: #475569; margin-bottom: 4px; }
+            @page {
+              size: A4 landscape;
+              margin: 1cm;
+            }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+              margin: 0; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact;
+              height: 100%;
+              width: 100%;
+            }
+            .printable-container {
+              display: flex;
+              flex-direction: column;
+              height: 100%;
+            }
+            h1 { 
+              text-align: center; color: #0f766e; font-size: 1.5em; text-transform: capitalize; 
+              flex-shrink: 0;
+              margin: 0 0 10px 0;
+            }
+            .calendar-body {
+              flex-grow: 1;
+              display: flex;
+              flex-direction: column;
+              border-top: 1px solid #ccc;
+              border-left: 1px solid #ccc;
+            }
+            .day-headers {
+              display: grid;
+              grid-template-columns: repeat(7, 1fr);
+              flex-shrink: 0;
+            }
+            .day-header { text-align: center; padding: 4px; font-weight: bold; background-color: #f1f5f9; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; font-size: 0.8em; }
+            .days-grid {
+              display: grid;
+              grid-template-columns: repeat(7, 1fr);
+              flex-grow: 1;
+              grid-template-rows: repeat(${numRows}, 1fr);
+            }
+            .day-cell { border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 4px; display: flex; flex-direction: column; overflow: hidden; }
+            .day-number { font-weight: bold; font-size: 0.8em; color: #475569; margin-bottom: 3px; }
             .empty-cell { background-color: #f8fafc; }
-            .event { font-size: 10px; padding: 3px; border-radius: 3px; color: white; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .events-container { flex-grow: 1; overflow-y: auto; }
+            .event { font-size: 9px; padding: 2px; border-radius: 3px; color: white; margin-top: 2px; white-space: normal; overflow-wrap: break-word; }
           </style>
         </head>
         <body>
-          <h1>${monthName}</h1>
-          <div class="calendar-grid">
-            ${daysOfWeek.map(day => `<div class="day-header">${day}</div>`).join('')}
-            ${daysHtml}
+          <div class="printable-container">
+            <h1>${monthName}</h1>
+            <div class="calendar-body">
+              <div class="day-headers">
+                ${daysOfWeek.map(day => `<div class="day-header">${day}</div>`).join('')}
+              </div>
+              <div class="days-grid">
+                ${daysHtml}
+              </div>
+            </div>
           </div>
         </body>
       </html>
@@ -161,7 +219,9 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.focus();
-      printWindow.print();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
     }
   };
 
@@ -196,13 +256,13 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
         </header>
 
         {/* Calendar Grid */}
-        <div className="flex-grow flex flex-col border-t border-l border-zinc-300">
+        <div className="flex-grow flex flex-col border-t border-l border-zinc-300 max-w-6xl mx-auto w-full">
             <div className="grid grid-cols-7">
                 {daysOfWeek.map(day => (
                     <div key={day} className="text-center py-2 text-sm font-bold text-zinc-600 bg-zinc-100 border-r border-b border-zinc-300">{day}</div>
                 ))}
             </div>
-             <div className="grid grid-cols-7 flex-grow">
+             <div className="grid grid-cols-7 flex-grow" style={{ gridTemplateRows: `repeat(${Math.ceil((new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() + new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()) / 7)}, 1fr)`}}>
                 {renderDaysForView()}
             </div>
         </div>

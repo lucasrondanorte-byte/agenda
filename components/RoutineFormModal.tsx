@@ -138,7 +138,7 @@ export const RoutineFormModal: React.FC<RoutineFormModalProps> = ({ isOpen, onCl
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
         <h2 className="text-2xl font-bold text-slate-800 mb-6">{routineToEdit ? 'Editar Rutina' : 'Crear Nueva Rutina'}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+        <form onSubmit={handleSubmit} className="space-y-3 max-h-[80vh] overflow-y-auto pr-2">
           <div>
             <label htmlFor="routine-title" className="block text-sm font-medium text-slate-700 mb-1">Título de la Rutina</label>
             <input type="text" id="routine-title" value={title} onChange={(e) => setTitle(e.target.value)}

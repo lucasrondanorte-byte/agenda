@@ -47,7 +47,7 @@ const EnergyStatus: React.FC<{
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-md">
             <div className="flex justify-between items-center mb-2">
                  <h3 className="text-xl font-semibold text-slate-800">Mi Energía de Hoy</h3>
                  <button
@@ -198,7 +198,7 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
         {/* Main Column */}
         <div className="lg:col-span-2 space-y-8">
           {/* Q&A Game */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-md">
             <h3 className="text-xl font-semibold text-slate-800 mb-4">El Juego de Preguntas</h3>
             
             {/* Action Panel */}
@@ -258,14 +258,14 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
                           </div>
                       ))
                   ) : (
-                      <p className="text-center text-sm text-slate-500 py-8">Vuestras conversaciones aparecerán aquí.</p>
+                      <p className="text-center text-sm text-slate-500 py-8">Tus conversaciones aparecerán aquí.</p>
                   )}
               </div>
             </div>
           </div>
 
           {/* Notes Mailbox */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-md">
               <h3 className="text-xl font-semibold text-slate-800 mb-4">Buzón de Notas</h3>
               <p className="text-sm text-slate-500 mb-4">Déjale un mensaje rápido a tu pareja para alegrarle el día.</p>
               <textarea
@@ -329,7 +329,7 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
                             })}
                         </div>
                     ) : (
-                        <p className="text-center text-sm text-slate-500 py-8">Vuestras notas y recuerdos compartidos aparecerán aquí.</p>
+                        <p className="text-center text-sm text-slate-500 py-8">Tus notas y recuerdos compartidos aparecerán aquí.</p>
                     )}
                 </div>
               </div>

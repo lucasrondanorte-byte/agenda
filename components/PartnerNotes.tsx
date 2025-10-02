@@ -18,12 +18,12 @@ type SummaryItem = {
 const emotionDetails: Record<EmotionMoji, { icon: string; text: string }> = {
     motivated: { icon: '✨', text: 'se siente motivado/a' },
     happy: { icon: '😄', text: 'se siente feliz' },
-    content: { icon: '😊', text: 'tiene un día contento' },
+    content: { icon: '😊', text: 'está contento/a' },
     tired: { icon: '😴', text: 'está un poco cansado/a' },
     grumpy: { icon: '⛈️', text: 'tiene un día complicado' },
     sad: { icon: '😢', text: 'se siente triste' },
     angry: { icon: '😠', text: 'se siente enojado/a' },
-    love_you: { icon: '❤️', text: 'te ama' },
+    love_you: { icon: '❤️', text: 'te envía amor' },
     miss_you: { icon: '🥺', text: 'te extraña' },
     hug: { icon: '🤗', text: 'quiere un abrazo' },
     kiss: { icon: '😘', text: 'quiere un beso' },
@@ -58,7 +58,7 @@ export const PartnerNotes: React.FC<PartnerNotesProps> = ({ partner, partnerNote
         id: s.date,
         type: 'emotion',
         timestamp: new Date(s.date).toISOString(),
-        content: `${emotionDetails[s.emotions[partner.id]].icon} Me siento ${emotionDetails[s.emotions[partner.id]].text}`
+        content: `${emotionDetails[s.emotions[partner.id]].icon} ${emotionDetails[s.emotions[partner.id]].text}`
       }));
       
     return [...noteItems, ...emotionItems]
@@ -82,7 +82,7 @@ export const PartnerNotes: React.FC<PartnerNotesProps> = ({ partner, partnerNote
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm scrapbook-background">
+    <div className="bg-white p-6 rounded-xl shadow-md scrapbook-background">
       <h3 className="text-xl font-semibold text-slate-700 mb-4 font-handwriting">Notas de {partner.name}</h3>
       
       {summaryItems.length > 0 ? (

@@ -212,7 +212,7 @@ export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddPr
     const [expandedProjectId, setExpandedProjectId] = useState<string | null>(projects[0]?.id || null);
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-md">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-slate-700">Mis Proyectos y Metas</h3>
                 <button onClick={onAddProject} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">

@@ -135,7 +135,7 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
           return;
       }
       if (pin !== confirmPin) {
-          setError('Los PINs no coinciden.');
+          setError('Los PIN no coinciden.');
           return;
       }
       onLogin(selectedUser!.id, pin);
@@ -199,7 +199,8 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
   const renderSelectUserScreen = () => (
      <div className="w-full max-w-md">
         <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-zinc-800">Bienvenido/a</h1>
+            <img src="https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png" alt="ConectaMente Logo" className="h-32 w-auto mb-6 mx-auto shadow-lg rounded-full drop-shadow-lg" />
+            <h1 className="text-3xl font-bold text-zinc-800">Bienvenido/a a ConectaMente</h1>
             <p className="text-zinc-600 mt-2">Selecciona un perfil para continuar o crea uno nuevo.</p>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-md">
@@ -284,8 +285,33 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-4">
-        <img src="https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png" alt="ConectaMente Logo" className="h-24 w-auto mb-10 shadow-lg rounded-full" />
-        {renderContent()}
+        <div className="pb-40">
+            {renderContent()}
+        </div>
+        <div className="absolute bottom-0 left-0 right-0">
+            <svg className="w-0 h-0 absolute">
+                <defs>
+                    <clipPath id="torn-edge-clip" clipPathUnits="objectBoundingBox">
+                        <path d="M0,0.1 C0.05,0.05, 0.1,0.15, 0.15,0.1 C0.2,0.02, 0.25,0.12, 0.3,0.1 C0.35,0.05, 0.4,0.15, 0.45,0.1 C0.5,0.05, 0.55,0.15, 0.6,0.1 C0.65,0.02, 0.7,0.12, 0.75,0.1 C0.8,0.05, 0.85,0.15, 0.9,0.1 C0.95,0.05, 1,0.15, 1,0.1 V1 H0 Z" />
+                    </clipPath>
+                </defs>
+            </svg>
+             <style>{`
+              .text-shadow-subtle {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              }
+              .torn-edge-clip {
+                clip-path: url(#torn-edge-clip);
+                filter: drop-shadow(0 -6px 4px rgba(0,0,0,0.05));
+              }
+            `}</style>
+            <div className="torn-edge-clip bg-[#fdfaf6] pt-12 pb-6">
+                <blockquote className="max-w-prose mx-auto text-stone-700 font-handwriting text-xl text-center text-shadow-subtle px-4">
+                    <p>"Nunca te olvides que solo existe el hoy. ¿Por qué dejar todo para mañana? Viví la vida que querés y que merecés. Por ende, una vida hermosa, llena de disfrute, felicidad y aprendizaje."</p>
+                    <footer className="text-right mt-2 font-bold">- V.C</footer>
+                </blockquote>
+            </div>
+        </div>
     </div>
   );
 };

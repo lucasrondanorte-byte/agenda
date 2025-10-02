@@ -92,7 +92,7 @@ export const TripFormModal: React.FC<TripFormModalProps> = ({ isOpen, onClose, o
                 <XMarkIcon className="w-6 h-6 text-slate-500" />
             </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+        <form onSubmit={handleSubmit} className="space-y-3 max-h-[80vh] overflow-y-auto pr-2">
           <div>
             <label htmlFor="trip-title" className="block text-sm font-medium text-slate-700 mb-1">Título del Viaje</label>
             <input type="text" id="trip-title" value={title} onChange={(e) => setTitle(e.target.value)}

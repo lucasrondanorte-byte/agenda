@@ -17,7 +17,7 @@ export const HomeSummary: React.FC<HomeSummaryProps> = ({ shoppingLists, onNavig
 
     return (
         <div 
-            className="bg-white p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-white p-6 rounded-xl shadow-md cursor-pointer hover:shadow-lg transition-shadow"
             onClick={onNavigate}
         >
             <div className="flex items-center gap-3 mb-4">

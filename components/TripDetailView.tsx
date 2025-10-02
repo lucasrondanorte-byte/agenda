@@ -33,7 +33,7 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({ note, onClose, a
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-[70] flex justify-center items-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col scrapbook-background" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl flex flex-col scrapbook-background" onClick={e => e.stopPropagation()}>
         <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-white/50 flex-shrink-0">
             <div>
                 <h2 className="text-2xl font-bold text-zinc-800 font-handwriting">{trip.title}</h2>
@@ -62,10 +62,10 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({ note, onClose, a
 
             <h3 className="text-xl font-semibold text-zinc-700 mt-6 mb-4 font-handwriting">Recuerdos del Viaje</h3>
             {trip.highlights.length > 0 ? (
-                 <div className="space-y-6">
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {trip.highlights.map((h, index) => (
-                        <div key={index} className={`flex flex-col md:flex-row gap-4 items-start p-3 bg-white/80 shadow-md rounded-lg border border-zinc-200 transform ${index % 2 === 0 ? 'rotate-1' : '-rotate-1'}`}>
-                            {h.photo && <img src={h.photo} alt={h.title} className="w-full md:w-40 h-32 object-cover rounded-md flex-shrink-0" />}
+                        <div key={index} className={`flex flex-col sm:flex-row gap-4 items-start p-3 bg-white/80 shadow-md rounded-lg border border-zinc-200 transform ${index % 2 === 0 ? 'rotate-1' : '-rotate-1'}`}>
+                            {h.photo && <img src={h.photo} alt={h.title} className="w-full sm:w-40 h-32 object-cover rounded-md flex-shrink-0" />}
                             <div className="flex-grow">
                                 <div className="flex items-center gap-3 mb-1">
                                     {h.emotion && <span className="text-2xl">{h.emotion}</span>}

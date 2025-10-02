@@ -74,7 +74,7 @@ export const HighlightFormModal: React.FC<HighlightFormModalProps> = ({ isOpen, 
                 <XMarkIcon className="w-6 h-6 text-slate-500" />
             </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+        <form onSubmit={handleSubmit} className="space-y-3 max-h-[80vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label htmlFor="highlight-title" className="block text-sm font-medium text-slate-700 mb-1">Título del Recuerdo</label>

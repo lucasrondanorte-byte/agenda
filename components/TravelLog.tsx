@@ -202,7 +202,7 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
 
     if (selectedTrip) {
         return (
-            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm scrapbook-background">
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md scrapbook-background">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <button onClick={() => setSelectedTrip(null)} className="flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-2">
