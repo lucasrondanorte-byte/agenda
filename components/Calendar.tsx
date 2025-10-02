@@ -24,7 +24,7 @@ const ChevronRightIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 const PrinterIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0M3.454 3.454a2.25 2.25 0 0 1 3.182 0L7.5 4.5m6 0 1.13-1.131a2.25 2.25 0 0 1 3.182 0l2.122 2.121a2.25 2.25 0 0 1 0 3.182L18.75 8.25m-1.5-1.5-3.879 3.88a2.25 2.25 0 0 1-3.182 0L6 9.75M12 15.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a2.25 2.25 0 0 0-2.25-2.25H9.75a2.25 2.25 0 0 0-2.25 2.25v3.75m6 0H7.5m9 0h-9m9 0v6m-9-6v6m0-6H5.25a2.25 2.25 0 0 0-2.25 2.25v4.5a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25v-4.5a2.25 2.25 0 0 0-2.25-2.25H18.75" />
     </svg>
 );
 
@@ -82,6 +82,12 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
 
       const isToday = isSameDay(date, today);
       const isSelected = isSameDay(date, selectedDate);
+      
+      const now = new Date();
+      const hasPendingPastEvents = dayEvents.some(event => {
+          const eventDateTime = new Date(`${event.date}T${event.time}`);
+          return eventDateTime < now && !event.completed;
+      });
 
       let dayClass = 'relative p-2 h-24 border-r border-b border-slate-100 flex flex-col cursor-pointer transition-colors duration-200';
       if (isSelected) {
@@ -104,21 +110,41 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
 
       days.push(
         <div key={i} className={dayClass} onClick={() => onDateSelect(date)}>
+           {hasPendingPastEvents && (
+            <span
+                title="Hay eventos pasados sin completar"
+                className="absolute top-2 right-2 w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse"
+            ></span>
+          )}
           <span className={dateNumberClass}>{i}</span>
           {dayEvents.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
-                {dayEvents.slice(0, 2).map(event => (
-                <div 
-                    key={event.id} 
-                    className="w-full text-xs truncate px-1.5 py-0.5 rounded-md text-white"
-                    style={{ backgroundColor: event.color || categoryColors[event.category] || categoryColors.otro }}
-                    >
-                    {event.title}
+            <div className="mt-1 flex-grow overflow-hidden">
+              {dayEvents.length > 2 ? (
+                // Dot view for 3+ events
+                <div className="flex flex-wrap gap-1" aria-label={`${dayEvents.length} events`}>
+                  {dayEvents.map(event => (
+                    <div
+                      key={event.id}
+                      title={`${event.time} - ${event.title}`}
+                      className={`w-2 h-2 rounded-full ${event.completed ? 'opacity-40' : ''}`}
+                      style={{ backgroundColor: event.color || categoryColors[event.category] || categoryColors.otro }}
+                    />
+                  ))}
                 </div>
-                ))}
-                {dayEvents.length > 2 && (
-                    <div className="text-xs text-slate-500 mt-1">+{dayEvents.length - 2} más</div>
-                )}
+              ) : (
+                // Pill view for 1-2 events
+                <div className="space-y-1">
+                  {dayEvents.map(event => (
+                    <div 
+                      key={event.id} 
+                      className={`w-full text-xs truncate px-1.5 py-0.5 rounded text-white ${event.completed ? 'opacity-50' : ''}`}
+                      style={{ backgroundColor: event.color || categoryColors[event.category] || categoryColors.otro }}
+                    >
+                      {event.title}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Event, EventCategory } from '../types';
 
 interface SchedulePanelProps {
@@ -8,6 +8,7 @@ interface SchedulePanelProps {
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (eventId: string) => void;
   onManageRoutines: () => void;
+  onToggleEventCompletion: (eventId: string) => void;
 }
 
 const categoryColors: Record<EventCategory, string> = {
@@ -29,7 +30,6 @@ const RepeatIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-
 const PencilIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -42,24 +42,38 @@ const TrashIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-const WhatsAppIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg fill="currentColor" viewBox="0 0 16 16" {...props}>
-        <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.93 7.93 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.89 7.89 0 0 0 13.6 2.326zM7.994 14.521a6.57 6.57 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
-    </svg>
-);
-
 const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
     </svg>
 );
 
-export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, events, onAddEvent, onEditEvent, onDeleteEvent, onManageRoutines }) => {
+const CheckCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+  </svg>
+);
+
+const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+
+
+export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, events, onAddEvent, onEditEvent, onDeleteEvent, onManageRoutines, onToggleEventCompletion }) => {
+  const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
   const dateString = selectedDate.toISOString().split('T')[0];
 
   const todaysEvents = events
     .filter(event => event.date === dateString)
     .sort((a, b) => a.time.localeCompare(b.time));
+
+  const toggleExpand = (eventId: string) => {
+    setExpandedEventIds(prev =>
+      prev.includes(eventId) ? prev.filter(id => id !== eventId) : [...prev, eventId]
+    );
+  };
 
   return (
     <div>
@@ -87,43 +101,67 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
             </div>
             {todaysEvents.length > 0 ? (
               <ul className="space-y-3">
-                {todaysEvents.map(event => (
-                  <li key={event.id} className="p-3 bg-slate-50 rounded-lg flex justify-between items-start group">
-                    <div className="flex items-start space-x-3 flex-grow min-w-0">
-                        <span 
-                            className="mt-1.5 w-2.5 h-2.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: event.color || categoryColors[event.category] || categoryColors.otro }}
-                        ></span>
-                        <div className="flex-grow">
-                             <div className="flex items-center space-x-2">
-                                {event.whatsappReminder && (
-                                    <div title="Recordatorio de WhatsApp activado">
-                                        <WhatsAppIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                {todaysEvents.map(event => {
+                    const isExpanded = expandedEventIds.includes(event.id);
+                    return (
+                        <li 
+                            key={event.id} 
+                            className={`p-3 rounded-lg flex flex-col group transition-all duration-300 ease-in-out border-l-4 ${
+                            event.completed
+                                ? 'bg-green-50 border-green-400'
+                                : 'bg-slate-50'
+                            }`}
+                            style={!event.completed ? { borderColor: event.color || categoryColors[event.category] || categoryColors.otro } : {}}
+                        >
+                            <div className="flex justify-between items-start w-full">
+                                <div className="flex items-start space-x-3 flex-grow min-w-0" onClick={() => event.description && toggleExpand(event.id)}>
+                                    <input 
+                                    type="checkbox" 
+                                    checked={!!event.completed}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        onToggleEventCompletion(event.id);
+                                    }}
+                                    className="mt-1 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0"
+                                    aria-label={`Marcar ${event.title} como completado`}
+                                    />
+                                    <div className={`flex-grow ${event.description ? 'cursor-pointer' : ''}`}>
+                                        <div className="flex items-center space-x-2">
+                                            {event.completed && <CheckCircleIcon className="w-5 h-5 text-green-500 flex-shrink-0 transition-opacity" />}
+                                            <p className={`font-semibold text-slate-800 truncate transition-colors ${event.completed ? 'line-through text-slate-500' : ''}`}>{event.title}</p>
+                                        </div>
+                                        <div className={`flex items-center gap-2 text-sm transition-colors ${event.completed ? 'text-slate-400' : 'text-slate-500'}`}>
+                                            <span>{event.time}</span>
+                                            {event.reminder && (
+                                                <div title="Recordatorio en la app activado">
+                                                    <BellIcon className={`w-4 h-4 transition-colors ${event.completed ? 'text-slate-400' : 'text-indigo-500'}`} />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
-                                <p className="font-semibold text-slate-800 truncate">{event.title}</p>
+                                </div>
+                                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                                    {event.description && (
+                                        <button onClick={() => toggleExpand(event.id)} className="p-1.5 text-slate-500 rounded-md">
+                                            <ChevronDownIcon className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                        </button>
+                                    )}
+                                    <button onClick={() => onEditEvent(event)} className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-200" title={event.routineId ? 'Edita la rutina para cambiar este evento' : 'Editar evento'}>
+                                        <PencilIcon className={`w-4 h-4 ${event.routineId ? 'text-slate-300 cursor-not-allowed' : ''}`}/>
+                                    </button>
+                                    <button onClick={() => onDeleteEvent(event.id)} className="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-slate-200" title={event.routineId ? 'Elimina la rutina para borrar este evento' : 'Eliminar evento'}>
+                                        <TrashIcon className={`w-4 h-4 ${event.routineId ? 'text-slate-300 cursor-not-allowed' : ''}`}/>
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                                <span>{event.time}</span>
-                                {event.reminder && (
-                                    <div title="Recordatorio en la app activado">
-                                        <BellIcon className="w-4 h-4 text-indigo-500" />
-                                    </div>
-                                )}
-                            </div>
-                            {event.description && <p className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">{event.description}</p>}
-                        </div>
-                    </div>
-                     <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
-                      <button onClick={() => onEditEvent(event)} className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-200" title={event.routineId ? 'Edita la rutina para cambiar este evento' : 'Editar evento'}>
-                        <PencilIcon className={`w-4 h-4 ${event.routineId ? 'text-slate-300 cursor-not-allowed' : ''}`}/>
-                      </button>
-                      <button onClick={() => onDeleteEvent(event.id)} className="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-slate-200" title={event.routineId ? 'Elimina la rutina para borrar este evento' : 'Eliminar evento'}>
-                        <TrashIcon className={`w-4 h-4 ${event.routineId ? 'text-slate-300 cursor-not-allowed' : ''}`}/>
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                            {isExpanded && event.description && (
+                                <div className="pl-8 pt-2">
+                                    <p className={`text-sm whitespace-pre-wrap transition-colors ${event.completed ? 'text-slate-500' : 'text-slate-600'}`}>{event.description}</p>
+                                </div>
+                            )}
+                        </li>
+                    )
+                })}
               </ul>
             ) : (
               <p className="text-center text-slate-500 py-8">No hay eventos programados para hoy.</p>

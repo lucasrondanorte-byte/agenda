@@ -16,11 +16,14 @@ const XMarkIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
+const travelEmotions = ['😊', '🤩', '😋', '😌', '😴', '❤️'];
+
 export const HighlightFormModal: React.FC<HighlightFormModalProps> = ({ isOpen, onClose, onSave, highlight, tripStartDate, tripEndDate }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<string | undefined>(undefined);
+  const [emotion, setEmotion] = useState<string | undefined>(undefined);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -29,11 +32,13 @@ export const HighlightFormModal: React.FC<HighlightFormModalProps> = ({ isOpen, 
       setDate(highlight.date);
       setDescription(highlight.description);
       setPhoto(highlight.photo);
+      setEmotion(highlight.emotion);
     } else {
       setTitle('');
       setDate(tripStartDate);
       setDescription('');
       setPhoto(undefined);
+      setEmotion(undefined);
     }
   }, [highlight, tripStartDate]);
 
@@ -57,7 +62,7 @@ export const HighlightFormModal: React.FC<HighlightFormModalProps> = ({ isOpen, 
       return;
     }
     setError('');
-    onSave({ title, date, description, photo }, highlight?.id);
+    onSave({ title, date, description, photo, emotion }, highlight?.id);
   };
 
   return (
@@ -83,6 +88,22 @@ export const HighlightFormModal: React.FC<HighlightFormModalProps> = ({ isOpen, 
                         min={tripStartDate} max={tripEndDate}
                         className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
+            </div>
+            <div>
+                 <label className="block text-sm font-medium text-slate-700 mb-2">¿Cómo te sentiste?</label>
+                 <div className="flex justify-around bg-slate-50 p-3 rounded-lg">
+                    {travelEmotions.map(emoji => (
+                        <button 
+                        key={emoji}
+                        type="button"
+                        onClick={() => setEmotion(emoji)}
+                        className={`text-3xl p-1 rounded-full transition-all duration-200 ${emotion === emoji ? 'bg-indigo-200 scale-125' : 'hover:bg-slate-200'}`}
+                        aria-label={`Seleccionar emoción: ${emoji}`}
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                 </div>
             </div>
             <div>
                 <label htmlFor="highlight-description" className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>

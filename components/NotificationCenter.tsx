@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Notification } from '../types';
 
 interface NotificationCenterProps {
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
+  onNotificationClick: (notification: Notification) => void;
   isMuted: boolean;
   onToggleMute: () => void;
   onClose: () => void;
@@ -46,14 +47,42 @@ const NoSymbolIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
+const PencilSquareIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+  </svg>
+);
+
+const DocumentTextIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+  </svg>
+);
+
+const CheckBadgeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+  </svg>
+);
+
+const BriefcaseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+  </svg>
+);
 
 
 const notificationIcons: Record<Notification['type'], React.ReactElement> = {
   pairing_request: <UserGroupIcon className="w-5 h-5 text-indigo-500" />,
   pairing_accepted: <UserGroupIcon className="w-5 h-5 text-green-500" />,
-  new_message: <ChatBubbleLeftEllipsisIcon className="w-5 h-5 text-sky-500" />,
-  new_emotion: <HeartIcon className="w-5 h-5 text-pink-500" />,
+  new_partner_note: <PencilSquareIcon className="w-5 h-5 text-yellow-500" />,
+  new_qa_question: <ChatBubbleLeftEllipsisIcon className="w-5 h-5 text-sky-500" />,
+  new_shared_emotion: <HeartIcon className="w-5 h-5 text-pink-500" />,
+  new_shared_reflection: <DocumentTextIcon className="w-5 h-5 text-purple-500" />,
+  new_shared_trip: <BriefcaseIcon className="w-5 h-5 text-cyan-500" />,
   event_reminder: <CalendarIcon className="w-5 h-5 text-amber-500" />,
+  daily_reflection_prompt: <PencilSquareIcon className="w-5 h-5 text-teal-500" />,
+  goal_checkin: <CheckBadgeIcon className="w-5 h-5 text-lime-500" />,
   generic: <BellSnoozeIcon className="w-5 h-5 text-slate-500" />,
 };
 
@@ -72,7 +101,7 @@ const formatTimeAgo = (timestamp: string) => {
 };
 
 
-export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifications, onMarkAsRead, onMarkAllAsRead, isMuted, onToggleMute, onClose }) => {
+export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifications, onMarkAsRead, onMarkAllAsRead, onNotificationClick, isMuted, onToggleMute, onClose }) => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -99,7 +128,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifica
             {notifications.length > 0 ? (
                 <ul>
                     {notifications.map(n => (
-                        <li key={n.id} onClick={() => onMarkAsRead(n.id)} className={`flex items-start gap-4 p-4 border-b border-slate-100 cursor-pointer transition-colors ${!n.read ? 'bg-indigo-50 hover:bg-indigo-100' : 'hover:bg-slate-50'}`}>
+                        <li 
+                          key={n.id} 
+                          onClick={() => {
+                            onNotificationClick(n);
+                            onClose();
+                          }} 
+                          className={`flex items-start gap-4 p-4 border-b border-slate-100 cursor-pointer transition-colors ${!n.read ? 'bg-indigo-50 hover:bg-indigo-100' : 'hover:bg-slate-50'}`}
+                        >
                             <div className="flex-shrink-0 mt-0.5">
                                 {notificationIcons[n.type] || notificationIcons.generic}
                             </div>

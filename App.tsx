@@ -12,19 +12,174 @@ import { CoupleSpace } from './components/CoupleSpace';
 import { PartnerNotes } from './components/PartnerNotes';
 import { DailyReflection } from './components/DailyReflection';
 import { TravelLog } from './components/TravelLog'; // Import new component
+import { ShareReflectionModal } from './components/ShareReflectionModal';
+import { ShareTripModal } from './components/ShareTripModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import type { Event, Notification, User, PairingRequest, SharedMessage, EmotionLog, JournalEntry, Routine, Goal, Trip } from './types';
+import type { Event, Notification, User, PairingRequest, SharedEmotionState, JournalEntry, Routine, Project, Task, Trip, EmotionMoji, QASession, PartnerNote, TaskStatus, ShoppingList, ShoppingListItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
-import { EmotionLogModal } from './components/EmotionLogModal';
 import { ReflectionLogModal } from './components/ReflectionLogModal';
+import { EmotionLogModal } from './components/EmotionLogModal';
 import { RoutineManagerModal } from './components/RoutineManagerModal';
 import { PrintableView } from './components/PrintableView';
 import { GoalsPanel } from './components/GoalsPanel';
+import { useSystemNotifications } from './hooks/useSystemNotifications';
+import { ProjectFormModal } from './components/AmbitionFormModal';
+import { GoalsSummary } from './components/GoalsSummary';
+import { HomePanel } from './components/HomePanel';
+import { HomeSummary } from './components/HomeSummary';
 
 const EXAMPLE_USERS: User[] = [
-  { id: 'user-1', name: 'Vicki', pairedWith: null, password: 'password123' },
-  { id: 'user-2', name: 'Lucas', pairedWith: null, password: 'password456' },
+  { id: 'user-1', name: 'Vicki', pairedWith: null },
+  { id: 'user-2', name: 'Lucas', pairedWith: null },
 ];
+
+// Reusable PIN Input component, also used in PinManagementModal
+const PinInput: React.FC<{ length: number; value: string; onChange: (pin: string) => void; error?: boolean; }> = ({ length, value, onChange, error }) => {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const pinArray = value.split('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const inputValue = e.target.value;
+    if (/^[0-9]$/.test(inputValue) || inputValue === '') {
+      const newPinArray = [...pinArray];
+      while (newPinArray.length < length) newPinArray.push('');
+      
+      newPinArray[index] = inputValue;
+      const newPin = newPinArray.slice(0, length).join('');
+      onChange(newPin);
+
+      if (inputValue && index < length - 1) {
+        inputRefs.current[index + 1]?.focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace' && !pinArray[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+  
+  useEffect(() => {
+    inputRefs.current = inputRefs.current.slice(0, length);
+  }, [length]);
+
+  return (
+    <div className={`flex justify-center gap-3 ${error ? 'animate-shake' : ''}`}>
+        <style>{`
+            @keyframes shake {
+                10%, 90% { transform: translate3d(-1px, 0, 0); }
+                20%, 80% { transform: translate3d(2px, 0, 0); }
+                30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+                40%, 60% { transform: translate3d(4px, 0, 0); }
+            }
+            .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+        `}</style>
+      {Array.from({ length }).map((_, index) => (
+        <input
+          key={index}
+          // FIX: Changed ref callback to use a block body `{}` instead of a concise body `()`. The ref callback should not return a value, but an assignment expression returns the assigned value. Using a block body ensures an implicit `undefined` return.
+          ref={(el) => {inputRefs.current[index] = el;}}
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={1}
+          value={pinArray[index] || ''}
+          onChange={(e) => handleChange(e, index)}
+          onKeyDown={(e) => handleKeyDown(e, index)}
+          className="w-14 h-16 text-center text-3xl font-bold border-2 border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+        />
+      ))}
+    </div>
+  );
+};
+
+
+const PinManagementModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (newPin: string) => void;
+    currentUser: User;
+}> = ({ isOpen, onClose, onSave, currentUser }) => {
+  const [currentPin, setCurrentPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [confirmNewPin, setConfirmNewPin] = useState('');
+  const [error, setError] = useState('');
+
+  const resetState = () => {
+    setCurrentPin('');
+    setNewPin('');
+    setConfirmNewPin('');
+    setError('');
+  };
+  
+  const handleClose = () => {
+      resetState();
+      onClose();
+  }
+
+  const handleSubmit = () => {
+      setError('');
+      if (currentUser.pin && currentPin !== currentUser.pin) {
+          setError('El PIN actual es incorrecto.');
+          return;
+      }
+      if (newPin.length !== 4) {
+          setError('El nuevo PIN debe tener 4 dígitos.');
+          return;
+      }
+      if (newPin !== confirmNewPin) {
+          setError('Los nuevos PINs no coinciden.');
+          return;
+      }
+      onSave(newPin);
+      resetState();
+  }
+  
+  useEffect(() => {
+    if (!isOpen) {
+      resetState();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={handleClose}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+        <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">Cambiar PIN</h2>
+        <div className="space-y-6">
+            {currentUser.pin && (
+                <div>
+                    <label className="block text-center text-sm font-medium text-slate-700 mb-2">PIN Actual</label>
+                    <PinInput length={4} value={currentPin} onChange={setCurrentPin} />
+                </div>
+            )}
+            <div>
+                <label className="block text-center text-sm font-medium text-slate-700 mb-2">Nuevo PIN</label>
+                <PinInput length={4} value={newPin} onChange={setNewPin} />
+            </div>
+             <div>
+                <label className="block text-center text-sm font-medium text-slate-700 mb-2">Confirmar Nuevo PIN</label>
+                <PinInput length={4} value={confirmNewPin} onChange={setConfirmNewPin} />
+            </div>
+        </div>
+        {error && <p className="text-red-600 text-sm mt-4 text-center">{error}</p>}
+        <div className="flex justify-end space-x-3 pt-6 mt-4 border-t border-slate-200">
+            <button type="button" onClick={handleClose}
+                className="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Cancelar
+            </button>
+            <button type="button" onClick={handleSubmit}
+                className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
+                Guardar Cambios
+            </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const getNextDayOfWeek = (dayOfWeek: number, fromDate: Date = new Date()): string => {
     const date = new Date(fromDate);
@@ -51,7 +206,6 @@ const EXAMPLE_ROUTINES_DATA: Routine[] = [
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0).toISOString().split('T')[0],
     reminder: true,
-    whatsappReminder: false,
     color: '#3B82F6', // blue-500
   },
   {
@@ -65,7 +219,6 @@ const EXAMPLE_ROUTINES_DATA: Routine[] = [
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0).toISOString().split('T')[0],
     reminder: true,
-    whatsappReminder: false,
     color: '#22C55E', // green-500
   },
 ];
@@ -80,6 +233,7 @@ const EXAMPLE_EVENTS_DATA: Event[] = [
         category: 'personal',
         reminder: true,
         color: '#EC4899', // pink-500
+        completed: false,
     },
     {
         id: 'event-dentist-2',
@@ -89,6 +243,7 @@ const EXAMPLE_EVENTS_DATA: Event[] = [
         category: 'otro',
         reminder: true,
         color: '#64748B', // slate-500
+        completed: false,
     },
     // Events from Gym Routine
     {
@@ -100,6 +255,7 @@ const EXAMPLE_EVENTS_DATA: Event[] = [
         category: 'personal',
         reminder: true,
         color: '#3B82F6',
+        completed: false,
     },
     {
         id: uuidv4(),
@@ -110,6 +266,7 @@ const EXAMPLE_EVENTS_DATA: Event[] = [
         category: 'personal',
         reminder: true,
         color: '#3B82F6',
+        completed: false,
     },
     {
         id: uuidv4(),
@@ -120,6 +277,7 @@ const EXAMPLE_EVENTS_DATA: Event[] = [
         category: 'personal',
         reminder: true,
         color: '#3B82F6',
+        completed: false,
     },
     // Events from Meeting Routine
     {
@@ -131,6 +289,7 @@ const EXAMPLE_EVENTS_DATA: Event[] = [
         category: 'trabajo',
         reminder: true,
         color: '#22C55E',
+        completed: false,
     },
     {
         id: uuidv4(),
@@ -141,6 +300,7 @@ const EXAMPLE_EVENTS_DATA: Event[] = [
         category: 'trabajo',
         reminder: true,
         color: '#22C55E',
+        completed: false,
     }
 ];
 
@@ -153,9 +313,9 @@ const EXAMPLE_TRIPS_DATA: Trip[] = [
         endDate: '2024-01-22',
         notes: 'Un viaje increíble lleno de trekking y paisajes espectaculares. El chocolate caliente fue el mejor.',
         highlights: [
-            { id: 'h-1-1', date: '2024-01-16', title: 'Cerro Campanario', description: 'Vistas panorámicas de 360 grados de los lagos y montañas. Impresionante.' },
-            { id: 'h-1-2', date: '2024-01-18', title: 'Circuito Chico', description: 'Recorrido en coche por los lugares más icónicos, con paradas en miradores.' },
-            { id: 'h-1-3', date: '2024-01-20', title: 'Caminata a Refugio Frey', description: 'Un trekking desafiante pero con una recompensa increíble al llegar a la laguna y el refugio.' },
+            { id: 'h-1-1', date: '2024-01-16', title: 'Cerro Campanario', description: 'Vistas panorámicas de 360 grados de los lagos y montañas. Impresionante.', emotion: '🤩' },
+            { id: 'h-1-2', date: '2024-01-18', title: 'Circuito Chico', description: 'Recorrido en coche por los lugares más icónicos, con paradas en miradores.', emotion: '😊' },
+            { id: 'h-1-3', date: '2024-01-20', title: 'Caminata a Refugio Frey', description: 'Un trekking desafiante pero con una recompensa increíble al llegar a la laguna y el refugio.', emotion: '😌' },
         ],
     },
     {
@@ -166,11 +326,80 @@ const EXAMPLE_TRIPS_DATA: Trip[] = [
         endDate: '2024-05-17',
         notes: 'Cada esquina cuenta una historia. La comida es simplemente de otro nivel.',
         highlights: [
-             { id: 'h-2-1', date: '2024-05-11', title: 'El Coliseo', description: 'Visita al amanecer para evitar las multitudes. Se sentía la historia en el aire.' },
-             { id: 'h-2-2', date: '2024-05-13', title: 'El Vaticano', description: 'La Basílica de San Pedro y los Museos Vaticanos. La Capilla Sixtina es indescriptible.' },
+             { id: 'h-2-1', date: '2024-05-11', title: 'El Coliseo', description: 'Visita al amanecer para evitar las multitudes. Se sentía la historia en el aire.', emotion: '🤩' },
+             { id: 'h-2-2', date: '2024-05-13', title: 'El Vaticano', description: 'La Basílica de San Pedro y los Museos Vaticanos. La Capilla Sixtina es indescriptible.', emotion: '❤️' },
         ],
     }
 ];
+
+const EXAMPLE_JOURNAL_ENTRIES_DATA: JournalEntry[] = [
+    {
+        date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        positiveThought: 'Hoy agradezco por la conversación que tuve con un viejo amigo. Me hizo darme cuenta de lo importante que es mantener esas conexiones.',
+        lessonLearned: 'Aprendí que a veces, tomarse un descanso de 5 minutos puede cambiar completamente mi productividad por la tarde.',
+        dayTitle: 'Una llamada que alegra el alma',
+        emotionEmoji: '😊'
+    },
+    {
+        date: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0], // 3 days ago
+        timestamp: new Date(Date.now() - 3 * 86400000).toISOString(),
+        positiveThought: 'Logré terminar un proyecto en el que estaba atascado. La sensación de logro es increíble.',
+        lessonLearned: 'La perseverancia realmente vale la pena. No rendirse ante el primer obstáculo es clave.',
+        dayTitle: 'Día de romper barreras',
+        emotionEmoji: '💪'
+    },
+     {
+        date: new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0], // A week ago
+        timestamp: new Date(Date.now() - 7 * 86400000).toISOString(),
+        positiveThought: 'Disfruté de una simple taza de café por la mañana, viendo el sol salir. Los pequeños momentos son los mejores.',
+        lessonLearned: 'No necesito grandes eventos para sentirme feliz. La paz se encuentra en las pequeñas cosas cotidianas.',
+        dayTitle: 'Calma matutina',
+        emotionEmoji: '😌'
+    }
+];
+
+const EXAMPLE_PROJECTS_DATA: Project[] = [
+  { id: 'proj-1', title: 'Aprender a tocar la guitarra', description: 'Ser capaz de tocar mis 5 canciones favoritas para fin de año.', icon: '🎸', category: 'Creatividad' },
+  { id: 'proj-2', title: 'Operación Maratón', description: 'Correr una maratón completa en menos de 4 horas.', icon: '🏃‍♂️', category: 'Salud', targetDate: '2024-11-25' },
+];
+
+const EXAMPLE_TASKS_DATA: Task[] = [
+  // Guitar Project
+  { id: 'task-1-1', projectId: 'proj-1', text: 'Comprar una guitarra acústica', status: 'done' },
+  { id: 'task-1-2', projectId: 'proj-1', text: 'Aprender los 4 acordes básicos (G, C, D, Em)', status: 'inProgress' },
+  { id: 'task-1-3', projectId: 'proj-1', text: 'Practicar cambios de acordes durante 15 min al día', status: 'todo' },
+  // Marathon Project
+  { id: 'task-2-1', projectId: 'proj-2', text: 'Investigar planes de entrenamiento', status: 'done' },
+  { id: 'task-2-2', projectId: 'proj-2', text: 'Comprar zapatillas para correr adecuadas', status: 'done' },
+  { id: 'task-2-3', projectId: 'proj-2', text: 'Correr 10km sin parar', status: 'inProgress' },
+  { id: 'task-2-4', projectId: 'proj-2', text: 'Inscribirme a una media maratón', status: 'todo' },
+];
+
+const EXAMPLE_SHOPPING_LISTS_DATA: ShoppingList[] = [
+    {
+        id: 'list-supermercado-1',
+        title: 'Supermercado',
+        icon: '🛒',
+        items: [
+            { id: 'item-1-1', text: 'Leche', completed: false },
+            { id: 'item-1-2', text: 'Huevos', completed: true },
+            { id: 'item-1-3', text: 'Pan', completed: false },
+            { id: 'item-1-4', text: 'Pollo', completed: false },
+        ]
+    },
+    {
+        id: 'list-cuentas-2',
+        title: 'Cuentas por Pagar',
+        icon: '🧾',
+        items: [
+            { id: 'item-2-1', text: 'Pagar factura de luz', completed: false },
+            { id: 'item-2-2', text: 'Pagar internet', completed: false },
+            { id: 'item-2-3', text: 'Suscripción de música', completed: true },
+        ]
+    },
+];
+
 
 enum MainView {
   Personal = 'Personal',
@@ -190,39 +419,50 @@ function App() {
   const userRoutinesKey = `routines_${currentUser?.id}`;
   const userJournalsKey = `journal_entries_${currentUser?.id}`;
   const userNotificationsKey = `notifications_${currentUser?.id}`;
-  const userWeeklyGoalsKey = `weekly_goals_${currentUser?.id}`;
-  const userMonthlyGoalsKey = `monthly_goals_${currentUser?.id}`;
-  const userAnnualGoalsKey = `annual_goals_${currentUser?.id}`;
+  const userProjectsKey = `projects_${currentUser?.id}`;
+  const userTasksKey = `tasks_${currentUser?.id}`;
   const userTripsKey = `trips_${currentUser?.id}`;
+  const userShoppingListsKey = `shopping_lists_${currentUser?.id}`;
 
 
   const [events, setEvents] = useLocalStorage<Event[]>(userEventsKey, EXAMPLE_EVENTS_DATA);
   const [routines, setRoutines] = useLocalStorage<Routine[]>(userRoutinesKey, EXAMPLE_ROUTINES_DATA);
-  const [journalEntries, setJournalEntries] = useLocalStorage<JournalEntry[]>(userJournalsKey, []);
-  const [weeklyGoals, setWeeklyGoals] = useLocalStorage<Goal[]>(userWeeklyGoalsKey, []);
-  const [monthlyGoals, setMonthlyGoals] = useLocalStorage<Goal[]>(userMonthlyGoalsKey, []);
-  const [annualGoals, setAnnualGoals] = useLocalStorage<Goal[]>(userAnnualGoalsKey, []);
+  const [journalEntries, setJournalEntries] = useLocalStorage<JournalEntry[]>(userJournalsKey, EXAMPLE_JOURNAL_ENTRIES_DATA);
+  const [projects, setProjects] = useLocalStorage<Project[]>(userProjectsKey, EXAMPLE_PROJECTS_DATA);
+  const [tasks, setTasks] = useLocalStorage<Task[]>(userTasksKey, EXAMPLE_TASKS_DATA);
   const [trips, setTrips] = useLocalStorage<Trip[]>(userTripsKey, EXAMPLE_TRIPS_DATA);
+  const [shoppingLists, setShoppingLists] = useLocalStorage<ShoppingList[]>(userShoppingListsKey, EXAMPLE_SHOPPING_LISTS_DATA);
 
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
   const [isRoutineManagerOpen, setIsRoutineManagerOpen] = useState(false);
   const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
-  const [isEmotionLogModalOpen, setIsEmotionLogModalOpen] = useState(false);
   const [isReflectionLogModalOpen, setIsReflectionLogModalOpen] = useState(false);
+  const [isEmotionLogModalOpen, setIsEmotionLogModalOpen] = useState(false);
   const [isPrintViewOpen, setIsPrintViewOpen] = useState(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isShareReflectionModalOpen, setIsShareReflectionModalOpen] = useState(false);
+  const [isShareTripModalOpen, setIsShareTripModalOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [reflectionToShare, setReflectionToShare] = useState<JournalEntry | null>(null);
+  const [tripToShare, setTripToShare] = useState<Trip | null>(null);
+
 
   // Notification states
   const [toastNotifications, setToastNotifications] = useState<Notification[]>([]);
   const [notifications, setNotifications] = useLocalStorage<Notification[]>(userNotificationsKey, []);
   const [isNotificationsMuted, setIsNotificationsMuted] = useLocalStorage<boolean>('notifications_muted', false);
+  const { sendSystemNotification } = useSystemNotifications();
 
-  const [notifiedWhatsappEvents, setNotifiedWhatsappEvents] = useLocalStorage<string[]>(`notified_whatsapp_${currentUser?.id}`, []);
+  const [notifiedEvents, setNotifiedEvents] = useLocalStorage<string[]>(`notified_events_${currentUser?.id}`, []);
+  const [lastReflectionPromptDate, setLastReflectionPromptDate] = useLocalStorage<string>(`last_reflection_prompt_${currentUser?.id}`, '');
   
   // Navigation states
-  const [activeSection, setActiveSection] = useState<'planner' | 'travel'>('planner');
+  const [activeSection, setActiveSection] = useState<'planner' | 'travel' | 'goals' | 'home'>('planner');
   const [mainView, setMainView] = useState<MainView>(MainView.Personal);
 
   const pairedUser = useMemo(() => {
@@ -237,24 +477,10 @@ function App() {
     return [currentUser.id, pairedUser.id].sort().join('_');
   }, [currentUser, pairedUser]);
 
-  const [sharedMessages, setSharedMessages] = useLocalStorage<SharedMessage[]>(`messages_${coupleId}`, []);
-  const [emotionLogs, setEmotionLogs] = useLocalStorage<EmotionLog[]>(`emotions_${coupleId}`, []);
-
-  // Find the latest message and emotion from the partner
-  const latestPartnerMessage = useMemo(() => {
-    if (!pairedUser) return null;
-    return [...sharedMessages]
-      .filter(m => m.userId === pairedUser.id)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null;
-  }, [sharedMessages, pairedUser]);
+  const [qaSessions, setQaSessions] = useLocalStorage<QASession[]>(`qa_sessions_${coupleId}`, []);
+  const [partnerNotes, setPartnerNotes] = useLocalStorage<PartnerNote[]>(`partner_notes_${coupleId}`, []);
+  const [sharedEmotionStates, setSharedEmotionStates] = useLocalStorage<SharedEmotionState[]>(`shared_emotions_${coupleId}`, []);
   
-  const latestPartnerEmotion = useMemo(() => {
-    if (!pairedUser) return null;
-    return [...emotionLogs]
-      .filter(e => e.userId === pairedUser.id)
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] || null;
-  }, [emotionLogs, pairedUser]);
-
 
   // Reset planner state on user change
   useEffect(() => {
@@ -264,11 +490,11 @@ function App() {
       setJournalEntries([]);
       setNotifications([]);
       setToastNotifications([]);
-      setNotifiedWhatsappEvents([]);
-      setWeeklyGoals([]);
-      setMonthlyGoals([]);
-      setAnnualGoals([]);
+      setNotifiedEvents([]);
+      setProjects([]);
+      setTasks([]);
       setTrips([]);
+      setShoppingLists([]);
     } else {
         // This ensures that when a user logs in, their data is loaded.
         // The useLocalStorage hook handles the initial load, but this effect
@@ -280,43 +506,70 @@ function App() {
         const newRoutinesKey = `routines_${currentUser.id}`;
         const storedRoutines = localStorage.getItem(newRoutinesKey);
         setRoutines(storedRoutines ? JSON.parse(storedRoutines) : EXAMPLE_ROUTINES_DATA);
+        
+        const newJournalEntriesKey = `journal_entries_${currentUser.id}`;
+        const storedJournalEntries = localStorage.getItem(newJournalEntriesKey);
+        setJournalEntries(storedJournalEntries ? JSON.parse(storedJournalEntries) : EXAMPLE_JOURNAL_ENTRIES_DATA);
 
         const newTripsKey = `trips_${currentUser.id}`;
         const storedTrips = localStorage.getItem(newTripsKey);
         setTrips(storedTrips ? JSON.parse(storedTrips) : EXAMPLE_TRIPS_DATA);
+        
+        const newProjectsKey = `projects_${currentUser.id}`;
+        const storedProjects = localStorage.getItem(newProjectsKey);
+        setProjects(storedProjects ? JSON.parse(storedProjects) : EXAMPLE_PROJECTS_DATA);
+        
+        const newTasksKey = `tasks_${currentUser.id}`;
+        const storedTasks = localStorage.getItem(newTasksKey);
+        setTasks(storedTasks ? JSON.parse(storedTasks) : EXAMPLE_TASKS_DATA);
+
+        const newShoppingListsKey = `shopping_lists_${currentUser.id}`;
+        const storedShoppingLists = localStorage.getItem(newShoppingListsKey);
+        setShoppingLists(storedShoppingLists ? JSON.parse(storedShoppingLists) : EXAMPLE_SHOPPING_LISTS_DATA);
     }
-  }, [currentUser, setEvents, setRoutines, setJournalEntries, setNotifications, setNotifiedWhatsappEvents, setWeeklyGoals, setMonthlyGoals, setAnnualGoals, setTrips]);
+  }, [currentUser, setEvents, setRoutines, setJournalEntries, setNotifications, setNotifiedEvents, setProjects, setTasks, setTrips, setShoppingLists]);
 
   const generateId = () => uuidv4();
 
   // User and Pairing Logic
-  const handleLogin = (userId: string, password: string): boolean => {
+  const handleLogin = (userId: string, pin: string): boolean => {
     const user = users.find(u => u.id === userId);
     if (!user) return false;
 
-    // Allow login if user has no password set (legacy users)
-    if (!user.password) {
+    // If user has no pin, this is the first login, set the pin
+    if (!user.pin) {
+        const updatedUsers = users.map(u => u.id === userId ? { ...u, pin } : u);
+        setUsers(updatedUsers);
+        setCurrentUser({ ...user, pin });
+        return true;
+    }
+
+    // Check pin if it exists
+    if (user.pin === pin) {
       setCurrentUser(user);
       return true;
     }
 
-    // Check password if it exists
-    if (user.password === password) {
-      setCurrentUser(user);
-      return true;
-    }
-
-    return false; // Password incorrect
+    return false; // Pin incorrect
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
   };
   
-  const handleCreateUser = (name: string, password: string) => {
-    const newUser: User = { id: generateId(), name, pairedWith: null, password };
-    setUsers([...users, newUser]);
-    setCurrentUser(newUser);
+  const handleCreateUser = (name: string): User => {
+    const newUser: User = { id: generateId(), name, pairedWith: null };
+    setUsers(prevUsers => [...prevUsers, newUser]);
+    // Do not log in here. Let UserAuth handle the transition to PIN setup.
+    return newUser;
+  };
+
+  const handleSavePin = (newPin: string) => {
+    if (!currentUser) return;
+    const updatedUsers = users.map(u => u.id === currentUser.id ? { ...u, pin: newPin } : u);
+    setUsers(updatedUsers);
+    setCurrentUser(prev => prev ? { ...prev, pin: newPin } : null);
+    setIsPinModalOpen(false);
   };
   
   const handleSendRequest = (toUserId: string) => {
@@ -409,7 +662,7 @@ function App() {
     if (editingEvent) {
       setEvents(events.map(e => e.id === editingEvent.id ? { ...eventData, id: editingEvent.id } : e));
     } else {
-      setEvents([...events, { ...eventData, id: generateId() }]);
+      setEvents([...events, { ...eventData, id: generateId(), completed: false }]);
     }
     handleCloseEventModal();
   };
@@ -425,6 +678,12 @@ function App() {
         return;
     }
     setEvents(events.filter(e => e.id !== eventId));
+  };
+  
+  const handleToggleEventCompletion = (eventId: string) => {
+    setEvents(events.map(e => 
+      e.id === eventId ? { ...e, completed: !e.completed } : e
+    ));
   };
 
   const handleOpenRoutineCreator = () => {
@@ -494,10 +753,8 @@ function App() {
                 description: routineToSave.description,
                 category: routineToSave.category,
                 reminder: routineToSave.reminder,
-                whatsappReminder: routineToSave.whatsappReminder,
-                whatsappNumber: routineToSave.whatsappNumber,
-                whatsappMessage: routineToSave.whatsappMessage,
                 color: routineToSave.color,
+                completed: false,
             });
         }
     }
@@ -524,52 +781,129 @@ function App() {
     }
   };
 
-
-  const handleSaveJournal = (entryToSave: JournalEntry) => {
+  // Reflection & Sharing Logic
+  const handleSaveJournal = (entryToSave: Omit<JournalEntry, 'timestamp'>) => {
+    const entryWithTimestamp: JournalEntry = {
+        ...entryToSave,
+        timestamp: new Date().toISOString(),
+    };
     setJournalEntries(prev => {
         const entryIndex = prev.findIndex(e => e.date === entryToSave.date);
         if (entryIndex > -1) {
             const updatedEntries = [...prev];
-            updatedEntries[entryIndex] = entryToSave;
+            updatedEntries[entryIndex] = entryWithTimestamp;
             return updatedEntries;
         } else {
-            return [...prev, entryToSave];
+            return [...prev, entryWithTimestamp];
         }
     });
   };
 
-  // Goal Logic
-  const handleAddGoal = (text: string, period: 'weekly' | 'monthly' | 'annual') => {
-    const newGoal: Goal = { id: generateId(), text, completed: false };
-    if (period === 'weekly') {
-      setWeeklyGoals(prev => [...prev, newGoal]);
-    } else if (period === 'monthly') {
-      setMonthlyGoals(prev => [...prev, newGoal]);
-    } else {
-      setAnnualGoals(prev => [...prev, newGoal]);
-    }
+  const handleOpenShareModal = (entry: JournalEntry) => {
+    setReflectionToShare(entry);
+    setIsShareReflectionModalOpen(true);
+  };
+  
+  const handleShareReflection = () => {
+    if (!reflectionToShare || !currentUser) return;
+    
+    const { timestamp, ...reflectionContent } = reflectionToShare;
+    
+    const note: PartnerNote = {
+      id: generateId(),
+      authorId: currentUser.id,
+      text: `${currentUser.name} ha compartido su reflexión.`,
+      timestamp: new Date().toISOString(),
+      type: 'reflection',
+      reflectionContent: reflectionContent,
+    };
+    
+    setPartnerNotes(prev => [...prev, note]);
+    setIsShareReflectionModalOpen(false);
   };
 
-  const handleToggleGoal = (id: string, period: 'weekly' | 'monthly' | 'annual') => {
-    const updater = (goals: Goal[]) => goals.map(g => g.id === id ? { ...g, completed: !g.completed } : g);
-    if (period === 'weekly') {
-      setWeeklyGoals(updater);
-    } else if (period === 'monthly') {
-      setMonthlyGoals(updater);
-    } else {
-      setAnnualGoals(updater);
-    }
+  const handleOpenShareTripModal = (trip: Trip) => {
+    setTripToShare(trip);
+    setIsShareTripModalOpen(true);
+  };
+  
+  const handleShareTrip = () => {
+    if (!tripToShare || !currentUser) return;
+    
+    const { id, ...tripContent } = tripToShare;
+    
+    const note: PartnerNote = {
+      id: generateId(),
+      authorId: currentUser.id,
+      text: `${currentUser.name} ha compartido un viaje.`,
+      timestamp: new Date().toISOString(),
+      type: 'trip',
+      tripContent: tripContent,
+    };
+    
+    setPartnerNotes(prev => [...prev, note]);
+    setIsShareTripModalOpen(false);
   };
 
-  const handleDeleteGoal = (id: string, period: 'weekly' | 'monthly' | 'annual') => {
-    const updater = (goals: Goal[]) => goals.filter(g => g.id !== id);
-    if (period === 'weekly') {
-      setWeeklyGoals(updater);
-    } else if (period === 'monthly') {
-      setMonthlyGoals(updater);
+  // Project & Task Logic
+  const handleOpenProjectCreator = () => {
+    setEditingProject(null);
+    setIsProjectModalOpen(true);
+  };
+
+  const handleOpenProjectEditor = (project: Project) => {
+    setEditingProject(project);
+    setIsProjectModalOpen(true);
+  };
+
+  const handleSaveProject = (projectData: Omit<Project, 'id'>, id?: string) => {
+    if (id) {
+        setProjects(prev => prev.map(p => p.id === id ? { ...projectData, id } : p));
     } else {
-      setAnnualGoals(updater);
+        setProjects(prev => [...prev, { ...projectData, id: generateId() }]);
     }
+    setIsProjectModalOpen(false);
+    setEditingProject(null);
+  };
+  
+  const handleDeleteProject = (projectId: string) => {
+      if (window.confirm('¿Estás seguro? Esto eliminará el proyecto y todas sus tareas.')) {
+          setProjects(prev => prev.filter(p => p.id !== projectId));
+          setTasks(prev => prev.filter(t => t.projectId !== projectId));
+      }
+  };
+
+  const handleAddTask = (projectId: string, text: string) => {
+      const newTask: Task = {
+          id: generateId(),
+          projectId,
+          text,
+          status: 'todo',
+      };
+      setTasks(prev => [...prev, newTask]);
+  };
+  
+  const handleUpdateTask = (taskId: string, newStatus: TaskStatus, newText?: string) => {
+      setTasks(prev => prev.map(t => {
+          if (t.id === taskId) {
+              return { ...t, status: newStatus, text: newText ?? t.text };
+          }
+          return t;
+      }));
+  };
+  
+  const handleDeleteTask = (taskId: string) => {
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+  };
+  
+  const handleAddMultipleTasks = (projectId: string, taskTexts: string[]) => {
+    const newTasks: Task[] = taskTexts.map(text => ({
+        id: generateId(),
+        projectId,
+        text,
+        status: 'todo',
+    }));
+    setTasks(prev => [...prev, ...newTasks]);
   };
 
    // Trip Logic
@@ -592,8 +926,102 @@ function App() {
         }
     };
 
+    // Home / Shopping List Logic
+    const handleSaveShoppingList = (title: string, icon: string, id?: string) => {
+        if (id) {
+            setShoppingLists(prev => prev.map(list => list.id === id ? { ...list, title, icon } : list));
+        } else {
+            const newList: ShoppingList = { id: generateId(), title, icon, items: [] };
+            setShoppingLists(prev => [...prev, newList]);
+        }
+    };
+
+    const handleDeleteShoppingList = (listId: string) => {
+        if (window.confirm('¿Estás seguro de que quieres eliminar esta lista y todos sus elementos?')) {
+            setShoppingLists(prev => prev.filter(list => list.id !== listId));
+        }
+    };
+
+    const handleAddShoppingListItem = (listId: string, text: string) => {
+        const newItem: ShoppingListItem = { id: generateId(), text, completed: false };
+        setShoppingLists(prev => prev.map(list => 
+            list.id === listId ? { ...list, items: [...list.items, newItem] } : list
+        ));
+    };
+
+    const handleUpdateShoppingListItem = (listId: string, itemId: string, newText: string, newCompleted: boolean) => {
+        setShoppingLists(prev => prev.map(list => {
+            if (list.id === listId) {
+                return {
+                    ...list,
+                    items: list.items.map(item => 
+                        item.id === itemId ? { ...item, text: newText, completed: newCompleted } : item
+                    )
+                };
+            }
+            return list;
+        }));
+    };
+    
+    const handleDeleteShoppingListItem = (listId: string, itemId: string) => {
+        setShoppingLists(prev => prev.map(list => 
+            list.id === listId ? { ...list, items: list.items.filter(item => item.id !== itemId) } : list
+        ));
+    };
+
 
   // Notification Logic
+  const handleMarkAsRead = (id: string) => {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+  
+  const handleMarkAllAsRead = () => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const handleNotificationClick = useCallback((notification: Notification) => {
+    window.focus(); // Bring window to front
+    
+    switch (notification.type) {
+      case 'event_reminder':
+        if (notification.relatedId) {
+          const event = events.find(e => e.id === notification.relatedId);
+          if (event) {
+            setActiveSection('planner');
+            setMainView(MainView.Personal);
+            // Use UTC to prevent timezone issues with date selection
+            setSelectedDate(new Date(event.date + 'T00:00:00Z'));
+          }
+        }
+        break;
+      case 'daily_reflection_prompt':
+        setActiveSection('planner');
+        setMainView(MainView.Personal);
+        setSelectedDate(new Date()); // Today
+        break;
+      case 'pairing_request':
+      case 'new_partner_note':
+      case 'new_shared_reflection':
+      case 'new_shared_emotion':
+      case 'new_shared_trip':
+         if (pairedUser) {
+           setActiveSection('planner');
+           setMainView(MainView.Couple);
+         } else {
+           setIsPairingModalOpen(true);
+         }
+         break;
+       case 'new_qa_question':
+         setActiveSection('planner');
+         setMainView(MainView.Couple);
+         break;
+    }
+    
+    handleMarkAsRead(notification.id);
+    // Close modals if any are open to show the target view
+    setIsNotificationsMuted(false); // Assume interaction means user wants notifications
+  }, [events, pairedUser]);
+
   const addNotification = useCallback((data: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     if (isNotificationsMuted && data.type !== 'generic') return;
 
@@ -604,74 +1032,74 @@ function App() {
       read: false,
     };
     
-    // Add to persistent notifications list
     if(data.type !== 'generic') {
-        setNotifications(prev => [newNotification, ...prev]);
+        setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep last 50
     }
 
-    // Add to temporary toast notifications list
     setToastNotifications(prev => [...prev, newNotification]);
+    
+    // Send system notification with navigation capabilities
+    if (data.type !== 'generic') {
+      sendSystemNotification(newNotification.title, {
+        body: newNotification.message,
+        tag: newNotification.relatedId || newNotification.id,
+      }, () => handleNotificationClick(newNotification));
+    }
 
-  }, [isNotificationsMuted, setNotifications]);
+  }, [isNotificationsMuted, setNotifications, sendSystemNotification, handleNotificationClick]);
 
-  const handleMarkAsRead = (id: string) => {
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-  
-  const handleMarkAllAsRead = () => {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
 
   // Effect for event reminders
   useEffect(() => {
     const checkReminders = () => {
       const now = new Date();
-      const todayString = now.toISOString().split('T')[0];
-      const currentTimeString = now.toTimeString().substring(0, 5); // HH:MM
+      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000);
 
       events.forEach(event => {
-        if (event.date === todayString && event.time === currentTimeString) {
-          const reminderAlreadySent = notifications.some(n => n.relatedId === event.id && n.type === 'event_reminder');
-          if (reminderAlreadySent) return;
-
-          // In-app notification
-          if (event.reminder) {
+        if (event.reminder && !notifiedEvents.includes(event.id)) {
+          const eventTime = new Date(`${event.date}T${event.time}:00`);
+          
+          if (eventTime <= fifteenMinutesFromNow && eventTime > now) {
+            const minutesUntil = Math.round((eventTime.getTime() - now.getTime()) / 60000);
             addNotification({
-              type: 'event_reminder',
-              title: `Recordatorio: ${event.title}`, 
-              message: `Tu evento "${event.title}" está programado para ahora.`,
-              relatedId: event.id
+                type: 'event_reminder',
+                title: `Recordatorio: ${event.title}`,
+                message: `Tu evento ${event.routineId ? '(de rutina) ' : ''}empieza en ${minutesUntil} minutos.`,
+                relatedId: event.id,
+                data: { date: event.date }
             });
-          }
-
-          // WhatsApp notification
-          if (event.whatsappReminder && event.whatsappNumber && !notifiedWhatsappEvents.includes(event.id)) {
-            const message = event.whatsappMessage || `¡Recordatorio para tu evento: ${event.title}!`;
-            const encodedMessage = encodeURIComponent(message);
-            const phoneNumber = event.whatsappNumber.replace(/\D/g, ''); // Remove non-numeric characters
-            const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-            
-             const toast: Notification = {
-                id: generateId(),
-                type: 'generic',
-                title: 'Recordatorio de WhatsApp',
-                message: `Es hora de enviar el recordatorio para tu evento "${event.title}".`,
-                timestamp: new Date().toISOString(),
-                read: false,
-                action: {
-                    label: 'Enviar por WhatsApp',
-                    callback: () => window.open(url, '_blank'),
-                }
-            };
-            setToastNotifications(prev => [...prev, toast]);
-            setNotifiedWhatsappEvents(prev => [...prev, event.id]);
+            setNotifiedEvents(prev => [...prev, event.id]);
           }
         }
       });
     };
-    const intervalId = setInterval(checkReminders, 30000); // Check every 30 seconds
+
+    const intervalId = setInterval(checkReminders, 60000); // Check every minute
     return () => clearInterval(intervalId);
-  }, [events, notifications, notifiedWhatsappEvents, setNotifiedWhatsappEvents, addNotification]);
+  }, [events, notifiedEvents, addNotification, setNotifiedEvents]);
+  
+  // Effect for Daily Reflection Prompt
+  useEffect(() => {
+      const checkReflection = () => {
+          const now = new Date();
+          const todayStr = now.toISOString().split('T')[0];
+          
+          if (now.getHours() === 20 && lastReflectionPromptDate !== todayStr) {
+              const hasReflected = journalEntries.some(e => e.date === todayStr);
+              if (!hasReflected) {
+                  addNotification({
+                      type: 'daily_reflection_prompt',
+                      title: '¿Cómo fue tu día?',
+                      message: 'Tómate un momento para tu reflexión diaria. Ayuda a despejar la mente.',
+                      data: { date: todayStr }
+                  });
+                  setLastReflectionPromptDate(todayStr);
+              }
+          }
+      };
+      const intervalId = setInterval(checkReflection, 1000 * 60 * 30); // Check every 30 mins
+      return () => clearInterval(intervalId);
+  }, [journalEntries, lastReflectionPromptDate, addNotification, setLastReflectionPromptDate]);
   
   // Effect for incoming pairing requests
   useEffect(() => {
@@ -692,39 +1120,66 @@ function App() {
   }, [pairingRequests, currentUser, users, notifications, addNotification]);
 
   // Effects for partner activity
-  const lastSeenPartnerMessageTimestamp = useRef<string | null>(null);
-  const lastSeenPartnerEmotionTimestamp = useRef<string | null>(null);
+  const lastSeenPartnerNoteTimestamp = useRef<string | null>(null);
+  const lastSeenPartnerEmotionDate = useRef<string | null>(null);
+  const lastSeenQASessionId = useRef<string | null>(null);
 
   useEffect(() => {
     if (pairedUser) {
-        const latestMessage = [...sharedMessages].filter(m => m.userId === pairedUser.id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-        lastSeenPartnerMessageTimestamp.current = latestMessage?.timestamp || null;
-        const latestEmotion = [...emotionLogs].filter(e => e.userId === pairedUser.id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-        lastSeenPartnerEmotionTimestamp.current = latestEmotion?.timestamp || null;
+        const latestNote = [...partnerNotes].filter(n => n.authorId === pairedUser.id).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+        lastSeenPartnerNoteTimestamp.current = latestNote?.timestamp || null;
+        
+        const latestEmotion = [...sharedEmotionStates].filter(s => s.emotions[pairedUser.id]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+        lastSeenPartnerEmotionDate.current = latestEmotion?.date || null;
+        
+        const latestQA = [...qaSessions].filter(s => s.askerId === pairedUser.id).sort((a,b) => new Date(b.askedAt).getTime() - new Date(a.askedAt).getTime())[0];
+        lastSeenQASessionId.current = latestQA?.id || null;
     }
-  }, [pairedUser, sharedMessages, emotionLogs]);
+  }, [pairedUser, partnerNotes, sharedEmotionStates, qaSessions]);
 
   useEffect(() => {
     if (!pairedUser) return;
-    const latestPartnerMessage = [...sharedMessages].filter(m => m.userId === pairedUser.id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-    if (latestPartnerMessage && latestPartnerMessage.timestamp !== lastSeenPartnerMessageTimestamp.current) {
-        if (lastSeenPartnerMessageTimestamp.current !== null) { // Don't notify on initial load
-            addNotification({ type: 'new_message', title: 'Nuevo Mensaje', message: `Has recibido un mensaje de ${latestPartnerMessage.userName}.` });
+    const latestPartnerNote = [...partnerNotes].filter(n => n.authorId === pairedUser.id).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+    if (latestPartnerNote && latestPartnerNote.timestamp !== lastSeenPartnerNoteTimestamp.current) {
+        if (lastSeenPartnerNoteTimestamp.current !== null) { // Don't notify on initial load
+            if (latestPartnerNote.type === 'reflection') {
+                 addNotification({ type: 'new_shared_reflection', title: 'Nueva Reflexión', message: `${pairedUser.name} ha compartido una reflexión.` });
+            } else if (latestPartnerNote.type === 'trip') {
+                 addNotification({ type: 'new_shared_trip', title: 'Nuevo Viaje Compartido', message: `${pairedUser.name} ha compartido un viaje.` });
+            } else {
+                 addNotification({ type: 'new_partner_note', title: 'Nueva Nota', message: `${pairedUser.name} te ha dejado una nota.` });
+            }
         }
-        lastSeenPartnerMessageTimestamp.current = latestPartnerMessage.timestamp;
+        lastSeenPartnerNoteTimestamp.current = latestPartnerNote.timestamp;
     }
-  }, [sharedMessages, pairedUser, addNotification]);
+  }, [partnerNotes, pairedUser, addNotification]);
 
   useEffect(() => {
     if (!pairedUser) return;
-    const latestPartnerEmotion = [...emotionLogs].filter(e => e.userId === pairedUser.id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-    if (latestPartnerEmotion && latestPartnerEmotion.timestamp !== lastSeenPartnerEmotionTimestamp.current) {
-        if (lastSeenPartnerEmotionTimestamp.current !== null) { // Don't notify on initial load
-            addNotification({ type: 'new_emotion', title: 'Nueva Emoción Compartida', message: `${latestPartnerEmotion.userName} ha compartido cómo se siente.` });
+    const latestPartnerEmotion = [...sharedEmotionStates].filter(s => s.emotions[pairedUser.id]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    if (latestPartnerEmotion && latestPartnerEmotion.date !== lastSeenPartnerEmotionDate.current) {
+        if (lastSeenPartnerEmotionDate.current !== null) { // Don't notify on initial load
+            addNotification({ type: 'new_shared_emotion', title: 'Nuevo Estado Emocional', message: `${pairedUser.name} ha compartido cómo se siente.` });
         }
-        lastSeenPartnerEmotionTimestamp.current = latestPartnerEmotion.timestamp;
+        lastSeenPartnerEmotionDate.current = latestPartnerEmotion.date;
     }
-  }, [emotionLogs, pairedUser, addNotification]);
+  }, [sharedEmotionStates, pairedUser, addNotification]);
+  
+  useEffect(() => {
+    if (!pairedUser) return;
+    const latestPartnerQuestion = [...qaSessions].filter(s => s.askerId === pairedUser.id && !s.answer).sort((a,b) => new Date(b.askedAt).getTime() - new Date(a.askedAt).getTime())[0];
+    if (latestPartnerQuestion && latestPartnerQuestion.id !== lastSeenQASessionId.current) {
+        if (lastSeenQASessionId.current !== null) {
+             addNotification({ type: 'new_qa_question', title: 'Nueva Pregunta', message: `${pairedUser.name} te ha hecho una pregunta.` });
+        }
+        lastSeenQASessionId.current = latestPartnerQuestion.id;
+    }
+  }, [qaSessions, pairedUser, addNotification]);
+
+  const handleNavigateToCoupleSpace = () => {
+    setActiveSection('planner');
+    setMainView(MainView.Couple);
+  };
 
 
   if (!currentUser) {
@@ -743,13 +1198,17 @@ function App() {
               user={currentUser}
               onLogout={handleLogout}
               onManagePairing={() => setIsPairingModalOpen(true)}
+              onManagePin={() => setIsPinModalOpen(true)}
               notifications={notifications}
               onMarkAsRead={handleMarkAsRead}
               onMarkAllAsRead={handleMarkAllAsRead}
+              onNotificationClick={handleNotificationClick}
               isMuted={isNotificationsMuted}
               onToggleMute={() => setIsNotificationsMuted(prev => !prev)}
               onNavigateToPlanner={() => setActiveSection('planner')}
               onNavigateToTravelLog={() => setActiveSection('travel')}
+              onNavigateToGoals={() => setActiveSection('goals')}
+              onNavigateToHome={() => setActiveSection('home')}
               activeSection={activeSection}
             />
         </div>
@@ -795,6 +1254,7 @@ function App() {
                                     onEditEvent={handleEditEventClick}
                                     onDeleteEvent={handleDeleteEvent}
                                     onManageRoutines={() => setIsRoutineManagerOpen(true)}
+                                    onToggleEventCompletion={handleToggleEventCompletion}
                                     />
                                 </div>
                                 <DailyReflection 
@@ -803,12 +1263,15 @@ function App() {
                                     selectedDate={selectedDate}
                                     onSave={handleSaveJournal}
                                     onOpenHistory={() => setIsReflectionLogModalOpen(true)}
+                                    onOpenShareModal={handleOpenShareModal}
+                                    partner={pairedUser}
                                 />
                                 {pairedUser && (
-                                    <PartnerNotes 
-                                    partner={pairedUser} 
-                                    emotion={latestPartnerEmotion} 
-                                    message={latestPartnerMessage} 
+                                    <PartnerNotes
+                                        partner={pairedUser}
+                                        partnerNotes={partnerNotes}
+                                        sharedEmotionStates={sharedEmotionStates}
+                                        onNavigate={handleNavigateToCoupleSpace}
                                     />
                                 )}
                             </div>
@@ -825,13 +1288,14 @@ function App() {
                                     onOpenPrintView={() => setIsPrintViewOpen(true)}
                                     />
                                 </div>
-                                <GoalsPanel 
-                                    weeklyGoals={weeklyGoals}
-                                    monthlyGoals={monthlyGoals}
-                                    annualGoals={annualGoals}
-                                    onAddGoal={handleAddGoal}
-                                    onToggleGoal={handleToggleGoal}
-                                    onDeleteGoal={handleDeleteGoal}
+                                 <HomeSummary
+                                    shoppingLists={shoppingLists}
+                                    onNavigate={() => setActiveSection('home')}
+                                />
+                                <GoalsSummary 
+                                    projects={projects}
+                                    tasks={tasks}
+                                    onNavigate={() => setActiveSection('goals')}
                                 />
                             </div>
                         </div>
@@ -841,12 +1305,13 @@ function App() {
                         <CoupleSpace 
                             currentUser={currentUser} 
                             partner={pairedUser} 
-                            coupleId={coupleId}
-                            messages={sharedMessages}
-                            setMessages={setSharedMessages}
-                            emotions={emotionLogs}
-                            setEmotions={setEmotionLogs}
-                            onOpenEmotionHistory={() => setIsEmotionLogModalOpen(true)}
+                            qaSessions={qaSessions}
+                            setQaSessions={setQaSessions}
+                            partnerNotes={partnerNotes}
+                            setPartnerNotes={setPartnerNotes}
+                            sharedEmotionStates={sharedEmotionStates}
+                            setSharedEmotionStates={setSharedEmotionStates}
+                            onOpenEmotionLog={() => setIsEmotionLogModalOpen(true)}
                         />
                     )}
                 </>
@@ -857,8 +1322,34 @@ function App() {
                 trips={trips}
                 onSaveTrip={handleSaveTrip}
                 onDeleteTrip={handleDeleteTrip}
+                pairedUser={pairedUser}
+                onOpenShareModal={handleOpenShareTripModal}
               />
            )}
+
+            {activeSection === 'goals' && (
+              <GoalsPanel 
+                projects={projects}
+                tasks={tasks}
+                onAddProject={handleOpenProjectCreator}
+                onEditProject={handleOpenProjectEditor}
+                onDeleteProject={handleDeleteProject}
+                onAddTask={handleAddTask}
+                onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
+                onAddMultipleTasks={handleAddMultipleTasks}
+              />
+            )}
+             {activeSection === 'home' && (
+                <HomePanel
+                    shoppingLists={shoppingLists}
+                    onSaveList={handleSaveShoppingList}
+                    onDeleteList={handleDeleteShoppingList}
+                    onAddItem={handleAddShoppingListItem}
+                    onUpdateItem={handleUpdateShoppingListItem}
+                    onDeleteItem={handleDeleteShoppingListItem}
+                />
+            )}
         </main>
       </div>
 
@@ -893,6 +1384,15 @@ function App() {
         onEdit={handleOpenRoutineEditor}
         onDelete={handleDeleteRoutine}
       />
+       <ProjectFormModal
+        isOpen={isProjectModalOpen}
+        onClose={() => {
+          setIsProjectModalOpen(false);
+          setEditingProject(null);
+        }}
+        onSave={handleSaveProject}
+        projectToEdit={editingProject}
+      />
       <PairingManager 
         isOpen={isPairingModalOpen}
         onClose={() => setIsPairingModalOpen(false)}
@@ -904,15 +1404,39 @@ function App() {
         onRespondToRequest={handleRespondToRequest}
         onUnpair={handleUnpair}
       />
-      <EmotionLogModal 
-        isOpen={isEmotionLogModalOpen}
-        onClose={() => setIsEmotionLogModalOpen(false)}
-        emotions={emotionLogs}
-      />
       <ReflectionLogModal 
         isOpen={isReflectionLogModalOpen}
         onClose={() => setIsReflectionLogModalOpen(false)}
         journalEntries={journalEntries}
+      />
+      {pairedUser && (
+        <EmotionLogModal
+            isOpen={isEmotionLogModalOpen}
+            onClose={() => setIsEmotionLogModalOpen(false)}
+            sharedEmotionStates={sharedEmotionStates}
+            currentUser={currentUser}
+            partner={pairedUser}
+        />
+      )}
+      <PinManagementModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        onSave={handleSavePin}
+        currentUser={currentUser}
+      />
+       <ShareReflectionModal
+        isOpen={isShareReflectionModalOpen}
+        onClose={() => setIsShareReflectionModalOpen(false)}
+        reflection={reflectionToShare}
+        onShareWithPartner={handleShareReflection}
+        partnerName={pairedUser?.name}
+      />
+       <ShareTripModal
+        isOpen={isShareTripModalOpen}
+        onClose={() => setIsShareTripModalOpen(false)}
+        trip={tripToShare}
+        onShareWithPartner={handleShareTrip}
+        partnerName={pairedUser?.name}
       />
     </>
   );

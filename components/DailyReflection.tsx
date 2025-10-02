@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import type { JournalEntry } from '../types';
+import React, { useState, useEffect } from 'react';
+import type { JournalEntry, User } from '../types';
 
 interface DailyReflectionProps {
   journalEntries: JournalEntry[];
   currentJournalEntry: JournalEntry | undefined;
   selectedDate: Date;
-  onSave: (entry: JournalEntry) => void;
+  onSave: (entry: Omit<JournalEntry, 'timestamp'>) => void;
   onOpenHistory: () => void;
+  onOpenShareModal: (entry: JournalEntry) => void;
+  partner: User | null;
 }
 
 const JournalIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -15,41 +17,74 @@ const JournalIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
+const CheckCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+  </svg>
+);
 
-export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries, currentJournalEntry, selectedDate, onSave, onOpenHistory }) => {
+const ShareIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.195.025.39.05.588.082a2.25 2.25 0 0 1 2.829 2.829.096.096 0 0 0 .082.082m0 0a2.25 2.25 0 1 0 2.186 0m-2.186 0a2.25 2.25 0 0 0-2.829-2.829.096.096 0 0 1-.082-.082m0 0a2.25 2.25 0 1 0 0-2.186m0 2.186c-.195-.025-.39-.05-.588-.082a2.25 2.25 0 0 1-2.829-2.829.096.096 0 0 0-.082-.082" />
+    </svg>
+);
+
+
+const reflectionEmotions = [
+    { emoji: '😊', label: 'Contento' },
+    { emoji: '😌', label: 'Tranquilo' },
+    { emoji: '🤔', label: 'Pensativo' },
+    { emoji: '💪', label: 'Productivo' },
+    { emoji: '😟', label: 'Complicado' },
+];
+
+
+export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries, currentJournalEntry, selectedDate, onSave, onOpenHistory, onOpenShareModal, partner }) => {
   const [positiveThought, setPositiveThought] = useState('');
   const [lessonLearned, setLessonLearned] = useState('');
-  const [mood, setMood] = useState('');
+  const [dayTitle, setDayTitle] = useState('');
+  const [emotionEmoji, setEmotionEmoji] = useState('');
+
+  const [isSaved, setIsSaved] = useState(false);
+  const [hasChanged, setHasChanged] = useState(false);
 
   useEffect(() => {
     setPositiveThought(currentJournalEntry?.positiveThought || '');
     setLessonLearned(currentJournalEntry?.lessonLearned || '');
-    setMood(currentJournalEntry?.mood || '');
-  }, [currentJournalEntry]);
+    setDayTitle(currentJournalEntry?.dayTitle || '');
+    setEmotionEmoji(currentJournalEntry?.emotionEmoji || '');
+    setHasChanged(false); // Reset change tracking when date changes
+  }, [currentJournalEntry, selectedDate]);
   
-  const dateString = selectedDate.toISOString().split('T')[0];
+  const handleSave = () => {
+    if (positiveThought.trim() || lessonLearned.trim() || dayTitle.trim() || emotionEmoji) {
+      onSave({
+        date: selectedDate.toISOString().split('T')[0],
+        positiveThought,
+        lessonLearned,
+        dayTitle,
+        emotionEmoji,
+      });
+      setIsSaved(true);
+      setHasChanged(false);
+      setTimeout(() => setIsSaved(false), 2500);
+    }
+  };
 
-  const handleSave = useCallback(() => {
-    onSave({
-      date: dateString,
-      positiveThought,
-      lessonLearned,
-      mood,
-    });
-  }, [dateString, positiveThought, lessonLearned, mood, onSave]);
+  const handleEmojiSelect = (emoji: string) => {
+    setEmotionEmoji(emoji);
+    if (!hasChanged) setHasChanged(true);
+  }
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      // Only save if there is some content, prevents creating empty entries just by selecting a date
-      if(positiveThought.trim() || lessonLearned.trim() || mood.trim()){
-         handleSave();
-      }
-    }, 1000); // Debounce time: 1 second
-
-    return () => {
-      clearTimeout(handler);
+  const createChangeHandler = <T,>(setter: React.Dispatch<React.SetStateAction<T>>) => {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setter(e.target.value as T);
+      if (!hasChanged) setHasChanged(true);
     };
-  }, [positiveThought, lessonLearned, mood, handleSave]);
+  };
+
+  const isSaveDisabled = isSaved || !hasChanged;
+  const isShareDisabled = !currentJournalEntry || hasChanged || !partner;
 
 
   return (
@@ -67,7 +102,7 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
           Ver historial
         </button>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div>
           <label htmlFor="positive-thought" className="block text-sm font-medium text-slate-600 mb-1">
             Un pensamiento positivo o agradecimiento de hoy:
@@ -76,7 +111,7 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             id="positive-thought"
             rows={3}
             value={positiveThought}
-            onChange={(e) => setPositiveThought(e.target.value)}
+            onChange={createChangeHandler(setPositiveThought)}
             className="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 resize-none transition-colors"
             placeholder="¿Qué te hizo sonreír hoy?"
           />
@@ -89,23 +124,69 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             id="lesson-learned"
             rows={3}
             value={lessonLearned}
-            onChange={(e) => setLessonLearned(e.target.value)}
+            onChange={createChangeHandler(setLessonLearned)}
             className="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 resize-none transition-colors"
             placeholder="Una pequeña o gran revelación..."
           />
         </div>
+         <div>
+            <label className="block text-sm font-medium text-slate-600 mb-2">¿Qué emoción representa mejor este día?</label>
+            <div className="flex flex-wrap justify-around bg-slate-50/70 p-3 rounded-lg gap-2">
+                {reflectionEmotions.map(({emoji, label}) => (
+                    <button 
+                    key={emoji}
+                    type="button"
+                    onClick={() => handleEmojiSelect(emoji)}
+                    className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 w-20 ${emotionEmoji === emoji ? 'bg-indigo-200 scale-110' : 'hover:bg-slate-200'}`}
+                    aria-label={`Seleccionar emoción: ${label}`}
+                    title={label}
+                    >
+                        <span className="text-3xl">{emoji}</span>
+                        <span className="text-xs font-medium text-slate-700 mt-1">{label}</span>
+                    </button>
+                ))}
+            </div>
+        </div>
         <div>
-          <label htmlFor="mood" className="block text-sm font-medium text-slate-600 mb-1">
-            Describe brevemente tu estado de ánimo general:
+          <label htmlFor="day-title" className="block text-sm font-medium text-slate-600 mb-1">
+            Si tuvieras que ponerle un título a tu día, ¿cuál sería?
           </label>
           <input
             type="text"
-            id="mood"
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
+            id="day-title"
+            value={dayTitle}
+            onChange={createChangeHandler(setDayTitle)}
             className="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-colors"
-            placeholder="p. ej., Tranquilo, enérgico, pensativo..."
+            placeholder="p. ej., Un día de calma inesperada, Misión cumplida..."
           />
+        </div>
+        <div className="flex justify-end pt-2 space-x-3">
+             <button
+                onClick={() => onOpenShareModal(currentJournalEntry!)}
+                disabled={isShareDisabled}
+                title={isShareDisabled ? (partner ? 'Guarda tu reflexión para poder compartirla' : 'Conecta con una pareja para compartir') : 'Compartir reflexión'}
+                className="flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+                <ShareIcon className="w-5 h-5" />
+                <span>Compartir</span>
+            </button>
+            <button
+                onClick={handleSave}
+                disabled={isSaveDisabled}
+                className={`flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-transparent rounded-md text-sm font-medium text-white shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                    ${isSaved ? 'bg-green-500' : 'bg-indigo-600'}
+                    ${isSaveDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-indigo-700'}
+                `}
+            >
+                {isSaved ? (
+                    <>
+                        <CheckCircleIcon className="w-5 h-5" />
+                        <span>¡Guardado!</span>
+                    </>
+                ) : (
+                    <span>Guardar Reflexión</span>
+                )}
+            </button>
         </div>
       </div>
     </div>

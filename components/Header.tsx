@@ -7,14 +7,18 @@ interface HeaderProps {
   user: User;
   onLogout: () => void;
   onManagePairing: () => void;
+  onManagePin: () => void;
   notifications: Notification[];
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
+  onNotificationClick: (notification: Notification) => void;
   isMuted: boolean;
   onToggleMute: () => void;
   onNavigateToPlanner: () => void;
   onNavigateToTravelLog: () => void;
-  activeSection: 'planner' | 'travel';
+  onNavigateToGoals: () => void;
+  onNavigateToHome: () => void;
+  activeSection: 'planner' | 'travel' | 'goals' | 'home';
 }
 
 const UserGroupIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -29,10 +33,23 @@ const CalendarDaysIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-const GlobeAltIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+const BriefcaseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c.506 0 1.023-.045 1.531-.132M3.284 14.251 12 21m0 0 8.716-6.749M12 3c.506 0 1.023.045 1.531.132M20.716 9.749 12 3m0 0L3.284 9.749m17.432 0c.32.222.61.472.87.75M3.284 9.749c-.32.222-.61.472-.87.75m19.452-1.5c.343.52.627 1.074.846 1.658M2.308 11.157a15.2 15.2 0 0 1-.846-1.658m19.452 1.5 1.488-9.716a1.125 1.125 0 0 0-1.282-1.282L3.84 8.249m17.432 1.5-1.488 9.716a1.125 1.125 0 0 1-1.282 1.282L3.84 15.751" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
   </svg>
+);
+
+const BullseyeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
+    </svg>
+);
+
+const HomeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+    </svg>
 );
 
 const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -41,21 +58,49 @@ const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     </svg>
 );
 
+const UserCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+  </svg>
+);
+const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+const KeyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
+  </svg>
+);
+const ArrowLeftStartOnRectangleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+  </svg>
+);
+
+
 export const Header: React.FC<HeaderProps> = ({ 
     user, 
     onLogout, 
-    onManagePairing, 
+    onManagePairing,
+    onManagePin,
     notifications, 
     onMarkAsRead, 
     onMarkAllAsRead, 
+    onNotificationClick,
     isMuted, 
     onToggleMute, 
     onNavigateToPlanner, 
     onNavigateToTravelLog,
+    onNavigateToGoals,
+    onNavigateToHome,
     activeSection 
 }) => {
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -63,6 +108,9 @@ export const Header: React.FC<HeaderProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setIsNotificationCenterOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -83,8 +131,40 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">ConectaMente</h1>
         </div>
-        <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-slate-600">Hola, {user.name}</span>
+        <div className="flex items-center space-x-2 sm:space-x-4">
+             <button 
+              onClick={onNavigateToHome}
+              className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                  activeSection === 'home' 
+                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <HomeIcon className="w-5 h-5 text-indigo-500"/>
+              <span className="hidden sm:inline">Mi Hogar</span>
+            </button>
+             <button 
+              onClick={onNavigateToGoals}
+              className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                  activeSection === 'goals' 
+                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <BullseyeIcon className="w-5 h-5 text-indigo-500"/>
+              <span className="hidden sm:inline">Metas</span>
+            </button>
+             <button 
+              onClick={onNavigateToTravelLog}
+              className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                  activeSection === 'travel' 
+                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <BriefcaseIcon className="w-5 h-5 text-indigo-500"/>
+              <span className="hidden sm:inline">Viajes</span>
+            </button>
             <div ref={notificationRef} className="relative">
               <button 
                 onClick={() => setIsNotificationCenterOpen(prev => !prev)}
@@ -103,36 +183,53 @@ export const Header: React.FC<HeaderProps> = ({
                   notifications={notifications}
                   onMarkAsRead={onMarkAsRead}
                   onMarkAllAsRead={onMarkAllAsRead}
+                  onNotificationClick={onNotificationClick}
                   isMuted={isMuted}
                   onToggleMute={onToggleMute}
                   onClose={() => setIsNotificationCenterOpen(false)}
                 />
               )}
             </div>
-             <button 
-              onClick={onNavigateToTravelLog}
-              className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                  activeSection === 'travel' 
-                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <GlobeAltIcon className="w-5 h-5 text-indigo-500"/>
-              <span>Bitácora de Viaje</span>
-            </button>
-            <button 
-              onClick={onManagePairing}
-              className="px-3 py-1.5 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center space-x-2"
-            >
-              <UserGroupIcon className="w-5 h-5 text-slate-500"/>
-              <span>Conexiones</span>
-            </button>
-             <button 
-                onClick={onLogout}
-                className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors"
-             >
-                Cerrar Sesión
-            </button>
+
+            <div className="relative" ref={userMenuRef}>
+                 <button 
+                    onClick={() => setIsUserMenuOpen(prev => !prev)}
+                    className="flex items-center space-x-2 p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                 >
+                    <UserCircleIcon className="w-6 h-6"/>
+                    <span className="text-sm font-medium text-slate-600 hidden sm:block">{user.name}</span>
+                    <ChevronDownIcon className="w-4 h-4 text-slate-400"/>
+                </button>
+                {isUserMenuOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-fade-in">
+                        <style>{`
+                            @keyframes fade-in {
+                                0% { opacity: 0; transform: translateY(-10px); }
+                                100% { opacity: 1; transform: translateY(0); }
+                            }
+                            .animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
+                        `}</style>
+                        <div className="p-2">
+                           <button onClick={() => { onManagePairing(); setIsUserMenuOpen(false); }}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors">
+                                <UserGroupIcon className="w-5 h-5 text-slate-500"/>
+                                <span>Conexiones</span>
+                           </button>
+                           <button onClick={() => { onManagePin(); setIsUserMenuOpen(false); }}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors">
+                                <KeyIcon className="w-5 h-5 text-slate-500"/>
+                                <span>Cambiar PIN</span>
+                           </button>
+                           <div className="my-1 h-px bg-slate-100"></div>
+                           <button onClick={onLogout}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                                <ArrowLeftStartOnRectangleIcon className="w-5 h-5"/>
+                                <span>Cerrar Sesión</span>
+                           </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
       </div>
     </header>

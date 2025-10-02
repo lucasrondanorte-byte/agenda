@@ -1,106 +1,207 @@
 // This component provides UI for user authentication actions.
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { User } from '../types';
 
-interface UserAuthProps {
-  users: User[];
-  onLogin: (userId: string, password: string) => boolean;
-  onCreateUser: (name: string, password: string) => void;
-}
+// Reusable PIN Input component
+const PinInput: React.FC<{
+  length: number;
+  value: string;
+  onChange: (pin: string) => void;
+  error?: boolean;
+}> = ({ length, value, onChange, error }) => {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const pinArray = value.split('');
 
-export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser }) => {
-  const [newUserName, setNewUserName] = useState('');
-  const [newUserPassword, setNewUserPassword] = useState('');
-  
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const inputValue = e.target.value;
+    // Allow only single digits
+    if (/^[0-9]$/.test(inputValue) || inputValue === '') {
+      const newPinArray = [...pinArray];
+      // Ensure array is of correct length to avoid out-of-bounds
+      while (newPinArray.length < length) newPinArray.push('');
+      
+      newPinArray[index] = inputValue;
+      const newPin = newPinArray.slice(0, length).join('');
+      onChange(newPin);
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newUserName.trim() && newUserPassword.trim()) {
-      onCreateUser(newUserName.trim(), newUserPassword.trim());
-      setNewUserName('');
-      setNewUserPassword('');
+      // Move focus to next input if a digit is entered
+      if (inputValue && index < length - 1) {
+        inputRefs.current[index + 1]?.focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    // Move focus to previous input on backspace if current is empty
+    if (e.key === 'Backspace' && !pinArray[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
     }
   };
   
-  const handleSelectUser = (user: User) => {
-    // If user has no password, log them in directly.
-    if (!user.password) {
-        onLogin(user.id, '');
-    } else {
-        setSelectedUser(user);
-        setLoginError('');
-        setLoginPassword('');
-    }
-  }
+  // Ensure refs array is always the correct size
+  useEffect(() => {
+    inputRefs.current = inputRefs.current.slice(0, length);
+  }, [length]);
 
-  const handleAttemptLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUser) return;
-    
-    const success = onLogin(selectedUser.id, loginPassword);
-    if (!success) {
-        setLoginError('Contraseña incorrecta. Por favor, intenta de nuevo.');
-        setLoginPassword('');
-    }
-  }
-
-  if (selectedUser) {
-    // Show password login form for the selected user
-    return (
-        <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
-          <div className="w-full max-w-sm">
-             <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-slate-800">Hola, {selectedUser.name}</h1>
-                <p className="text-slate-600 mt-2">Ingresa tu contraseña para continuar.</p>
-            </div>
-            <div className="bg-white p-8 rounded-xl shadow-md">
-                <form onSubmit={handleAttemptLogin}>
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
-                        <input 
-                            type="password"
-                            id="password"
-                            value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            autoFocus
-                        />
-                    </div>
-                    {loginError && <p className="text-red-600 text-sm mt-2">{loginError}</p>}
-                    <div className="mt-6 flex items-center justify-between">
-                         <button
-                            type="button"
-                            onClick={() => setSelectedUser(null)}
-                            className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-                        >
-                            Volver
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        >
-                            Ingresar
-                        </button>
-                    </div>
-                </form>
-            </div>
-          </div>
-        </div>
-    );
-  }
-
-  // Original user selection screen
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md">
+    <div className={`flex justify-center gap-3 ${error ? 'animate-shake' : ''}`}>
+        <style>{`
+            @keyframes shake {
+                10%, 90% { transform: translate3d(-1px, 0, 0); }
+                20%, 80% { transform: translate3d(2px, 0, 0); }
+                30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+                40%, 60% { transform: translate3d(4px, 0, 0); }
+            }
+            .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+        `}</style>
+      {Array.from({ length }).map((_, index) => (
+        <input
+          key={index}
+          // FIX: Changed ref callback to use a block body `{}` instead of a concise body `()`. The ref callback should not return a value, but an assignment expression returns the assigned value. Using a block body ensures an implicit `undefined` return.
+          ref={(el) => { inputRefs.current[index] = el; }}
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={1}
+          value={pinArray[index] || ''}
+          onChange={(e) => handleChange(e, index)}
+          onKeyDown={(e) => handleKeyDown(e, index)}
+          className="w-14 h-16 text-center text-3xl font-bold border-2 border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+        />
+      ))}
+    </div>
+  );
+};
+
+
+interface UserAuthProps {
+  users: User[];
+  onLogin: (userId: string, pin: string) => boolean;
+  onCreateUser: (name: string) => User;
+}
+
+type AuthScreen = 'select_user' | 'create_user' | 'enter_pin' | 'set_pin';
+
+export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser }) => {
+  const [screen, setScreen] = useState<AuthScreen>('select_user');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [error, setError] = useState('');
+
+  const [newUserName, setNewUserName] = useState('');
+
+  const handleSelectUser = (user: User) => {
+    setSelectedUser(user);
+    setError('');
+    setPin('');
+    if (user.pin) {
+      setScreen('enter_pin');
+    } else {
+      setScreen('set_pin');
+    }
+  };
+  
+  const handleBack = () => {
+      setSelectedUser(null);
+      setError('');
+      setPin('');
+      setConfirmPin('');
+      setNewUserName('');
+      setScreen('select_user');
+  }
+  
+  const handlePinChange = (value: string) => {
+      setPin(value);
+      setError('');
+      if (screen === 'enter_pin' && value.length === 4) {
+          setTimeout(() => handleSubmitPin(value), 100);
+      }
+  };
+  
+  const handleSubmitPin = (pinValue: string) => {
+    if (!selectedUser) return;
+    const success = onLogin(selectedUser.id, pinValue);
+    if (!success) {
+      setError('PIN incorrecto. Por favor, intenta de nuevo.');
+      setPin('');
+    }
+  };
+  
+  const handleSetPin = () => {
+      if (pin.length !== 4) {
+          setError('El PIN debe tener 4 dígitos.');
+          return;
+      }
+      if (pin !== confirmPin) {
+          setError('Los PINs no coinciden.');
+          return;
+      }
+      onLogin(selectedUser!.id, pin);
+  };
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newUserName.trim()) {
+      const newUser = onCreateUser(newUserName.trim());
+      handleSelectUser(newUser);
+    }
+  };
+
+  const renderPinScreen = (isSetup: boolean) => (
+    <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-slate-800">Hola, {selectedUser?.name}</h1>
+            <p className="text-slate-600 mt-2">
+                {isSetup ? 'Crea un PIN de 4 dígitos para proteger tu cuenta.' : 'Ingresa tu PIN para continuar.'}
+            </p>
+        </div>
+        <div className="bg-white p-8 rounded-xl shadow-md">
+            <div className="space-y-4">
+                <div>
+                    <label className="block text-center text-sm font-medium text-slate-700 mb-2">
+                        {isSetup ? 'Nuevo PIN' : 'Tu PIN'}
+                    </label>
+                    <PinInput length={4} value={pin} onChange={handlePinChange} error={!!error}/>
+                </div>
+                {isSetup && (
+                     <div>
+                        <label className="block text-center text-sm font-medium text-slate-700 mb-2">Confirmar PIN</label>
+                        <PinInput length={4} value={confirmPin} onChange={setConfirmPin} />
+                    </div>
+                )}
+            </div>
+             {error && <p className="text-red-600 text-sm mt-4 text-center">{error}</p>}
+             <div className="mt-6 flex items-center justify-between">
+                 <button
+                    type="button"
+                    onClick={handleBack}
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                >
+                    Volver
+                </button>
+                {isSetup && (
+                    <button
+                        type="button"
+                        onClick={handleSetPin}
+                        className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        Guardar y Entrar
+                    </button>
+                )}
+            </div>
+        </div>
+    </div>
+  );
+
+
+  const renderSelectUserScreen = () => (
+     <div className="w-full max-w-md">
         <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-slate-800">Bienvenido/a</h1>
             <p className="text-slate-600 mt-2">Selecciona un perfil para continuar o crea uno nuevo.</p>
         </div>
-
         <div className="bg-white p-8 rounded-xl shadow-md">
             <h2 className="text-lg font-semibold text-slate-700 mb-4">Perfiles Existentes</h2>
             {users.length > 0 ? (
@@ -118,43 +219,72 @@ export const UserAuth: React.FC<UserAuthProps> = ({ users, onLogin, onCreateUser
             ) : (
                 <p className="text-center text-sm text-slate-500 py-4">No hay perfiles. ¡Crea el primero!</p>
             )}
-
-            <div className="mt-8 pt-6 border-t border-slate-200">
-                 <h2 className="text-lg font-semibold text-slate-700 mb-4">Crear Nuevo Perfil</h2>
-                 <form onSubmit={handleCreate} className="space-y-4">
-                    <div>
-                        <label htmlFor="new-name" className="block text-sm font-medium text-slate-700 mb-1">Tu nombre</label>
-                        <input 
-                            type="text"
-                            id="new-name"
-                            value={newUserName}
-                            onChange={(e) => setNewUserName(e.target.value)}
-                            placeholder="Nombre de usuario"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                    </div>
-                     <div>
-                        <label htmlFor="new-password"className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
-                        <input 
-                            type="password"
-                            id="new-password"
-                            value={newUserPassword}
-                            onChange={(e) => setNewUserPassword(e.target.value)}
-                            placeholder="Crea una contraseña"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="w-full px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300"
-                        disabled={!newUserName.trim() || !newUserPassword.trim()}
-                    >
-                        Crear Perfil
-                    </button>
-                 </form>
+             <div className="mt-8 pt-6 border-t border-slate-200">
+                <button
+                    onClick={() => setScreen('create_user')}
+                    className="w-full px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                >
+                    Crear Nuevo Perfil
+                </button>
             </div>
         </div>
-      </div>
+    </div>
+  );
+  
+  const renderCreateUserScreen = () => (
+     <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-slate-800">Crear Perfil</h1>
+            <p className="text-slate-600 mt-2">Introduce tu nombre. Configurarás tu PIN en el siguiente paso.</p>
+        </div>
+        <div className="bg-white p-8 rounded-xl shadow-md">
+            <form onSubmit={handleCreate} className="space-y-4">
+                <div>
+                    <label htmlFor="new-name" className="block text-sm font-medium text-slate-700 mb-1">Tu nombre</label>
+                    <input 
+                        type="text"
+                        id="new-name"
+                        value={newUserName}
+                        onChange={(e) => setNewUserName(e.target.value)}
+                        placeholder="Nombre de usuario"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        autoFocus
+                    />
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                    <button type="button" onClick={handleBack} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                        Volver
+                    </button>
+                    <button
+                        type="submit"
+                        className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 disabled:bg-indigo-300"
+                        disabled={!newUserName.trim()}
+                    >
+                        Siguiente: Crear PIN
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+  );
+
+  const renderContent = () => {
+      switch(screen) {
+          case 'enter_pin':
+              return renderPinScreen(false);
+          case 'set_pin':
+              return renderPinScreen(true);
+          case 'create_user':
+              return renderCreateUserScreen();
+          case 'select_user':
+          default:
+              return renderSelectUserScreen();
+      }
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
+        {renderContent()}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Event, EventCategory } from '../types';
 import { ColorPicker } from './ColorPicker';
+import { useSystemNotifications } from '../hooks/useSystemNotifications';
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -24,10 +25,9 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
   const [category, setCategory] = useState<EventCategory>('personal');
   const [color, setColor] = useState<string | undefined>(undefined);
   const [reminder, setReminder] = useState(false);
-  const [whatsappReminder, setWhatsappReminder] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [whatsappMessage, setWhatsappMessage] = useState('');
   const [error, setError] = useState('');
+  
+  const { requestPermission } = useSystemNotifications();
 
   useEffect(() => {
     if (event) {
@@ -37,9 +37,6 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
       setCategory(event.category || 'personal');
       setColor(event.color);
       setReminder(event.reminder);
-      setWhatsappReminder(event.whatsappReminder || false);
-      setWhatsappNumber(event.whatsappNumber || '');
-      setWhatsappMessage(event.whatsappMessage || `¡Hola! Te recuerdo tu evento: "${event.title}" a las ${event.time}.`);
     } else {
       setTitle('');
       setTime('12:00');
@@ -47,29 +44,15 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
       setCategory('personal');
       setColor(undefined);
       setReminder(false);
-      setWhatsappReminder(false);
-      setWhatsappNumber('');
-      setWhatsappMessage(`¡Hola! Te recuerdo tu evento: "" a las 12:00.`);
     }
   }, [event]);
   
-  // Update default message when title or time changes for new events
-  useEffect(() => {
-    if(!event) {
-        setWhatsappMessage(`¡Hola! Te recuerdo tu evento: "${title}" a las ${time}.`);
-    }
-  }, [title, time, event]);
-
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       setError('El título no puede estar vacío.');
-      return;
-    }
-    if (whatsappReminder && !whatsappNumber.trim()) {
-      setError('El número de WhatsApp es obligatorio para el recordatorio.');
       return;
     }
     setError('');
@@ -81,11 +64,18 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
       category,
       color,
       reminder,
-      whatsappReminder,
-      whatsappNumber: whatsappReminder ? whatsappNumber.trim() : '',
-      whatsappMessage: whatsappReminder ? whatsappMessage.trim() : '',
     });
   };
+  
+  const handleReminderToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setReminder(isChecked);
+
+    if(isChecked) {
+        requestPermission();
+    }
+  }
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
@@ -149,61 +139,21 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
           <div className="pt-2 space-y-4">
             <fieldset className="border-t border-slate-200 pt-4">
                 <legend className="text-sm font-medium text-slate-800">Recordatorios</legend>
-                 <div className="mt-2 space-y-3">
+                 <p className="text-xs text-slate-500 mt-2 mb-3">
+                    Al activar un recordatorio, se te pedirá permiso para enviar notificaciones a través de tu navegador.
+                 </p>
+                 <div className="space-y-3">
                     <div className="flex items-center">
                         <input
                             id="reminder"
                             type="checkbox"
                             checked={reminder}
-                            onChange={(e) => setReminder(e.target.checked)}
+                            onChange={handleReminderToggle}
                             className="h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                         />
                         <label htmlFor="reminder" className="ml-3 block text-sm text-slate-700">
-                           Notificación en la aplicación
+                           Notificación del sistema
                         </label>
-                    </div>
-                    {/* WhatsApp Reminder */}
-                    <div className="relative">
-                        <div className="flex items-center">
-                             <input
-                                id="whatsappReminder"
-                                type="checkbox"
-                                checked={whatsappReminder}
-                                onChange={(e) => setWhatsappReminder(e.target.checked)}
-                                className="h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
-                            />
-                            <label htmlFor="whatsappReminder" className="ml-3 block text-sm text-slate-700">
-                                Activar Recordatorio por WhatsApp
-                            </label>
-                        </div>
-                        {whatsappReminder && (
-                            <div className="mt-3 pl-7 space-y-3">
-                                <p className="text-xs text-slate-500 mb-2">
-                                    Recibirás una notificación en la app para que confirmes y envíes el mensaje a la hora programada.
-                                </p>
-                                <div>
-                                    <label htmlFor="whatsappNumber" className="block text-xs font-medium text-slate-600 mb-1">Número de WhatsApp</label>
-                                    <input
-                                        type="tel"
-                                        id="whatsappNumber"
-                                        value={whatsappNumber}
-                                        onChange={(e) => setWhatsappNumber(e.target.value)}
-                                        className="w-full px-3 py-1.5 border border-slate-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                        placeholder="+1234567890 (con código de país)"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="whatsappMessage" className="block text-xs font-medium text-slate-600 mb-1">Mensaje</label>
-                                     <textarea
-                                        id="whatsappMessage"
-                                        value={whatsappMessage}
-                                        onChange={(e) => setWhatsappMessage(e.target.value)}
-                                        rows={3}
-                                        className="w-full px-3 py-1.5 border border-slate-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
-                                    />
-                                </div>
-                            </div>
-                        )}
                     </div>
                  </div>
             </fieldset>
