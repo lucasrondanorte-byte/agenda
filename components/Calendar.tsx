@@ -86,7 +86,10 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
       const now = new Date();
       const hasPendingPastEvents = dayEvents.some(event => {
           const eventDateTime = new Date(`${event.date}T${event.time}`);
-          return eventDateTime < now && !event.completed;
+          // Check if the event is from before today (ignoring today)
+          const eventDay = new Date(event.date + 'T00:00:00');
+          const todayDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          return eventDay < todayDay && !event.completed;
       });
 
       let dayClass = 'relative p-2 h-24 border-r border-b border-zinc-100 flex flex-col cursor-pointer transition-colors duration-200';
@@ -113,7 +116,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
            {hasPendingPastEvents && (
             <span
                 title="Hay eventos pasados sin completar"
-                className="absolute top-2 right-2 w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse"
+                className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"
             ></span>
           )}
           <span className={dateNumberClass}>{i}</span>
