@@ -23,8 +23,8 @@ export const GoalsSummary: React.FC<GoalsSummaryProps> = ({ projects, tasks, onN
             onClick={onNavigate}
         >
             <div className="flex items-center gap-3 mb-4">
-              <BullseyeIcon className="w-6 h-6 text-indigo-500"/>
-              <h3 className="text-xl font-semibold text-slate-700">Mis Metas Actuales</h3>
+              <BullseyeIcon className="w-6 h-6 text-teal-500"/>
+              <h3 className="text-xl font-semibold text-zinc-700">Mis Metas Actuales</h3>
             </div>
             {summaryProjects.length > 0 ? (
                 <div className="space-y-4">
@@ -40,11 +40,11 @@ export const GoalsSummary: React.FC<GoalsSummaryProps> = ({ projects, tasks, onN
                                     <span className="text-2xl">{project.icon || '🎯'}</span>
                                     <div className="flex-grow">
                                         <div className="flex justify-between items-baseline">
-                                            <p className="font-semibold text-slate-800 truncate">{project.title}</p>
-                                            <p className="text-xs font-medium text-slate-500">{doneTasks}/{totalTasks}</p>
+                                            <p className="font-semibold text-zinc-800 truncate">{project.title}</p>
+                                            <p className="text-xs font-medium text-zinc-500">{doneTasks}/{totalTasks}</p>
                                         </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-2 mt-1">
-                                            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                                        <div className="w-full bg-zinc-200 rounded-full h-2 mt-1">
+                                            <div className="bg-teal-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
                                         </div>
                                     </div>
                                 </div>
@@ -52,14 +52,14 @@ export const GoalsSummary: React.FC<GoalsSummaryProps> = ({ projects, tasks, onN
                         );
                     })}
                     {projects.length > 3 && (
-                        <p className="text-center text-sm font-medium text-indigo-600 mt-4">
+                        <p className="text-center text-sm font-medium text-teal-600 mt-4">
                             y {projects.length - 3} más...
                         </p>
                     )}
                 </div>
             ) : (
                  <div className="text-center py-8">
-                    <p className="text-slate-500">Aún no has definido ningún proyecto. ¡Haz clic aquí para empezar!</p>
+                    <p className="text-zinc-500">Aún no has definido ningún proyecto. ¡Haz clic aquí para empezar!</p>
                 </div>
             )}
         </div>

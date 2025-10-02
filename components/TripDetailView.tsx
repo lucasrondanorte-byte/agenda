@@ -34,13 +34,13 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({ note, onClose, a
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-[70] flex justify-center items-center p-4" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col scrapbook-background" onClick={e => e.stopPropagation()}>
-        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white/50 flex-shrink-0">
+        <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-white/50 flex-shrink-0">
             <div>
-                <h2 className="text-2xl font-bold text-slate-800 font-handwriting">{trip.title}</h2>
-                <p className="text-sm text-slate-600">Compartido por {author.name}</p>
+                <h2 className="text-2xl font-bold text-zinc-800 font-handwriting">{trip.title}</h2>
+                <p className="text-sm text-zinc-600">Compartido por {author.name}</p>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-slate-100">
-                <XMarkIcon className="w-6 h-6 text-slate-500" />
+            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-zinc-100">
+                <XMarkIcon className="w-6 h-6 text-zinc-500" />
             </button>
         </div>
         <div className="flex-grow overflow-y-auto max-h-[80vh] p-6">
@@ -49,36 +49,36 @@ export const TripDetailView: React.FC<TripDetailViewProps> = ({ note, onClose, a
                     <img src={trip.coverPhoto} alt={trip.title} className="w-full h-64 object-cover rounded-sm"/>
                 </div>
             )}
-            <div className="flex items-center text-slate-600 mb-2">
+            <div className="flex items-center text-zinc-600 mb-2">
                 <MapPinIcon className="w-5 h-5 mr-2" />
                 <span>{trip.destination}</span>
             </div>
-            <p className="text-sm text-slate-500 mb-4">{formatDateRange(trip.startDate, trip.endDate)}</p>
+            <p className="text-sm text-zinc-500 mb-4">{formatDateRange(trip.startDate, trip.endDate)}</p>
             {trip.notes && (
-                <blockquote className="italic border-l-4 border-slate-300 pl-4 py-2 my-4 bg-white/60 rounded-r-lg">
+                <blockquote className="italic border-l-4 border-zinc-300 pl-4 py-2 my-4 bg-white/60 rounded-r-lg">
                     "{trip.notes}"
                 </blockquote>
             )}
 
-            <h3 className="text-xl font-semibold text-slate-700 mt-6 mb-4 font-handwriting">Recuerdos del Viaje</h3>
+            <h3 className="text-xl font-semibold text-zinc-700 mt-6 mb-4 font-handwriting">Recuerdos del Viaje</h3>
             {trip.highlights.length > 0 ? (
                  <div className="space-y-6">
                     {trip.highlights.map((h, index) => (
-                        <div key={index} className={`flex flex-col md:flex-row gap-4 items-start p-3 bg-white/80 shadow-md rounded-lg border border-slate-200 transform ${index % 2 === 0 ? 'rotate-1' : '-rotate-1'}`}>
+                        <div key={index} className={`flex flex-col md:flex-row gap-4 items-start p-3 bg-white/80 shadow-md rounded-lg border border-zinc-200 transform ${index % 2 === 0 ? 'rotate-1' : '-rotate-1'}`}>
                             {h.photo && <img src={h.photo} alt={h.title} className="w-full md:w-40 h-32 object-cover rounded-md flex-shrink-0" />}
                             <div className="flex-grow">
                                 <div className="flex items-center gap-3 mb-1">
                                     {h.emotion && <span className="text-2xl">{h.emotion}</span>}
-                                    <h4 className="font-bold text-slate-800">{h.title}</h4>
+                                    <h4 className="font-bold text-zinc-800">{h.title}</h4>
                                 </div>
-                                <p className="text-xs text-slate-500 mb-2">{new Date(h.date + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })}</p>
-                                <p className="text-sm text-slate-600 whitespace-pre-wrap">{h.description}</p>
+                                <p className="text-xs text-zinc-500 mb-2">{new Date(h.date + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })}</p>
+                                <p className="text-sm text-zinc-600 whitespace-pre-wrap">{h.description}</p>
                             </div>
                         </div>
                     ))}
                  </div>
             ) : (
-                <p className="text-center text-slate-500 py-8">No se compartieron recuerdos específicos.</p>
+                <p className="text-center text-zinc-500 py-8">No se compartieron recuerdos específicos.</p>
             )}
         </div>
       </div>

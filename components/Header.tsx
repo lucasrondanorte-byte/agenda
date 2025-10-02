@@ -27,12 +27,6 @@ const UserGroupIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-const CalendarDaysIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0h18M-7.5 12h1.5m3 0h1.5m3 0h1.5m-7.5 4.5h1.5m3 0h1.5m3 0h1.5" />
-  </svg>
-);
-
 const BriefcaseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
@@ -120,55 +114,53 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto py-3 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <div 
-          className="flex items-center gap-3 cursor-pointer"
+          className="flex items-center gap-3 cursor-pointer group"
           onClick={onNavigateToPlanner}
           title="Ir al planificador"
         >
-          <div className="flex-shrink-0 p-2 bg-indigo-500 rounded-lg">
-              <CalendarDaysIcon className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">ConectaMente</h1>
+          <img src="https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png" alt="ConectaMente Logo" className="h-12 transition-transform duration-300 group-hover:scale-105" />
+          <h1 className="text-2xl font-bold text-zinc-800 tracking-tight">ConectaMente</h1>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-4">
              <button 
               onClick={onNavigateToHome}
               className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                   activeSection === 'home' 
-                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                  ? 'bg-teal-100 text-teal-700 border-teal-200'
+                  : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
               }`}
             >
-              <HomeIcon className="w-5 h-5 text-indigo-500"/>
+              <HomeIcon className="w-5 h-5 text-teal-500"/>
               <span className="hidden sm:inline">Mi Hogar</span>
             </button>
              <button 
               onClick={onNavigateToGoals}
               className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                   activeSection === 'goals' 
-                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                  ? 'bg-teal-100 text-teal-700 border-teal-200'
+                  : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
               }`}
             >
-              <BullseyeIcon className="w-5 h-5 text-indigo-500"/>
+              <BullseyeIcon className="w-5 h-5 text-teal-500"/>
               <span className="hidden sm:inline">Metas</span>
             </button>
              <button 
               onClick={onNavigateToTravelLog}
               className={`px-3 py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                   activeSection === 'travel' 
-                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                  ? 'bg-teal-100 text-teal-700 border-teal-200'
+                  : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
               }`}
             >
-              <BriefcaseIcon className="w-5 h-5 text-indigo-500"/>
+              <BriefcaseIcon className="w-5 h-5 text-teal-500"/>
               <span className="hidden sm:inline">Viajes</span>
             </button>
             <div ref={notificationRef} className="relative">
               <button 
                 onClick={() => setIsNotificationCenterOpen(prev => !prev)}
-                className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                className="p-2 rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
                 aria-label="Ver notificaciones"
               >
                 <BellIcon className="w-6 h-6"/>
@@ -194,14 +186,14 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative" ref={userMenuRef}>
                  <button 
                     onClick={() => setIsUserMenuOpen(prev => !prev)}
-                    className="flex items-center space-x-2 p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                    className="flex items-center space-x-2 p-2 rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
                  >
                     <UserCircleIcon className="w-6 h-6"/>
-                    <span className="text-sm font-medium text-slate-600 hidden sm:block">{user.name}</span>
-                    <ChevronDownIcon className="w-4 h-4 text-slate-400"/>
+                    <span className="text-sm font-medium text-zinc-600 hidden sm:block">{user.name}</span>
+                    <ChevronDownIcon className="w-4 h-4 text-zinc-400"/>
                 </button>
                 {isUserMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-fade-in">
+                    <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-zinc-200 z-50 overflow-hidden animate-fade-in">
                         <style>{`
                             @keyframes fade-in {
                                 0% { opacity: 0; transform: translateY(-10px); }
@@ -211,16 +203,16 @@ export const Header: React.FC<HeaderProps> = ({
                         `}</style>
                         <div className="p-2">
                            <button onClick={() => { onManagePairing(); setIsUserMenuOpen(false); }}
-                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors">
-                                <UserGroupIcon className="w-5 h-5 text-slate-500"/>
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors">
+                                <UserGroupIcon className="w-5 h-5 text-zinc-500"/>
                                 <span>Conexiones</span>
                            </button>
                            <button onClick={() => { onManagePin(); setIsUserMenuOpen(false); }}
-                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-md transition-colors">
-                                <KeyIcon className="w-5 h-5 text-slate-500"/>
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors">
+                                <KeyIcon className="w-5 h-5 text-zinc-500"/>
                                 <span>Cambiar PIN</span>
                            </button>
-                           <div className="my-1 h-px bg-slate-100"></div>
+                           <div className="my-1 h-px bg-zinc-100"></div>
                            <button onClick={onLogout}
                             className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors">
                                 <ArrowLeftStartOnRectangleIcon className="w-5 h-5"/>

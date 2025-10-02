@@ -78,8 +78,8 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
   return (
     <div>
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Agenda del Día</h2>
-        <p className="text-md text-slate-500 mt-1">
+        <h2 className="text-2xl font-bold text-zinc-800">Agenda del Día</h2>
+        <p className="text-md text-zinc-500 mt-1">
           {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
@@ -87,13 +87,13 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
       <div className="mt-6">
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-slate-800">Eventos de Hoy</h3>
+              <h3 className="text-lg font-medium text-zinc-800">Eventos de Hoy</h3>
               <div className="flex items-center space-x-4">
-                 <button onClick={onManageRoutines} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                 <button onClick={onManageRoutines} className="flex items-center space-x-2 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
                     <RepeatIcon className="w-5 h-5"/>
                     <span>Rutinas</span>
                 </button>
-                <button onClick={onAddEvent} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                <button onClick={onAddEvent} className="flex items-center space-x-2 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
                   <PlusIcon className="w-5 h-5"/>
                   <span>Añadir Evento</span>
                 </button>
@@ -109,7 +109,7 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
                             className={`p-3 rounded-lg flex flex-col group transition-all duration-300 ease-in-out border-l-4 ${
                             event.completed
                                 ? 'bg-green-50 border-green-400'
-                                : 'bg-slate-50'
+                                : 'bg-stone-50'
                             }`}
                             style={!event.completed ? { borderColor: event.color || categoryColors[event.category] || categoryColors.otro } : {}}
                         >
@@ -122,19 +122,19 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
                                         e.stopPropagation();
                                         onToggleEventCompletion(event.id);
                                     }}
-                                    className="mt-1 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0"
+                                    className="mt-1 h-5 w-5 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 cursor-pointer flex-shrink-0"
                                     aria-label={`Marcar ${event.title} como completado`}
                                     />
                                     <div className={`flex-grow ${event.description ? 'cursor-pointer' : ''}`}>
                                         <div className="flex items-center space-x-2">
                                             {event.completed && <CheckCircleIcon className="w-5 h-5 text-green-500 flex-shrink-0 transition-opacity" />}
-                                            <p className={`font-semibold text-slate-800 truncate transition-colors ${event.completed ? 'line-through text-slate-500' : ''}`}>{event.title}</p>
+                                            <p className={`font-semibold text-zinc-800 truncate transition-colors ${event.completed ? 'line-through text-zinc-500' : ''}`}>{event.title}</p>
                                         </div>
-                                        <div className={`flex items-center gap-2 text-sm transition-colors ${event.completed ? 'text-slate-400' : 'text-slate-500'}`}>
+                                        <div className={`flex items-center gap-2 text-sm transition-colors ${event.completed ? 'text-zinc-400' : 'text-zinc-500'}`}>
                                             <span>{event.time}</span>
                                             {event.reminder && (
                                                 <div title="Recordatorio en la app activado">
-                                                    <BellIcon className={`w-4 h-4 transition-colors ${event.completed ? 'text-slate-400' : 'text-indigo-500'}`} />
+                                                    <BellIcon className={`w-4 h-4 transition-colors ${event.completed ? 'text-zinc-400' : 'text-teal-500'}`} />
                                                 </div>
                                             )}
                                         </div>
@@ -142,21 +142,21 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
                                 </div>
                                 <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
                                     {event.description && (
-                                        <button onClick={() => toggleExpand(event.id)} className="p-1.5 text-slate-500 rounded-md">
+                                        <button onClick={() => toggleExpand(event.id)} className="p-1.5 text-zinc-500 rounded-md">
                                             <ChevronDownIcon className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                         </button>
                                     )}
-                                    <button onClick={() => onEditEvent(event)} className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-200" title={event.routineId ? 'Edita la rutina para cambiar este evento' : 'Editar evento'}>
-                                        <PencilIcon className={`w-4 h-4 ${event.routineId ? 'text-slate-300 cursor-not-allowed' : ''}`}/>
+                                    <button onClick={() => onEditEvent(event)} className="p-1.5 text-zinc-500 hover:text-teal-600 rounded-md hover:bg-zinc-200" title={event.routineId ? 'Edita la rutina para cambiar este evento' : 'Editar evento'}>
+                                        <PencilIcon className={`w-4 h-4 ${event.routineId ? 'text-zinc-300 cursor-not-allowed' : ''}`}/>
                                     </button>
-                                    <button onClick={() => onDeleteEvent(event.id)} className="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-slate-200" title={event.routineId ? 'Elimina la rutina para borrar este evento' : 'Eliminar evento'}>
-                                        <TrashIcon className={`w-4 h-4 ${event.routineId ? 'text-slate-300 cursor-not-allowed' : ''}`}/>
+                                    <button onClick={() => onDeleteEvent(event.id)} className="p-1.5 text-zinc-500 hover:text-red-600 rounded-md hover:bg-zinc-200" title={event.routineId ? 'Elimina la rutina para borrar este evento' : 'Eliminar evento'}>
+                                        <TrashIcon className={`w-4 h-4 ${event.routineId ? 'text-zinc-300 cursor-not-allowed' : ''}`}/>
                                     </button>
                                 </div>
                             </div>
                             {isExpanded && event.description && (
                                 <div className="pl-8 pt-2">
-                                    <p className={`text-sm whitespace-pre-wrap transition-colors ${event.completed ? 'text-slate-500' : 'text-slate-600'}`}>{event.description}</p>
+                                    <p className={`text-sm whitespace-pre-wrap transition-colors ${event.completed ? 'text-zinc-500' : 'text-zinc-600'}`}>{event.description}</p>
                                 </div>
                             )}
                         </li>
@@ -164,7 +164,7 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
                 })}
               </ul>
             ) : (
-              <p className="text-center text-slate-500 py-8">No hay eventos programados para hoy.</p>
+              <p className="text-center text-zinc-500 py-8">No hay eventos programados para hoy.</p>
             )}
           </div>
       </div>

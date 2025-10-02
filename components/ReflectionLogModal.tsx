@@ -73,14 +73,14 @@ export const ReflectionLogModal: React.FC<ReflectionLogModalProps> = ({ isOpen, 
           <title>Historial de Reflexiones</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px; }
-            h1 { color: #1e40af; }
+            h1 { color: #0f766e; }
             h2 { font-size: 1.1em; color: #666; font-weight: normal; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 20px; }
             .entry { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 20px; background-color: #f9fafb; page-break-inside: avoid; }
             .entry-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; color: #6b7280; font-size: 0.9em; }
-            .date { font-weight: bold; font-size: 1.1em; color: #1d4ed8; }
+            .date { font-weight: bold; font-size: 1.1em; color: #115e59; }
             .emoji { font-size: 1.5em; margin-right: 10px; }
             .day-title { font-style: italic; color: #4b5563; }
-            .thought { border-left: 3px solid #60a5fa; padding-left: 10px; margin: 10px 0; }
+            .thought { border-left: 3px solid #5eead4; padding-left: 10px; margin: 10px 0; }
             .lesson { border-left: 3px solid #9ca3af; padding-left: 10px; margin: 10px 0; }
             strong { color: #374151; }
           </style>
@@ -122,39 +122,39 @@ export const ReflectionLogModal: React.FC<ReflectionLogModalProps> = ({ isOpen, 
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-slate-800">Mi Línea de Tiempo de Reflexiones</h2>
-            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-slate-100">
-                <XMarkIcon className="w-6 h-6 text-slate-500" />
+            <h2 className="text-2xl font-bold text-zinc-800">Mi Línea de Tiempo de Reflexiones</h2>
+            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-zinc-100">
+                <XMarkIcon className="w-6 h-6 text-zinc-500" />
             </button>
         </div>
 
-        <div className="px-1 py-4 mb-4 border-t border-b border-slate-200 flex flex-wrap items-end gap-4">
+        <div className="px-1 py-4 mb-4 border-t border-b border-zinc-200 flex flex-wrap items-end gap-4">
             <div className="flex-grow">
-                <label htmlFor="start-date" className="block text-sm font-medium text-slate-600 mb-1">Desde</label>
+                <label htmlFor="start-date" className="block text-sm font-medium text-zinc-600 mb-1">Desde</label>
                 <input type="date" id="start-date" value={startDate} onChange={e => setStartDate(e.target.value)} 
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"/>
+                    className="w-full px-3 py-1.5 border border-zinc-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"/>
             </div>
              <div className="flex-grow">
-                <label htmlFor="end-date" className="block text-sm font-medium text-slate-600 mb-1">Hasta</label>
+                <label htmlFor="end-date" className="block text-sm font-medium text-zinc-600 mb-1">Hasta</label>
                 <input type="date" id="end-date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"/>
+                    className="w-full px-3 py-1.5 border border-zinc-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"/>
             </div>
             <button onClick={handleClearFilters}
-                className="px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50">
+                className="px-3 py-1.5 bg-white border border-zinc-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50">
                 Limpiar Filtros
             </button>
         </div>
         
         <div className="flex-grow overflow-y-auto max-h-[60vh] pr-4">
             {filteredEntries.length > 0 ? (
-                <div className="relative border-l-2 border-slate-200 pl-6 space-y-8">
+                <div className="relative border-l-2 border-zinc-200 pl-6 space-y-8">
                     {filteredEntries.map(entry => (
                         <div key={entry.timestamp} className="relative">
-                            <div className="absolute -left-[33px] top-1 w-4 h-4 bg-white border-2 border-indigo-500 rounded-full"></div>
-                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="absolute -left-[33px] top-1 w-4 h-4 bg-white border-2 border-teal-500 rounded-full"></div>
+                            <div className="p-4 bg-stone-50 rounded-lg border border-zinc-200">
                                 <div className="flex justify-between items-baseline mb-3">
-                                    <p className="text-md font-semibold text-indigo-700">{formatDate(entry.timestamp)}</p>
-                                    <p className="text-sm font-medium text-slate-500">{formatTime(entry.timestamp)}</p>
+                                    <p className="text-md font-semibold text-teal-700">{formatDate(entry.timestamp)}</p>
+                                    <p className="text-sm font-medium text-zinc-500">{formatTime(entry.timestamp)}</p>
                                 </div>
                                 <div className="space-y-4 text-sm">
                                     {(entry.dayTitle || entry.emotionEmoji) && (
@@ -162,22 +162,22 @@ export const ReflectionLogModal: React.FC<ReflectionLogModalProps> = ({ isOpen, 
                                             {entry.emotionEmoji && <span className="text-3xl">{entry.emotionEmoji}</span>}
                                             {entry.dayTitle && (
                                                 <div>
-                                                    <p className="font-semibold text-slate-600">El título de mi día:</p>
-                                                    <p className="text-slate-800 mt-1 italic">"{entry.dayTitle}"</p>
+                                                    <p className="font-semibold text-zinc-600">El título de mi día:</p>
+                                                    <p className="text-zinc-800 mt-1 italic">"{entry.dayTitle}"</p>
                                                 </div>
                                             )}
                                         </div>
                                     )}
                                     {entry.positiveThought && (
                                         <div>
-                                            <p className="font-semibold text-slate-600">Pensamiento positivo:</p>
-                                            <blockquote className="text-slate-800 mt-1 pl-3 border-l-4 border-indigo-300">{entry.positiveThought}</blockquote>
+                                            <p className="font-semibold text-zinc-600">Pensamiento positivo:</p>
+                                            <blockquote className="text-zinc-800 mt-1 pl-3 border-l-4 border-teal-300">{entry.positiveThought}</blockquote>
                                         </div>
                                     )}
                                     {entry.lessonLearned && (
                                         <div>
-                                            <p className="font-semibold text-slate-600">Lección aprendida:</p>
-                                            <blockquote className="text-slate-800 mt-1 pl-3 border-l-4 border-slate-300">{entry.lessonLearned}</blockquote>
+                                            <p className="font-semibold text-zinc-600">Lección aprendida:</p>
+                                            <blockquote className="text-zinc-800 mt-1 pl-3 border-l-4 border-zinc-300">{entry.lessonLearned}</blockquote>
                                         </div>
                                     )}
                                 </div>
@@ -186,16 +186,16 @@ export const ReflectionLogModal: React.FC<ReflectionLogModalProps> = ({ isOpen, 
                     ))}
                 </div>
             ) : (
-                 <p className="text-center text-slate-500 py-12">No se han encontrado reflexiones para el período seleccionado.</p>
+                 <p className="text-center text-zinc-500 py-12">No se han encontrado reflexiones para el período seleccionado.</p>
             )}
         </div>
 
-        <div className="mt-6 flex justify-between items-center pt-4 border-t border-slate-200">
+        <div className="mt-6 flex justify-between items-center pt-4 border-t border-zinc-200">
             <button
               type="button"
               onClick={handleDownload}
               disabled={filteredEntries.length === 0}
-              className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-4 py-2 bg-white border border-zinc-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <DownloadIcon className="w-5 h-5"/>
               <span>Descargar Historial</span>
@@ -203,7 +203,7 @@ export const ReflectionLogModal: React.FC<ReflectionLogModalProps> = ({ isOpen, 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 bg-teal-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
             >
               Cerrar
             </button>

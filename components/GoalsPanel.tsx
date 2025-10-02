@@ -66,10 +66,11 @@ const TaskItem: React.FC<{ task: Task; onUpdateTask: GoalsPanelProps['onUpdateTa
     );
 };
 
-const statusConfig: Record<TaskStatus, { icon: React.ReactElement, label: string, color: string }> = {
-    todo: { icon: <CircleIcon className="w-4 h-4" />, label: "Por Hacer", color: "text-slate-500" },
-    inProgress: { icon: <CircleHalfIcon className="w-4 h-4" />, label: "En Progreso", color: "text-blue-500" },
-    done: { icon: <CheckCircleFillIcon className="w-4 h-4" />, label: "Hecho", color: "text-green-500" },
+// FIX: Changed statusConfig to store component types instead of element instances for better type safety.
+const statusConfig: Record<TaskStatus, { icon: React.FC<React.SVGProps<SVGSVGElement>>, label: string, color: string }> = {
+    todo: { icon: CircleIcon, label: "Por Hacer", color: "text-slate-500" },
+    inProgress: { icon: CircleHalfIcon, label: "En Progreso", color: "text-blue-500" },
+    done: { icon: CheckCircleFillIcon, label: "Hecho", color: "text-green-500" },
 };
 
 const ProjectDetails: React.FC<Omit<GoalsPanelProps, 'projects' | 'tasks' | 'onAddProject'> & { project: Project; projectTasks: Task[]; }> = ({ project, projectTasks, onAddTask, onUpdateTask, onDeleteTask, onAddMultipleTasks, onEditProject, onDeleteProject }) => {
@@ -157,24 +158,28 @@ const ProjectDetails: React.FC<Omit<GoalsPanelProps, 'projects' | 'tasks' | 'onA
                 </div>
                 {/* Task List */}
                 <div className="mt-3 space-y-2 min-h-[5rem]">
-                    {tasksByStatus[activeTab].map(task => (
+                    {tasksByStatus[activeTab].map(task => {
+                        const IconComponent = statusConfig[task.status].icon;
+                        return (
                         <div key={task.id} className="flex items-center gap-3 text-sm p-1 rounded hover:bg-slate-200/50">
                              <div className={`flex items-center ${statusConfig[task.status].color}`}>
-                                {statusConfig[task.status].icon}
+                                <IconComponent className="w-4 h-4" />
                              </div>
                              <div className="flex-grow">
                                 <TaskItem task={task} onUpdateTask={onUpdateTask} onDeleteTask={onDeleteTask} />
                              </div>
                              <div className="flex items-center">
-                                {(['todo', 'inProgress', 'done'] as TaskStatus[]).map(s => (
+                                {(['todo', 'inProgress', 'done'] as TaskStatus[]).map(s => {
+                                    const StatusIcon = statusConfig[s].icon;
+                                    return (
                                     <button key={s} onClick={() => onUpdateTask(task.id, s, task.text)}
                                         className={`p-1 rounded-full ${task.status === s ? statusConfig[s].color : 'text-slate-300 hover:text-slate-500'}`} title={`Marcar como '${statusConfig[s].label}'`}>
-                                        {React.cloneElement(statusConfig[s].icon, { className: 'w-5 h-5' })}
+                                        <StatusIcon className="w-5 h-5" />
                                     </button>
-                                ))}
+                                )})}
                              </div>
                         </div>
-                    ))}
+                    )})}
                 </div>
                  {/* Add Task & AI */}
                 <div className="mt-4 pt-3 border-t border-slate-200">

@@ -25,154 +25,116 @@ const UserGroupIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 const ChatBubbleLeftEllipsisIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.76 9.76 0 0 1-2.53-.388m-5.168-4.285A11.979 11.979 0 0 1 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.455.09-.934.09-1.425v-2.552c0-3.542 2.67-6.443 6-6.443h2.25c2.519 0 4.716 1.632 5.49 3.868.17.44.258.913.258 1.396Z" />
   </svg>
 );
 
-const HeartIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+const CalendarDaysIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0h18M12 12.75h.008v.008H12v-.008Zm0 3h.008v.008H12v-.008Zm.008-3h.008v.008H12.008V9.75Zm-3 3h.008v.008H9v-.008Zm0-3h.008v.008H9V9.75Zm3 0h.008v.008H12V9.75Zm-3 0h.008v.008H9V9.75Zm6 3h.008v.008h-.008v-.008Zm0-3h.008v.008h-.008V9.75Zm-3 3h.008v.008h-.008v-.008Zm-3-3h.008v.008H9v-.008Z" />
   </svg>
 );
 
-const CalendarIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+const BookOpenIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0h18M-7.5 12h1.5m3 0h1.5m3 0h1.5m-7.5 4.5h1.5m3 0h1.5m3 0h1.5" />
-  </svg>
-);
-
-const NoSymbolIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
-  </svg>
-);
-
-const PencilSquareIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-  </svg>
-);
-
-const DocumentTextIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-  </svg>
-);
-
-const CheckBadgeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-  </svg>
-);
-
-const BriefcaseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
   </svg>
 );
 
 
 const notificationIcons: Record<Notification['type'], React.ReactElement> = {
-  pairing_request: <UserGroupIcon className="w-5 h-5 text-indigo-500" />,
-  pairing_accepted: <UserGroupIcon className="w-5 h-5 text-green-500" />,
-  new_partner_note: <PencilSquareIcon className="w-5 h-5 text-yellow-500" />,
-  new_qa_question: <ChatBubbleLeftEllipsisIcon className="w-5 h-5 text-sky-500" />,
-  new_shared_emotion: <HeartIcon className="w-5 h-5 text-pink-500" />,
-  new_shared_reflection: <DocumentTextIcon className="w-5 h-5 text-purple-500" />,
-  new_shared_trip: <BriefcaseIcon className="w-5 h-5 text-cyan-500" />,
-  event_reminder: <CalendarIcon className="w-5 h-5 text-amber-500" />,
-  daily_reflection_prompt: <PencilSquareIcon className="w-5 h-5 text-teal-500" />,
-  goal_checkin: <CheckBadgeIcon className="w-5 h-5 text-lime-500" />,
-  generic: <BellSnoozeIcon className="w-5 h-5 text-slate-500" />,
+  pairing_request: <UserGroupIcon className="w-6 h-6 text-indigo-500" />,
+  pairing_accepted: <UserGroupIcon className="w-6 h-6 text-green-500" />,
+  new_partner_note: <ChatBubbleLeftEllipsisIcon className="w-6 h-6 text-yellow-500" />,
+  new_qa_question: <ChatBubbleLeftEllipsisIcon className="w-6 h-6 text-cyan-500" />,
+  new_shared_emotion: <UserGroupIcon className="w-6 h-6 text-pink-500" />,
+  new_shared_reflection: <BookOpenIcon className="w-6 h-6 text-purple-500" />,
+  new_shared_trip: <UserGroupIcon className="w-6 h-6 text-blue-500" />,
+  event_reminder: <CalendarDaysIcon className="w-6 h-6 text-teal-500" />,
+  daily_reflection_prompt: <BookOpenIcon className="w-6 h-6 text-amber-500" />,
+  goal_checkin: <UserGroupIcon className="w-6 h-6 text-lime-500" />,
+  generic: <UserGroupIcon className="w-6 h-6 text-slate-500" />,
 };
 
 const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const past = new Date(timestamp);
-    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
-    
-    if (diffInSeconds < 60) return "ahora";
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `hace ${diffInMinutes}m`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `hace ${diffInHours}h`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `hace ${diffInDays}d`;
+  const now = new Date();
+  const past = new Date(timestamp);
+  const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "ahora";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d`;
 };
 
 
-export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifications, onMarkAsRead, onMarkAllAsRead, onNotificationClick, isMuted, onToggleMute, onClose }) => {
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  return (
-    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-fade-in">
-        <style>{`
-            @keyframes fade-in {
-                0% { opacity: 0; transform: translateY(-10px); }
-                100% { opacity: 1; transform: translateY(0); }
-            }
-            .animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
-        `}</style>
-        <div className="p-4 border-b border-slate-100">
-            <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-slate-800">Notificaciones</h3>
-                {unreadCount > 0 && (
-                    <button onClick={onMarkAllAsRead} className="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+export const NotificationCenter: React.FC<NotificationCenterProps> = ({
+  notifications,
+  onMarkAsRead,
+  onMarkAllAsRead,
+  onNotificationClick,
+  isMuted,
+  onToggleMute,
+  onClose,
+}) => {
+    return (
+        <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-zinc-200 z-50 flex flex-col overflow-hidden animate-fade-in">
+            <style>{`
+                @keyframes fade-in {
+                    0% { opacity: 0; transform: translateY(-10px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in { animation: fade-in 0.2s ease-out forwards; }
+            `}</style>
+            <div className="p-3 border-b border-zinc-200 flex-shrink-0">
+                <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-zinc-800 text-lg">Notificaciones</h3>
+                    <div className="flex items-center space-x-2">
+                        <button onClick={onToggleMute} title={isMuted ? "Activar notificaciones" : "Silenciar notificaciones"}
+                          className={`p-1.5 rounded-full ${isMuted ? 'text-red-500 bg-red-100' : 'text-zinc-500 hover:bg-zinc-100'}`}>
+                            <BellSnoozeIcon className="w-5 h-5"/>
+                        </button>
+                    </div>
+                </div>
+                {notifications.some(n => !n.read) && (
+                    <button onClick={onMarkAllAsRead} className="text-xs font-medium text-teal-600 hover:underline mt-1">
                         Marcar todo como leído
                     </button>
                 )}
             </div>
-        </div>
 
-        <div className="max-h-96 overflow-y-auto">
-            {notifications.length > 0 ? (
-                <ul>
-                    {notifications.map(n => (
-                        <li 
-                          key={n.id} 
-                          onClick={() => {
-                            onNotificationClick(n);
-                            onClose();
-                          }} 
-                          className={`flex items-start gap-4 p-4 border-b border-slate-100 cursor-pointer transition-colors ${!n.read ? 'bg-indigo-50 hover:bg-indigo-100' : 'hover:bg-slate-50'}`}
-                        >
-                            <div className="flex-shrink-0 mt-0.5">
-                                {notificationIcons[n.type] || notificationIcons.generic}
-                            </div>
-                            <div className="flex-grow">
-                                <p className="text-sm font-semibold text-slate-800">{n.title}</p>
-                                <p className="text-sm text-slate-600">{n.message}</p>
-                                <p className="text-xs text-slate-400 mt-1">{formatTimeAgo(n.timestamp)}</p>
-                            </div>
-                            {!n.read && (
+            <div className="flex-grow overflow-y-auto max-h-96">
+                {notifications.length > 0 ? (
+                    <ul>
+                        {notifications.map(n => (
+                            <li key={n.id} onClick={() => { onNotificationClick(n); onClose(); }}
+                                className={`flex items-start p-3 space-x-3 cursor-pointer transition-colors ${ n.read ? 'hover:bg-zinc-50' : 'bg-teal-50 hover:bg-teal-100'}`}>
                                 <div className="flex-shrink-0 mt-0.5">
-                                    <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full block"></span>
+                                    {notificationIcons[n.type] || notificationIcons.generic}
                                 </div>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <div className="p-8 text-center">
-                    <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                        <NoSymbolIcon className="w-6 h-6 text-slate-400" />
+                                <div className="flex-grow">
+                                    <p className="font-semibold text-sm text-zinc-800">{n.title}</p>
+                                    <p className="text-sm text-zinc-600">{n.message}</p>
+                                    <p className="text-xs text-zinc-400 mt-1">{formatTimeAgo(n.timestamp)}</p>
+                                </div>
+                                {!n.read && (
+                                    <div className="flex-shrink-0 mt-0.5">
+                                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                    </div>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="text-center p-12 text-zinc-500">
+                        <p className="font-semibold">Todo al día</p>
+                        <p className="text-sm mt-1">No tienes notificaciones nuevas.</p>
                     </div>
-                    <p className="mt-4 text-sm font-medium text-slate-600">No tienes notificaciones</p>
-                    <p className="mt-1 text-xs text-slate-500">Aquí aparecerán las nuevas alertas.</p>
-                </div>
-            )}
+                )}
+            </div>
         </div>
-
-        <div className="p-3 bg-slate-50 border-t border-slate-100">
-            <label htmlFor="mute-toggle" className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm font-medium text-slate-700">Silenciar notificaciones</span>
-                <div className="relative">
-                    <input type="checkbox" id="mute-toggle" className="sr-only" checked={isMuted} onChange={onToggleMute} />
-                    <div className={`block w-10 h-6 rounded-full transition-colors ${isMuted ? 'bg-slate-300' : 'bg-indigo-500'}`}></div>
-                    <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isMuted ? 'transform translate-x-0' : 'transform translate-x-4'}`}></div>
-                </div>
-            </label>
-        </div>
-    </div>
-  );
+    );
 };

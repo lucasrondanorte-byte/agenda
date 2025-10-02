@@ -80,42 +80,42 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">{event ? 'Editar Evento' : 'Añadir Nuevo Evento'}</h2>
+        <h2 className="text-2xl font-bold text-zinc-800 mb-6">{event ? 'Editar Evento' : 'Añadir Nuevo Evento'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Título</label>
+            <label htmlFor="title" className="block text-sm font-medium text-zinc-700 mb-1">Título</label>
             <input
               type="text"
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               placeholder="p. ej., Reunión de equipo"
             />
           </div>
           <div>
-            <label htmlFor="time" className="block text-sm font-medium text-slate-700 mb-1">Hora</label>
+            <label htmlFor="time" className="block text-sm font-medium text-zinc-700 mb-1">Hora</label>
             <input
               type="time"
               id="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             />
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Descripción (Opcional)</label>
+            <label htmlFor="description" className="block text-sm font-medium text-zinc-700 mb-1">Descripción (Opcional)</label>
             <textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+              className="w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
               placeholder="Añade más detalles sobre tu evento..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Categoría</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-2">Categoría</label>
             <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => (
                 <button
@@ -125,7 +125,7 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
                     className={`px-3 py-1 text-sm font-medium rounded-full transition-all ${
                     category === cat.id
                         ? `${cat.color} text-white ring-2 ring-offset-2 ${cat.ring}`
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                     }`}
                 >
                     {cat.name}
@@ -137,9 +137,9 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
             <ColorPicker selectedColor={color} onChange={setColor} />
           </div>
           <div className="pt-2 space-y-4">
-            <fieldset className="border-t border-slate-200 pt-4">
-                <legend className="text-sm font-medium text-slate-800">Recordatorios</legend>
-                 <p className="text-xs text-slate-500 mt-2 mb-3">
+            <fieldset className="border-t border-zinc-200 pt-4">
+                <legend className="text-sm font-medium text-zinc-800">Recordatorios</legend>
+                 <p className="text-xs text-zinc-500 mt-2 mb-3">
                     Al activar un recordatorio, se te pedirá permiso para enviar notificaciones a través de tu navegador.
                  </p>
                  <div className="space-y-3">
@@ -149,9 +149,9 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
                             type="checkbox"
                             checked={reminder}
                             onChange={handleReminderToggle}
-                            className="h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                            className="h-4 w-4 text-teal-600 border-zinc-300 rounded focus:ring-teal-500"
                         />
-                        <label htmlFor="reminder" className="ml-3 block text-sm text-slate-700">
+                        <label htmlFor="reminder" className="ml-3 block text-sm text-zinc-700">
                            Notificación del sistema
                         </label>
                     </div>
@@ -163,13 +163,13 @@ export const EventFormModal: React.FC<EventFormModalProps> = ({ isOpen, onClose,
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 bg-white border border-zinc-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 bg-teal-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
             >
               Guardar Evento
             </button>

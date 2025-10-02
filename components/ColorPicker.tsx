@@ -21,7 +21,7 @@ interface ColorPickerProps {
 export const ColorPicker: React.FC<ColorPickerProps> = ({ selectedColor, onChange }) => {
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
+      <label className="block text-sm font-medium text-zinc-700 mb-2">Color</label>
       <div className="flex flex-wrap gap-3">
         {colors.map(color => (
           <button
@@ -29,7 +29,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ selectedColor, onChang
             type="button"
             onClick={() => onChange(color)}
             className={`w-8 h-8 rounded-full transition-all focus:outline-none border-2 ${
-              selectedColor === color ? 'ring-2 ring-offset-2 ring-indigo-500 border-white' : 'border-transparent hover:scale-110'
+              selectedColor === color ? 'ring-2 ring-offset-2 ring-teal-500 border-white' : 'border-transparent hover:scale-110'
             }`}
             style={{ backgroundColor: color }}
             aria-label={`Select color ${color}`}

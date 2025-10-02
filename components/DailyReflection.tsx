@@ -91,12 +91,12 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <JournalIcon className="w-6 h-6 text-indigo-500"/>
-          <h3 className="text-xl font-semibold text-slate-700">Mi Reflexión del Día</h3>
+          <JournalIcon className="w-6 h-6 text-teal-500"/>
+          <h3 className="text-xl font-semibold text-zinc-700">Mi Reflexión del Día</h3>
         </div>
         <button
           onClick={onOpenHistory}
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors disabled:text-slate-400 disabled:cursor-not-allowed"
+          className="text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors disabled:text-zinc-400 disabled:cursor-not-allowed"
           disabled={journalEntries.length === 0}
         >
           Ver historial
@@ -104,7 +104,7 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
       </div>
       <div className="space-y-6">
         <div>
-          <label htmlFor="positive-thought" className="block text-sm font-medium text-slate-600 mb-1">
+          <label htmlFor="positive-thought" className="block text-sm font-medium text-zinc-600 mb-1">
             Un pensamiento positivo o agradecimiento de hoy:
           </label>
           <textarea
@@ -112,12 +112,12 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             rows={3}
             value={positiveThought}
             onChange={createChangeHandler(setPositiveThought)}
-            className="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 resize-none transition-colors"
+            className="w-full px-3 py-2 border border-zinc-200 bg-stone-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 resize-none transition-colors"
             placeholder="¿Qué te hizo sonreír hoy?"
           />
         </div>
         <div>
-          <label htmlFor="lesson-learned" className="block text-sm font-medium text-slate-600 mb-1">
+          <label htmlFor="lesson-learned" className="block text-sm font-medium text-zinc-600 mb-1">
             Algo que aprendí sobre mí o sobre los demás:
           </label>
           <textarea
@@ -125,30 +125,30 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             rows={3}
             value={lessonLearned}
             onChange={createChangeHandler(setLessonLearned)}
-            className="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 resize-none transition-colors"
+            className="w-full px-3 py-2 border border-zinc-200 bg-stone-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 resize-none transition-colors"
             placeholder="Una pequeña o gran revelación..."
           />
         </div>
          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-2">¿Qué emoción representa mejor este día?</label>
-            <div className="flex flex-wrap justify-around bg-slate-50/70 p-3 rounded-lg gap-2">
+            <label className="block text-sm font-medium text-zinc-600 mb-2">¿Qué emoción representa mejor este día?</label>
+            <div className="flex flex-wrap justify-around bg-stone-50/70 p-3 rounded-lg gap-2">
                 {reflectionEmotions.map(({emoji, label}) => (
                     <button 
                     key={emoji}
                     type="button"
                     onClick={() => handleEmojiSelect(emoji)}
-                    className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 w-20 ${emotionEmoji === emoji ? 'bg-indigo-200 scale-110' : 'hover:bg-slate-200'}`}
+                    className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 w-20 ${emotionEmoji === emoji ? 'bg-teal-200 scale-110' : 'hover:bg-zinc-200'}`}
                     aria-label={`Seleccionar emoción: ${label}`}
                     title={label}
                     >
                         <span className="text-3xl">{emoji}</span>
-                        <span className="text-xs font-medium text-slate-700 mt-1">{label}</span>
+                        <span className="text-xs font-medium text-zinc-700 mt-1">{label}</span>
                     </button>
                 ))}
             </div>
         </div>
         <div>
-          <label htmlFor="day-title" className="block text-sm font-medium text-slate-600 mb-1">
+          <label htmlFor="day-title" className="block text-sm font-medium text-zinc-600 mb-1">
             Si tuvieras que ponerle un título a tu día, ¿cuál sería?
           </label>
           <input
@@ -156,7 +156,7 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             id="day-title"
             value={dayTitle}
             onChange={createChangeHandler(setDayTitle)}
-            className="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-colors"
+            className="w-full px-3 py-2 border border-zinc-200 bg-stone-50 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-300 transition-colors"
             placeholder="p. ej., Un día de calma inesperada, Misión cumplida..."
           />
         </div>
@@ -165,7 +165,7 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
                 onClick={() => onOpenShareModal(currentJournalEntry!)}
                 disabled={isShareDisabled}
                 title={isShareDisabled ? (partner ? 'Guarda tu reflexión para poder compartirla' : 'Conecta con una pareja para compartir') : 'Compartir reflexión'}
-                className="flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-slate-300 bg-white rounded-md text-sm font-medium text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-zinc-300 bg-white rounded-md text-sm font-medium text-zinc-700 shadow-sm transition-colors duration-200 hover:bg-zinc-50 disabled:opacity-60 disabled:cursor-not-allowed"
             >
                 <ShareIcon className="w-5 h-5" />
                 <span>Compartir</span>
@@ -173,9 +173,9 @@ export const DailyReflection: React.FC<DailyReflectionProps> = ({ journalEntries
             <button
                 onClick={handleSave}
                 disabled={isSaveDisabled}
-                className={`flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-transparent rounded-md text-sm font-medium text-white shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                    ${isSaved ? 'bg-green-500' : 'bg-indigo-600'}
-                    ${isSaveDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-indigo-700'}
+                className={`flex items-center justify-center space-x-2 px-4 py-2 w-40 border border-transparent rounded-md text-sm font-medium text-white shadow-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500
+                    ${isSaved ? 'bg-green-500' : 'bg-teal-600'}
+                    ${isSaveDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-teal-700'}
                 `}
             >
                 {isSaved ? (

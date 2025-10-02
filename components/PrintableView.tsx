@@ -72,7 +72,7 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
 
     const days = [];
     for (let i = 0; i < startDay; i++) {
-      days.push(<div key={`empty-start-${i}`} className="border-r border-b border-slate-300"></div>);
+      days.push(<div key={`empty-start-${i}`} className="border-r border-b border-zinc-300"></div>);
     }
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
@@ -80,8 +80,8 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
       const dayEvents = (eventsByDate[dateString] || []).sort((a,b) => a.time.localeCompare(b.time));
 
       days.push(
-        <div key={i} className="relative p-2 h-40 border-r border-b border-slate-300 flex flex-col">
-          <span className="font-semibold text-slate-700">{i}</span>
+        <div key={i} className="relative p-2 h-40 border-r border-b border-zinc-300 flex flex-col">
+          <span className="font-semibold text-zinc-700">{i}</span>
           {dayEvents.length > 0 && (
             <div className="mt-1 space-y-1 overflow-auto">
                 {dayEvents.map(event => (
@@ -137,7 +137,7 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
           <title>Calendario Mensual - ${monthName}</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            h1 { text-align: center; color: #1e40af; font-size: 1.8em; text-transform: capitalize; }
+            h1 { text-align: center; color: #0f766e; font-size: 1.8em; text-transform: capitalize; }
             .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #ccc; border-left: 1px solid #ccc; }
             .day-header { text-align: center; padding: 8px; font-weight: bold; background-color: #f1f5f9; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; font-size: 0.9em; }
             .day-cell { border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 5px; height: 120px; vertical-align: top; }
@@ -170,36 +170,36 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ isOpen, onClose, e
     <div id="printable-view-container" className="fixed inset-0 bg-white z-50 p-8 flex flex-col">
         {/* Header */}
         <header className="flex justify-between items-center mb-6 no-print">
-            <h1 className="text-3xl font-bold text-slate-800">
+            <h1 className="text-3xl font-bold text-zinc-800">
                 Vista de Impresión
             </h1>
             <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                    <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-slate-100 transition-colors">
-                        <ChevronLeftIcon className="w-6 h-6 text-slate-600" />
+                    <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
+                        <ChevronLeftIcon className="w-6 h-6 text-zinc-600" />
                     </button>
-                    <h2 className="text-2xl font-semibold text-slate-700 w-48 text-center">
+                    <h2 className="text-2xl font-semibold text-zinc-700 w-48 text-center">
                         {currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                     </h2>
-                    <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-slate-100 transition-colors">
-                        <ChevronRightIcon className="w-6 h-6 text-slate-600" />
+                    <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
+                        <ChevronRightIcon className="w-6 h-6 text-zinc-600" />
                     </button>
                 </div>
-                <button onClick={handlePrint} className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+                <button onClick={handlePrint} className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
                     <PrinterIcon className="w-5 h-5" />
                     <span>Imprimir</span>
                 </button>
-                 <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 transition-colors">
-                    <XMarkIcon className="w-7 h-7 text-slate-600" />
+                 <button onClick={onClose} className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
+                    <XMarkIcon className="w-7 h-7 text-zinc-600" />
                 </button>
             </div>
         </header>
 
         {/* Calendar Grid */}
-        <div className="flex-grow flex flex-col border-t border-l border-slate-300">
+        <div className="flex-grow flex flex-col border-t border-l border-zinc-300">
             <div className="grid grid-cols-7">
                 {daysOfWeek.map(day => (
-                    <div key={day} className="text-center py-2 text-sm font-bold text-slate-600 bg-slate-100 border-r border-b border-slate-300">{day}</div>
+                    <div key={day} className="text-center py-2 text-sm font-bold text-zinc-600 bg-zinc-100 border-r border-b border-zinc-300">{day}</div>
                 ))}
             </div>
              <div className="grid grid-cols-7 flex-grow">

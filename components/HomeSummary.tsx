@@ -21,18 +21,18 @@ export const HomeSummary: React.FC<HomeSummaryProps> = ({ shoppingLists, onNavig
             onClick={onNavigate}
         >
             <div className="flex items-center gap-3 mb-4">
-              <HomeIcon className="w-6 h-6 text-indigo-500"/>
-              <h3 className="text-xl font-semibold text-slate-700">Listas del Hogar</h3>
+              <HomeIcon className="w-6 h-6 text-teal-500"/>
+              <h3 className="text-xl font-semibold text-zinc-700">Listas del Hogar</h3>
             </div>
             {summaryLists.length > 0 ? (
                 <div className="space-y-3">
                     {summaryLists.map(list => {
                         const pendingItems = list.items.filter(item => !item.completed).length;
                         return (
-                            <div key={list.id} className="flex items-center gap-3 p-2 bg-slate-50 rounded-md">
+                            <div key={list.id} className="flex items-center gap-3 p-2 bg-stone-50 rounded-md">
                                 <span className="text-xl">{list.icon}</span>
                                 <div className="flex-grow">
-                                    <p className="font-medium text-sm text-slate-700 truncate">{list.title}</p>
+                                    <p className="font-medium text-sm text-zinc-700 truncate">{list.title}</p>
                                 </div>
                                 <span className={`text-sm font-semibold px-2 py-0.5 rounded-full ${pendingItems > 0 ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
                                     {pendingItems}
@@ -43,7 +43,7 @@ export const HomeSummary: React.FC<HomeSummaryProps> = ({ shoppingLists, onNavig
                 </div>
             ) : (
                  <div className="text-center py-6">
-                    <p className="text-sm text-slate-500">Añade listas de compras, cuentas por pagar y más. ¡Haz clic para empezar!</p>
+                    <p className="text-sm text-zinc-500">Añade listas de compras, cuentas por pagar y más. ¡Haz clic para empezar!</p>
                 </div>
             )}
         </div>

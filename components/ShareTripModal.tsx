@@ -34,16 +34,16 @@ const CameraIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 const TripCard: React.FC<{ trip: Trip }> = ({ trip }) => {
     return (
-        <div className="bg-white p-3 pb-4 shadow-lg rounded-sm border border-slate-200">
-            <div className="h-40 bg-slate-200 flex items-center justify-center overflow-hidden">
+        <div className="bg-white p-3 pb-4 shadow-lg rounded-sm border border-zinc-200">
+            <div className="h-40 bg-zinc-200 flex items-center justify-center overflow-hidden">
                {trip.coverPhoto ? 
                 <img src={trip.coverPhoto} alt={trip.title} className="w-full h-full object-cover"/> : 
-                <CameraIcon className="w-12 h-12 text-slate-400"/>
+                <CameraIcon className="w-12 h-12 text-zinc-400"/>
                }
             </div>
             <div className="p-3 text-center">
-                <h3 className="font-bold text-xl text-slate-800 font-handwriting truncate">{trip.title}</h3>
-                <p className="text-md text-slate-500 truncate">{trip.destination}</p>
+                <h3 className="font-bold text-xl text-zinc-800 font-handwriting truncate">{trip.title}</h3>
+                <p className="text-md text-zinc-500 truncate">{trip.destination}</p>
             </div>
         </div>
     );
@@ -73,30 +73,30 @@ ${trip.notes ? `Notas: ${trip.notes}`: ''}
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-[100] flex justify-center items-center p-4" onClick={onClose}>
-            <div className="bg-slate-50 rounded-lg shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="bg-stone-50 rounded-lg shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-slate-800">Compartir Viaje</h2>
-                    <button onClick={onClose} className="p-1.5 rounded-full hover:bg-slate-200">
-                        <XMarkIcon className="w-6 h-6 text-slate-500" />
+                    <h2 className="text-2xl font-bold text-zinc-800">Compartir Viaje</h2>
+                    <button onClick={onClose} className="p-1.5 rounded-full hover:bg-zinc-200">
+                        <XMarkIcon className="w-6 h-6 text-zinc-500" />
                     </button>
                 </div>
                 
                 <div className="space-y-6">
                     {/* Preview */}
                     <div>
-                        <p className="text-sm font-medium text-slate-600 mb-2 text-center">Vista Previa</p>
+                        <p className="text-sm font-medium text-zinc-600 mb-2 text-center">Vista Previa</p>
                         <TripCard trip={trip} />
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col justify-center space-y-4 pt-4 border-t border-slate-200">
+                    <div className="flex flex-col justify-center space-y-4 pt-4 border-t border-zinc-200">
                         {partnerName && (
-                            <button onClick={onShareWithPartner} className="w-full flex items-center justify-center space-x-3 px-4 py-3 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-colors">
+                            <button onClick={onShareWithPartner} className="w-full flex items-center justify-center space-x-3 px-4 py-3 bg-teal-600 text-white rounded-lg shadow-sm hover:bg-teal-700 transition-colors">
                                 <UserIcon className="w-5 h-5"/>
                                 <span className="font-semibold">Enviar a {partnerName}</span>
                             </button>
                         )}
-                         <button onClick={handleCopyText} className="w-full flex items-center justify-center space-x-3 px-4 py-3 bg-slate-600 text-white rounded-lg shadow-sm hover:bg-slate-700 transition-colors">
+                         <button onClick={handleCopyText} className="w-full flex items-center justify-center space-x-3 px-4 py-3 bg-zinc-600 text-white rounded-lg shadow-sm hover:bg-zinc-700 transition-colors">
                             <DocumentDuplicateIcon className="w-5 h-5"/>
                             <span className="font-semibold">{copyStatus === 'copied' ? '¡Copiado!' : 'Copiar Texto'}</span>
                         </button>

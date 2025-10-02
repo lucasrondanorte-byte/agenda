@@ -72,7 +72,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
     const days = [];
     // Padding for days before the start of the month
     for (let i = 0; i < startDay; i++) {
-      days.push(<div key={`empty-start-${i}`} className="border-r border-b border-slate-100"></div>);
+      days.push(<div key={`empty-start-${i}`} className="border-r border-b border-zinc-100"></div>);
     }
     // Days of the month
     for (let i = 1; i <= daysInMonth; i++) {
@@ -89,22 +89,22 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
           return eventDateTime < now && !event.completed;
       });
 
-      let dayClass = 'relative p-2 h-24 border-r border-b border-slate-100 flex flex-col cursor-pointer transition-colors duration-200';
+      let dayClass = 'relative p-2 h-24 border-r border-b border-zinc-100 flex flex-col cursor-pointer transition-colors duration-200';
       if (isSelected) {
-        dayClass += ' bg-indigo-100';
+        dayClass += ' bg-teal-100';
       } else if(isToday) {
-        dayClass += ' bg-slate-50';
+        dayClass += ' bg-stone-50';
       } else {
-        dayClass += ' hover:bg-slate-50';
+        dayClass += ' hover:bg-stone-50';
       }
 
       let dateNumberClass = 'text-sm font-medium';
        if (isSelected) {
-        dateNumberClass += ' text-indigo-700';
+        dateNumberClass += ' text-teal-700';
       } else if (isToday) {
-        dateNumberClass += ' text-indigo-600';
+        dateNumberClass += ' text-teal-600';
       } else {
-         dateNumberClass += ' text-slate-500';
+         dateNumberClass += ' text-zinc-500';
       }
 
 
@@ -156,24 +156,24 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, setCurrentDate,
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-slate-700">
+        <h2 className="text-xl font-semibold text-zinc-700">
           {currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
         </h2>
         <div className="flex space-x-2">
-            <button onClick={onOpenPrintView} title="Abrir vista de impresión" className="p-2 rounded-full hover:bg-slate-100 transition-colors">
-                <PrinterIcon className="w-5 h-5 text-slate-500" />
+            <button onClick={onOpenPrintView} title="Abrir vista de impresión" className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
+                <PrinterIcon className="w-5 h-5 text-zinc-500" />
             </button>
-          <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-slate-100 transition-colors">
-            <ChevronLeftIcon className="w-5 h-5 text-slate-500" />
+          <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
+            <ChevronLeftIcon className="w-5 h-5 text-zinc-500" />
           </button>
-          <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-slate-100 transition-colors">
-            <ChevronRightIcon className="w-5 h-5 text-slate-500" />
+          <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-zinc-100 transition-colors">
+            <ChevronRightIcon className="w-5 h-5 text-zinc-500" />
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 border-t border-l border-slate-100 rounded-lg overflow-hidden">
+      <div className="grid grid-cols-7 border-t border-l border-zinc-100 rounded-lg overflow-hidden">
         {daysOfWeek.map(day => (
-          <div key={day} className="text-center py-2 text-sm font-semibold text-slate-500 bg-slate-50 border-r border-b border-slate-100">{day}</div>
+          <div key={day} className="text-center py-2 text-sm font-semibold text-zinc-500 bg-stone-50 border-r border-b border-zinc-100">{day}</div>
         ))}
         {renderDays()}
       </div>

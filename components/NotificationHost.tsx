@@ -37,15 +37,15 @@ const NotificationCard: React.FC<{ notification: Notification; onDismiss: (id: s
       `}</style>
       <div className="flex items-start">
         <div className="flex-shrink-0">
-         <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
+         <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="white" className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
             </svg>
          </div>
         </div>
         <div className="ml-3 w-0 flex-1 pt-0.5">
-          <p className="text-sm font-semibold text-slate-900">{notification.title}</p>
-          <p className="mt-1 text-sm text-slate-600">{notification.message}</p>
+          <p className="text-sm font-semibold text-zinc-900">{notification.title}</p>
+          <p className="mt-1 text-sm text-zinc-600">{notification.message}</p>
           {notification.action && (
             <div className="mt-3 flex space-x-3">
               <button
@@ -53,7 +53,7 @@ const NotificationCard: React.FC<{ notification: Notification; onDismiss: (id: s
                   notification.action?.callback();
                   onDismiss(notification.id);
                 }}
-                className="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
               >
                 {notification.action.label}
               </button>
@@ -61,7 +61,7 @@ const NotificationCard: React.FC<{ notification: Notification; onDismiss: (id: s
           )}
         </div>
         <div className="ml-4 flex-shrink-0 flex">
-          <button onClick={() => onDismiss(notification.id)} className="inline-flex text-slate-400 hover:text-slate-600">
+          <button onClick={() => onDismiss(notification.id)} className="inline-flex text-zinc-400 hover:text-zinc-600">
             <span className="sr-only">Cerrar</span>
             <XMarkIcon className="h-5 w-5" aria-hidden="true" />
           </button>

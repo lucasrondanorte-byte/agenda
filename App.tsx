@@ -27,6 +27,7 @@ import { ProjectFormModal } from './components/AmbitionFormModal';
 import { GoalsSummary } from './components/GoalsSummary';
 import { HomePanel } from './components/HomePanel';
 import { HomeSummary } from './components/HomeSummary';
+import { SplashScreen } from './components/SplashScreen';
 
 const EXAMPLE_USERS: User[] = [
   { id: 'user-1', name: 'Vicki', pairedWith: null },
@@ -87,7 +88,7 @@ const PinInput: React.FC<{ length: number; value: string; onChange: (pin: string
           value={pinArray[index] || ''}
           onChange={(e) => handleChange(e, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
-          className="w-14 h-16 text-center text-3xl font-bold border-2 border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+          className="w-14 h-16 text-center text-3xl font-bold border-2 border-zinc-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
         />
       ))}
     </div>
@@ -147,31 +148,31 @@ const PinManagementModal: React.FC<{
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={handleClose}>
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-        <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">Cambiar PIN</h2>
+        <h2 className="text-2xl font-bold text-zinc-800 mb-6 text-center">Cambiar PIN</h2>
         <div className="space-y-6">
             {currentUser.pin && (
                 <div>
-                    <label className="block text-center text-sm font-medium text-slate-700 mb-2">PIN Actual</label>
+                    <label className="block text-center text-sm font-medium text-zinc-700 mb-2">PIN Actual</label>
                     <PinInput length={4} value={currentPin} onChange={setCurrentPin} />
                 </div>
             )}
             <div>
-                <label className="block text-center text-sm font-medium text-slate-700 mb-2">Nuevo PIN</label>
+                <label className="block text-center text-sm font-medium text-zinc-700 mb-2">Nuevo PIN</label>
                 <PinInput length={4} value={newPin} onChange={setNewPin} />
             </div>
              <div>
-                <label className="block text-center text-sm font-medium text-slate-700 mb-2">Confirmar Nuevo PIN</label>
+                <label className="block text-center text-sm font-medium text-zinc-700 mb-2">Confirmar Nuevo PIN</label>
                 <PinInput length={4} value={confirmNewPin} onChange={setConfirmNewPin} />
             </div>
         </div>
         {error && <p className="text-red-600 text-sm mt-4 text-center">{error}</p>}
-        <div className="flex justify-end space-x-3 pt-6 mt-4 border-t border-slate-200">
+        <div className="flex justify-end space-x-3 pt-6 mt-4 border-t border-zinc-200">
             <button type="button" onClick={handleClose}
-                className="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50">
+                className="px-4 py-2 bg-white border border-zinc-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-zinc-50">
                 Cancelar
             </button>
             <button type="button" onClick={handleSubmit}
-                className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
+                className="px-4 py-2 bg-teal-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-teal-700">
                 Guardar Cambios
             </button>
         </div>
@@ -407,6 +408,7 @@ enum MainView {
 }
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useLocalStorage<User[]>('users', EXAMPLE_USERS);
   const [pairingRequests, setPairingRequests] = useLocalStorage<PairingRequest[]>('pairingRequests', []);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -464,6 +466,11 @@ function App() {
   // Navigation states
   const [activeSection, setActiveSection] = useState<'planner' | 'travel' | 'goals' | 'home'>('planner');
   const [mainView, setMainView] = useState<MainView>(MainView.Personal);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const pairedUser = useMemo(() => {
     if (currentUser?.pairedWith) {
@@ -1181,6 +1188,9 @@ function App() {
     setMainView(MainView.Couple);
   };
 
+  if (isLoading) {
+    return <SplashScreen />;
+  }
 
   if (!currentUser) {
     return <UserAuth users={users} onLogin={handleLogin} onCreateUser={handleCreateUser} />;
@@ -1192,7 +1202,7 @@ function App() {
   return (
     <>
       <NotificationHost toastNotifications={toastNotifications} setToastNotifications={setToastNotifications} />
-      <div className="bg-slate-50 min-h-screen font-sans">
+      <div className="min-h-screen font-sans">
         <div>
             <Header 
               user={currentUser}
@@ -1216,14 +1226,14 @@ function App() {
             {activeSection === 'planner' && (
                 <>
                     {pairedUser && (
-                        <div className="mb-6 border-b border-slate-200">
+                        <div className="mb-6 border-b border-zinc-200">
                             <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                             <button
                                 onClick={() => setMainView(MainView.Personal)}
                                 className={`${
                                 mainView === MainView.Personal
-                                    ? 'border-indigo-500 text-indigo-600'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                    ? 'border-teal-500 text-teal-600'
+                                    : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
                                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                             >
                                 Planificador Personal
@@ -1232,8 +1242,8 @@ function App() {
                                 onClick={() => setMainView(MainView.Couple)}
                                 className={`${
                                 mainView === MainView.Couple
-                                    ? 'border-indigo-500 text-indigo-600'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                    ? 'border-teal-500 text-teal-600'
+                                    : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
                                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                             >
                                 Espacio de Conexiones

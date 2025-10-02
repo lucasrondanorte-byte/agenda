@@ -21,7 +21,7 @@ export const useSystemNotifications = () => {
     if ('Notification' in window && Notification.permission === 'granted') {
       const notification = new Notification(title, {
         ...options,
-        icon: '/logo.svg', // Optional: Add an icon for brand recognition
+        icon: 'https://i.postimg.cc/YhvKDdRc/Logo-for-Conecta-Mente-Clean-Sans-Serif-Abstract-Design.png', // Optional: Add an icon for brand recognition
       });
 
       if (onClick) {
