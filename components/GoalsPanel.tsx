@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Project, Task, TaskStatus } from '../types';
+import { ConfirmationModal } from './ConfirmationModal';
 
 // Props Interface
 interface GoalsPanelProps {
@@ -38,7 +39,7 @@ const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 
-const TaskItem: React.FC<{ task: Task; onUpdateTask: GoalsPanelProps['onUpdateTask']; onDeleteTask: GoalsPanelProps['onDeleteTask']; }> = ({ task, onUpdateTask, onDeleteTask }) => {
+const TaskItem: React.FC<{ task: Task; onUpdateTask: GoalsPanelProps['onUpdateTask']; onRequestDelete: (task: Task) => void; }> = ({ task, onUpdateTask, onRequestDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState(task.text);
 
@@ -60,7 +61,7 @@ const TaskItem: React.FC<{ task: Task; onUpdateTask: GoalsPanelProps['onUpdateTa
             )}
             <div className="flex items-center space-x-1 sm:opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                 <button onClick={() => setIsEditing(true)} className="p-1 text-slate-400 hover:text-indigo-600 rounded"><PencilIcon className="w-4 h-4"/></button>
-                <button onClick={() => onDeleteTask(task.id)} className="p-1 text-slate-400 hover:text-red-600 rounded"><TrashIcon className="w-4 h-4"/></button>
+                <button onClick={() => onRequestDelete(task)} className="p-1 text-slate-400 hover:text-red-600 rounded"><TrashIcon className="w-4 h-4"/></button>
             </div>
         </div>
     );
@@ -73,7 +74,16 @@ const statusConfig: Record<TaskStatus, { icon: React.FC<React.SVGProps<SVGSVGEle
     done: { icon: CheckCircleFillIcon, label: "Hecho", color: "text-green-500" },
 };
 
-const ProjectDetails: React.FC<Omit<GoalsPanelProps, 'projects' | 'tasks' | 'onAddProject'> & { project: Project; projectTasks: Task[]; }> = ({ project, projectTasks, onAddTask, onUpdateTask, onDeleteTask, onAddMultipleTasks, onEditProject, onDeleteProject }) => {
+const ProjectDetails: React.FC<{
+    project: Project;
+    projectTasks: Task[];
+    onAddTask: GoalsPanelProps['onAddTask'];
+    onUpdateTask: GoalsPanelProps['onUpdateTask'];
+    onAddMultipleTasks: GoalsPanelProps['onAddMultipleTasks'];
+    onEditProject: GoalsPanelProps['onEditProject'];
+    onRequestDeleteProject: (project: Project) => void;
+    onRequestDeleteTask: (task: Task) => void;
+}> = ({ project, projectTasks, onAddTask, onUpdateTask, onAddMultipleTasks, onEditProject, onRequestDeleteProject, onRequestDeleteTask }) => {
     const [newTaskText, setNewTaskText] = useState('');
     const [activeTab, setActiveTab] = useState<TaskStatus>('todo');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -166,7 +176,7 @@ const ProjectDetails: React.FC<Omit<GoalsPanelProps, 'projects' | 'tasks' | 'onA
                                 <IconComponent className="w-4 h-4" />
                              </div>
                              <div className="flex-grow">
-                                <TaskItem task={task} onUpdateTask={onUpdateTask} onDeleteTask={onDeleteTask} />
+                                <TaskItem task={task} onUpdateTask={onUpdateTask} onRequestDelete={onRequestDeleteTask} />
                              </div>
                              <div className="flex items-center">
                                 {(['todo', 'inProgress', 'done'] as TaskStatus[]).map(s => {
@@ -201,7 +211,7 @@ const ProjectDetails: React.FC<Omit<GoalsPanelProps, 'projects' | 'tasks' | 'onA
             {/* Project Actions */}
             <div className="flex justify-end space-x-2 mt-4 pt-4 border-t border-slate-200">
                 <button onClick={() => onEditProject(project)} className="text-xs font-medium text-slate-600 hover:text-indigo-600 p-2 rounded-md">Editar Proyecto</button>
-                <button onClick={() => onDeleteProject(project.id)} className="text-xs font-medium text-slate-600 hover:text-red-600 p-2 rounded-md">Eliminar Proyecto</button>
+                <button onClick={() => onRequestDeleteProject(project)} className="text-xs font-medium text-slate-600 hover:text-red-600 p-2 rounded-md">Eliminar Proyecto</button>
             </div>
         </div>
     );
@@ -210,70 +220,103 @@ const ProjectDetails: React.FC<Omit<GoalsPanelProps, 'projects' | 'tasks' | 'onA
 
 export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddProject, onEditProject, onDeleteProject, onAddTask, onUpdateTask, onDeleteTask, onAddMultipleTasks }) => {
     const [expandedProjectId, setExpandedProjectId] = useState<string | null>(projects[0]?.id || null);
+    const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
+
+    const requestProjectDeletion = (project: Project) => {
+        setConfirmationState({
+          isOpen: true,
+          title: 'Eliminar Proyecto',
+          message: `¿Estás seguro? Esto eliminará el proyecto "${project.title}" y todas sus tareas.`,
+          onConfirm: () => onDeleteProject(project.id)
+        });
+    };
+    
+    const requestTaskDeletion = (task: Task) => {
+        setConfirmationState({
+            isOpen: true,
+            title: 'Eliminar Tarea',
+            message: `¿Estás seguro de que quieres eliminar la tarea "${task.text}"?`,
+            onConfirm: () => onDeleteTask(task.id)
+        });
+    };
 
     return (
-        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-slate-700">Mis Proyectos y Metas</h3>
-                <button onClick={onAddProject} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                    <PlusIcon className="w-5 h-5"/>
-                    <span>Nuevo Proyecto</span>
-                </button>
-            </div>
-            <div className="space-y-2 overflow-y-auto pr-2">
-                {projects.length > 0 ? projects.map(project => {
-                    const projectTasks = tasks.filter(t => t.projectId === project.id);
-                    const totalTasks = projectTasks.length;
-                    const doneTasks = projectTasks.filter(t => t.status === 'done').length;
-                    const progress = totalTasks > 0 ? (doneTasks / totalTasks) * 100 : 0;
-                    const isExpanded = expandedProjectId === project.id;
+        <>
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-semibold text-slate-700">Mis Proyectos y Metas</h3>
+                    <button onClick={onAddProject} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                        <PlusIcon className="w-5 h-5"/>
+                        <span>Nuevo Proyecto</span>
+                    </button>
+                </div>
+                <div className="space-y-2 overflow-y-auto pr-2">
+                    {projects.length > 0 ? projects.map(project => {
+                        const projectTasks = tasks.filter(t => t.projectId === project.id);
+                        const totalTasks = projectTasks.length;
+                        const doneTasks = projectTasks.filter(t => t.status === 'done').length;
+                        const progress = totalTasks > 0 ? (doneTasks / totalTasks) * 100 : 0;
+                        const isExpanded = expandedProjectId === project.id;
 
-                    return (
-                        <div key={project.id} className="bg-slate-50/70 rounded-lg border border-slate-200 overflow-hidden">
-                            <button 
-                                onClick={() => setExpandedProjectId(isExpanded ? null : project.id)}
-                                className="w-full p-3 text-left group"
-                            >
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-2xl">{project.icon || '🎯'}</span>
-                                        <h4 className="text-md font-bold text-slate-800">{project.title}</h4>
+                        return (
+                            <div key={project.id} className="bg-slate-50/70 rounded-lg border border-slate-200 overflow-hidden">
+                                <button 
+                                    onClick={() => setExpandedProjectId(isExpanded ? null : project.id)}
+                                    className="w-full p-3 text-left group"
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">{project.icon || '🎯'}</span>
+                                            <h4 className="text-md font-bold text-slate-800">{project.title}</h4>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-semibold text-slate-500">{doneTasks}/{totalTasks}</span>
+                                            <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs font-semibold text-slate-500">{doneTasks}/{totalTasks}</span>
-                                        <ChevronDownIcon className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                    <div className="mt-2 pl-10">
+                                        <div className="w-full bg-slate-200 rounded-full h-2">
+                                            <div className="bg-indigo-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="mt-2 pl-10">
-                                    <div className="w-full bg-slate-200 rounded-full h-2">
-                                        <div className="bg-indigo-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                                    </div>
-                                </div>
-                            </button>
-                            {isExpanded && (
-                                <ProjectDetails
-                                    project={project}
-                                    projectTasks={projectTasks}
-                                    onEditProject={onEditProject}
-                                    onDeleteProject={onDeleteProject}
-                                    onAddTask={onAddTask}
-                                    onUpdateTask={onUpdateTask}
-                                    onDeleteTask={onDeleteTask}
-                                    onAddMultipleTasks={onAddMultipleTasks}
-                                />
-                            )}
+                                </button>
+                                {isExpanded && (
+                                    <ProjectDetails
+                                        project={project}
+                                        projectTasks={projectTasks}
+                                        onEditProject={onEditProject}
+                                        onRequestDeleteProject={requestProjectDeletion}
+                                        onAddTask={onAddTask}
+                                        onUpdateTask={onUpdateTask}
+                                        onRequestDeleteTask={requestTaskDeletion}
+                                        onAddMultipleTasks={onAddMultipleTasks}
+                                    />
+                                )}
+                            </div>
+                        )
+                    }) : (
+                        <div className="text-center py-12">
+                            <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6 text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h12M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-12a2.25 2.25 0 0 1-2.25-2.25V3M3.75 21v-4.125c0-.621.504-1.125 1.125-1.125h14.25c.621 0 1.125.504 1.125 1.125V21M3.75 21h16.5M12 16.5v4.5" /></svg>
+                            </div>
+                            <h4 className="mt-4 text-lg font-semibold text-slate-700">Define tu próxima meta</h4>
+                            <p className="mt-1 text-sm text-slate-500">Crea un proyecto para empezar a organizar tus tareas.</p>
                         </div>
-                    )
-                }) : (
-                    <div className="text-center py-12">
-                        <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6 text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h12M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-12a2.25 2.25 0 0 1-2.25-2.25V3M3.75 21v-4.125c0-.621.504-1.125 1.125-1.125h14.25c.621 0 1.125.504 1.125 1.125V21M3.75 21h16.5M12 16.5v4.5" /></svg>
-                        </div>
-                        <h4 className="mt-4 text-lg font-semibold text-slate-700">Define tu próxima meta</h4>
-                        <p className="mt-1 text-sm text-slate-500">Crea un proyecto para empezar a organizar tus tareas.</p>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
-        </div>
+            {confirmationState?.isOpen && (
+                <ConfirmationModal 
+                    isOpen={confirmationState.isOpen}
+                    onClose={() => setConfirmationState(null)}
+                    onConfirm={() => {
+                        confirmationState.onConfirm();
+                        setConfirmationState(null);
+                    }}
+                    title={confirmationState.title}
+                    message={confirmationState.message}
+                />
+            )}
+        </>
     );
 };

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Routine } from '../types';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface RoutineManagerModalProps {
   isOpen: boolean;
@@ -30,48 +31,73 @@ const TrashIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 
 export const RoutineManagerModal: React.FC<RoutineManagerModalProps> = ({ isOpen, onClose, routines, onEdit, onDelete, onCreate }) => {
+  const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
+  
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-slate-800">Gestionar Rutinas</h2>
-            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-slate-100">
-                <XMarkIcon className="w-6 h-6 text-slate-500" />
-            </button>
-        </div>
+  const requestDeletion = (routine: Routine) => {
+    setConfirmationState({
+      isOpen: true,
+      title: 'Eliminar Rutina',
+      message: `¿Estás seguro? Se eliminará la rutina "${routine.title}" y todos sus eventos futuros.`,
+      onConfirm: () => onDelete(routine.id)
+    });
+  };
 
-        <div className="mb-6">
-            <button 
-                onClick={onCreate}
-                className="w-full px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-                Crear Nueva Rutina
-            </button>
-        </div>
-        
-        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
-            {routines.length > 0 ? routines.map(routine => (
-                <div key={routine.id} className="p-3 bg-slate-50 rounded-lg flex justify-between items-center group">
-                    <div className="flex items-center space-x-3">
-                        <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: routine.color || '#64748B' }}></span>
-                        <p className="font-semibold text-slate-800">{routine.title}</p>
-                    </div>
-                    <div className="flex items-center space-x-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => onEdit(routine)} className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-200">
-                            <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => onDelete(routine.id)} className="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-slate-200">
-                            <TrashIcon className="w-4 h-4"/>
-                        </button>
-                    </div>
-                </div>
-            )) : (
-                <p className="text-center text-slate-500 py-8">No has creado ninguna rutina todavía.</p>
-            )}
+  return (
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
+        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-slate-800">Gestionar Rutinas</h2>
+              <button onClick={onClose} className="p-1.5 rounded-full hover:bg-slate-100">
+                  <XMarkIcon className="w-6 h-6 text-slate-500" />
+              </button>
+          </div>
+
+          <div className="mb-6">
+              <button 
+                  onClick={onCreate}
+                  className="w-full px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                  Crear Nueva Rutina
+              </button>
+          </div>
+          
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+              {routines.length > 0 ? routines.map(routine => (
+                  <div key={routine.id} className="p-3 bg-slate-50 rounded-lg flex justify-between items-center group">
+                      <div className="flex items-center space-x-3">
+                          <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: routine.color || '#64748B' }}></span>
+                          <p className="font-semibold text-slate-800">{routine.title}</p>
+                      </div>
+                      <div className="flex items-center space-x-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => onEdit(routine)} className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-200">
+                              <PencilIcon className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => requestDeletion(routine)} className="p-1.5 text-slate-500 hover:text-red-600 rounded-md hover:bg-slate-200">
+                              <TrashIcon className="w-4 h-4"/>
+                          </button>
+                      </div>
+                  </div>
+              )) : (
+                  <p className="text-center text-slate-500 py-8">No has creado ninguna rutina todavía.</p>
+              )}
+          </div>
         </div>
       </div>
-    </div>
+      {confirmationState?.isOpen && (
+          <ConfirmationModal 
+              isOpen={confirmationState.isOpen}
+              onClose={() => setConfirmationState(null)}
+              onConfirm={() => {
+                  confirmationState.onConfirm();
+                  setConfirmationState(null);
+              }}
+              title={confirmationState.title}
+              message={confirmationState.message}
+          />
+      )}
+    </>
   );
 };

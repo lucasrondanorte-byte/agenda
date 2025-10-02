@@ -15,7 +15,7 @@ import { TravelLog } from './components/TravelLog'; // Import new component
 import { ShareReflectionModal } from './components/ShareReflectionModal';
 import { ShareTripModal } from './components/ShareTripModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import type { Event, Notification, User, PairingRequest, SharedEmotionState, JournalEntry, Routine, Project, Task, Trip, EmotionMoji, QASession, PartnerNote, TaskStatus, ShoppingList, ShoppingListItem } from './types';
+import type { Event, Notification, User, PairingRequest, SharedEmotionState, JournalEntry, Routine, Project, Task, Trip, EmotionMoji, QASession, PartnerNote, TaskStatus, ShoppingList, ShoppingListItem, Semester, Subject, Exam, SubjectStatus, AcademicSummaryData, TourStep } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { ReflectionLogModal } from './components/ReflectionLogModal';
 import { EmotionLogModal } from './components/EmotionLogModal';
@@ -28,6 +28,15 @@ import { GoalsSummary } from './components/GoalsSummary';
 import { HomePanel } from './components/HomePanel';
 import { HomeSummary } from './components/HomeSummary';
 import { SplashScreen } from './components/SplashScreen';
+import { AcademicPanel } from './components/AcademicPanel';
+import { AcademicSummary } from './components/AcademicSummary';
+import { SemesterFormModal } from './components/SemesterFormModal';
+import { SubjectFormModal } from './components/SubjectFormModal';
+import { ExamFormModal } from './components/ExamFormModal';
+import { GradeEntryModal } from './components/GradeEntryModal';
+import { ExamGradeModal } from './components/ExamGradeModal';
+import { ConfirmationModal } from './components/ConfirmationModal';
+import { Tour } from './components/Tour';
 
 const EXAMPLE_USERS: User[] = [
   { id: 'user-1', name: 'Vicki', pairedWith: null },
@@ -382,6 +391,8 @@ const EXAMPLE_SHOPPING_LISTS_DATA: ShoppingList[] = [
         id: 'list-supermercado-1',
         title: 'Supermercado',
         icon: '🛒',
+        ownerId: 'user-1',
+        isShared: false,
         items: [
             { id: 'item-1-1', text: 'Leche', completed: false },
             { id: 'item-1-2', text: 'Huevos', completed: true },
@@ -393,6 +404,8 @@ const EXAMPLE_SHOPPING_LISTS_DATA: ShoppingList[] = [
         id: 'list-cuentas-2',
         title: 'Cuentas por Pagar',
         icon: '🧾',
+        ownerId: 'user-1',
+        isShared: false,
         items: [
             { id: 'item-2-1', text: 'Pagar factura de luz', completed: false },
             { id: 'item-2-2', text: 'Pagar internet', completed: false },
@@ -401,11 +414,32 @@ const EXAMPLE_SHOPPING_LISTS_DATA: ShoppingList[] = [
     },
 ];
 
+const EXAMPLE_SEMESTERS_DATA: Semester[] = [
+    { id: 'sem-1', year: 2024, term: 'Primer Cuatrimestre', subjectIds: ['sub-1'] },
+    { id: 'sem-2', year: 2023, term: 'Segundo Cuatrimestre', subjectIds: ['sub-2', 'sub-3'] },
+];
+const EXAMPLE_SUBJECTS_DATA: Subject[] = [
+    { id: 'sub-1', name: 'Análisis Matemático II', status: 'cursando', finalGrade: null, prerequisiteIds: ['sub-2'] },
+    { id: 'sub-2', name: 'Análisis Matemático I', status: 'aprobada', finalGrade: 8, prerequisiteIds: [] },
+    { id: 'sub-3', name: 'Álgebra y Geometría Analítica', status: 'aprobada', finalGrade: 7, prerequisiteIds: [] },
+    { id: 'sub-4', name: 'Física I', status: 'pendiente', finalGrade: null, prerequisiteIds: ['sub-2', 'sub-3'] },
+];
+const EXAMPLE_EXAMS_DATA: Exam[] = [
+    { id: 'exam-1', subjectId: 'sub-1', type: 'parcial', title: 'Primer Parcial', date: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0], time: '09:00', grade: null, topics: 'Integrales Dobles\nSeries de Fourier\nTransformada de Laplace' },
+    { id: 'exam-2', subjectId: 'sub-2', type: 'final', title: 'Final', date: '2023-12-15', time: '14:00', grade: 8, topics: 'Límites y Continuidad\nDerivadas y Aplicaciones\nIntegrales Simples' },
+];
+
 
 enum MainView {
   Personal = 'Personal',
   Couple = 'Pareja',
 }
+
+const GripVerticalIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5.25H9.75M9 8.25H9.75M9 11.25H9.75M9 14.25H9.75M9 17.25H9.75M15 5.25H15.75M15 8.25H15.75M15 11.25H15.75M15 14.25H15.75M15 17.25H15.75" />
+  </svg>
+);
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -424,7 +458,11 @@ function App() {
   const userProjectsKey = `projects_${currentUser?.id}`;
   const userTasksKey = `tasks_${currentUser?.id}`;
   const userTripsKey = `trips_${currentUser?.id}`;
-  const userShoppingListsKey = `shopping_lists_${currentUser?.id}`;
+  const userSemestersKey = `semesters_${currentUser?.id}`;
+  const userSubjectsKey = `subjects_${currentUser?.id}`;
+  const userExamsKey = `exams_${currentUser?.id}`;
+  const userSummaryOrderKey = `summary_order_${currentUser?.id}`;
+  const userMainPanelOrderKey = `main_panel_order_${currentUser?.id}`;
 
 
   const [events, setEvents] = useLocalStorage<Event[]>(userEventsKey, EXAMPLE_EVENTS_DATA);
@@ -433,7 +471,10 @@ function App() {
   const [projects, setProjects] = useLocalStorage<Project[]>(userProjectsKey, EXAMPLE_PROJECTS_DATA);
   const [tasks, setTasks] = useLocalStorage<Task[]>(userTasksKey, EXAMPLE_TASKS_DATA);
   const [trips, setTrips] = useLocalStorage<Trip[]>(userTripsKey, EXAMPLE_TRIPS_DATA);
-  const [shoppingLists, setShoppingLists] = useLocalStorage<ShoppingList[]>(userShoppingListsKey, EXAMPLE_SHOPPING_LISTS_DATA);
+  const [allShoppingLists, setAllShoppingLists] = useLocalStorage<ShoppingList[]>('all_shopping_lists', EXAMPLE_SHOPPING_LISTS_DATA);
+  const [semesters, setSemesters] = useLocalStorage<Semester[]>(userSemestersKey, EXAMPLE_SEMESTERS_DATA);
+  const [subjects, setSubjects] = useLocalStorage<Subject[]>(userSubjectsKey, EXAMPLE_SUBJECTS_DATA);
+  const [exams, setExams] = useLocalStorage<Exam[]>(userExamsKey, EXAMPLE_EXAMS_DATA);
 
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
@@ -446,12 +487,18 @@ function App() {
   const [isShareReflectionModalOpen, setIsShareReflectionModalOpen] = useState(false);
   const [isShareTripModalOpen, setIsShareTripModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+  const [isExamGradeModalOpen, setIsExamGradeModalOpen] = useState(false);
+  const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; confirmText?: string; cancelText?: string; } | null>(null);
+
 
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [reflectionToShare, setReflectionToShare] = useState<JournalEntry | null>(null);
   const [tripToShare, setTripToShare] = useState<Trip | null>(null);
+  const [subjectForGrade, setSubjectForGrade] = useState<Subject | null>(null);
+  const [examForGrade, setExamForGrade] = useState<Exam | null>(null);
 
 
   // Notification states
@@ -464,8 +511,46 @@ function App() {
   const [lastReflectionPromptDate, setLastReflectionPromptDate] = useLocalStorage<string>(`last_reflection_prompt_${currentUser?.id}`, '');
   
   // Navigation states
-  const [activeSection, setActiveSection] = useState<'planner' | 'travel' | 'goals' | 'home'>('planner');
+  const [activeSection, setActiveSection] = useState<'planner' | 'travel' | 'goals' | 'home' | 'academic'>('planner');
   const [mainView, setMainView] = useState<MainView>(MainView.Personal);
+  
+  // Right Column (Summary) reordering state
+  const DEFAULT_SUMMARY_ORDER = ['home', 'academic', 'goals'];
+  const [summaryOrder, setSummaryOrder] = useLocalStorage<string[]>(userSummaryOrderKey, DEFAULT_SUMMARY_ORDER);
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+  
+  // Left Column (Main Panel) reordering state
+  const DEFAULT_MAIN_PANEL_ORDER = ['schedule', 'reflection', 'partnerNotes'];
+  const [mainPanelOrder, setMainPanelOrder] = useLocalStorage<string[]>(userMainPanelOrderKey, DEFAULT_MAIN_PANEL_ORDER);
+  const dragMainPanelItem = useRef<number | null>(null);
+  const dragOverMainPanelItem = useRef<number | null>(null);
+
+  // Tour State
+  const tourCompletedKey = `tour_completed_${currentUser?.id}`;
+  const [isTourCompleted, setIsTourCompleted] = useLocalStorage<boolean>(tourCompletedKey, false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  const handleDragSort = () => {
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    const newSummaryOrder = [...summaryOrder];
+    const draggedItemContent = newSummaryOrder.splice(dragItem.current, 1)[0];
+    newSummaryOrder.splice(dragOverItem.current, 0, draggedItemContent);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    setSummaryOrder(newSummaryOrder);
+  };
+
+  const handleMainPanelDragSort = () => {
+    if (dragMainPanelItem.current === null || dragOverMainPanelItem.current === null) return;
+    const newMainPanelOrder = [...mainPanelOrder];
+    const draggedItemContent = newMainPanelOrder.splice(dragMainPanelItem.current, 1)[0];
+    newMainPanelOrder.splice(dragOverMainPanelItem.current, 0, draggedItemContent);
+    dragMainPanelItem.current = null;
+    dragOverMainPanelItem.current = null;
+    setMainPanelOrder(newMainPanelOrder);
+  };
+
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2000);
@@ -479,6 +564,106 @@ function App() {
     return null;
   }, [currentUser, users]);
 
+    const tourSteps = useMemo((): TourStep[] => {
+    const steps: TourStep[] = [
+      {
+        element: 'body',
+        title: '¡Bienvenido/a a ConectaMente!',
+        content: 'Este tour te guiará por las funciones principales. Puedes usar los botones para navegar o hacer clic fuera para salir.',
+        position: 'center',
+      },
+      {
+        element: '#header-nav',
+        title: 'Navegación Principal',
+        content: 'Desde aquí puedes navegar entre las secciones clave: tu Planificador (la vista actual), Hogar, Metas, Académico y Viajes.',
+        position: 'bottom',
+      },
+      {
+        element: '#header-nav-home',
+        title: 'Sección: Mi Hogar',
+        content: 'Aquí puedes organizar tus listas de compras, tareas del hogar y más. Todo lo que necesitas para gestionar tu espacio personal y familiar.',
+        position: 'bottom',
+      },
+      {
+        element: '#header-nav-goals',
+        title: 'Sección: Metas',
+        content: 'Define tus grandes proyectos y ambiciones. Desglósalos en tareas más pequeñas y sigue tu progreso para alcanzar tus sueños.',
+        position: 'bottom',
+      },
+      {
+        element: '#header-nav-academic',
+        title: 'Sección: Académico',
+        content: 'Lleva un control completo de tu carrera. Gestiona materias, correlatividades, fechas de examen y tus calificaciones, todo en un solo lugar.',
+        position: 'bottom',
+      },
+       {
+        element: '#header-nav-travel',
+        title: 'Sección: Viajes',
+        content: 'Crea una bitácora digital de tus aventuras. Guarda tus destinos, fechas y pega los mejores recuerdos y fotos de cada viaje.',
+        position: 'bottom',
+      },
+      {
+        element: '#calendar-view',
+        title: 'Tu Calendario',
+        content: 'Este es tu calendario. Te da una vista general de tus eventos del mes. Haz clic en un día para ver o añadir eventos para esa fecha específica.',
+        position: 'left',
+      },
+      {
+        element: '#schedule-panel',
+        title: 'Agenda del Día',
+        content: 'Aquí verás los eventos del día seleccionado. Puedes añadir nuevos eventos, gestionar rutinas y marcar tareas como completadas.',
+        position: 'right',
+      },
+      {
+        element: '#reflection-panel',
+        title: 'Reflexión Diaria',
+        content: 'Tómate un momento cada día para conectar contigo. Guarda tus pensamientos, lecciones aprendidas y cómo te sentiste.',
+        position: 'right',
+      },
+      {
+        element: '#summary-column',
+        title: 'Resúmenes Rápidos',
+        content: 'En esta columna tienes vistas rápidas de tus otras secciones. ¡Y puedes arrastrarlas para reordenarlas como prefieras!',
+        position: 'left',
+      },
+    ];
+
+    if (pairedUser) {
+      steps.push({
+        element: '#couple-space-tab',
+        title: 'Espacio de Conexiones',
+        content: 'Este es su espacio privado para compartir notas, cómo se sienten y conectar a un nivel más profundo.',
+        position: 'bottom',
+      });
+    }
+
+    steps.push({
+      element: '#user-menu',
+      title: 'Tu Perfil y Conexiones',
+      content: "Desde aquí gestionas tu perfil, la seguridad y, muy importante, tus 'Conexiones'. Puedes vincular tu cuenta con la de tu pareja para compartir un espacio privado.",
+      position: 'left',
+    });
+    
+     steps.push({
+      element: 'body',
+      title: '¡Todo listo!',
+      content: 'Has completado el tour. Explora y haz de ConectaMente tu espacio. Recuerda que puedes volver a hacer este tour desde el menú de usuario.',
+      position: 'center',
+    });
+    
+    return steps;
+  }, [pairedUser]);
+
+
+  const userShoppingLists = useMemo(() => {
+    if (!currentUser) return [];
+    return allShoppingLists.filter(list => 
+        list.ownerId === currentUser.id || 
+        (list.isShared && list.ownerId === pairedUser?.id)
+    );
+  }, [allShoppingLists, currentUser, pairedUser]);
+
+
   const coupleId = useMemo(() => {
     if (!currentUser || !pairedUser) return null;
     return [currentUser.id, pairedUser.id].sort().join('_');
@@ -488,6 +673,28 @@ function App() {
   const [partnerNotes, setPartnerNotes] = useLocalStorage<PartnerNote[]>(`partner_notes_${coupleId}`, []);
   const [sharedEmotionStates, setSharedEmotionStates] = useLocalStorage<SharedEmotionState[]>(`shared_emotions_${coupleId}`, []);
   
+  const academicEventsForCalendar = useMemo((): Event[] => {
+    const subjectMap = new Map(subjects.map(s => [s.id, s]));
+    // FIX: Add an explicit return type to the map callback. This helps TypeScript correctly infer
+    // the array type for the subsequent filter, resolving the type predicate error.
+    return exams.map((exam): Event | null => {
+        const subject = subjectMap.get(exam.subjectId);
+        if (!subject) return null;
+        return {
+            id: `exam-${exam.id}`,
+            title: `[${exam.type === 'final' ? 'Final' : 'Parcial'}] ${subject.name}`,
+            date: exam.date,
+            time: exam.time,
+            category: 'otro' as const,
+            reminder: true, // Exams always have reminders
+            color: '#8B5CF6', // A distinct violet color
+            completed: exam.grade !== null,
+            isAcademic: true, // Custom flag to identify these events
+        };
+    }).filter((e): e is Event => e !== null);
+  }, [exams, subjects]);
+
+  const allEvents = useMemo(() => [...events, ...academicEventsForCalendar], [events, academicEventsForCalendar]);
 
   // Reset planner state on user change
   useEffect(() => {
@@ -501,7 +708,9 @@ function App() {
       setProjects([]);
       setTasks([]);
       setTrips([]);
-      setShoppingLists([]);
+      setSemesters([]);
+      setSubjects([]);
+      setExams([]);
     } else {
         // This ensures that when a user logs in, their data is loaded.
         // The useLocalStorage hook handles the initial load, but this effect
@@ -529,12 +738,33 @@ function App() {
         const newTasksKey = `tasks_${currentUser.id}`;
         const storedTasks = localStorage.getItem(newTasksKey);
         setTasks(storedTasks ? JSON.parse(storedTasks) : EXAMPLE_TASKS_DATA);
+        
+        const newSemestersKey = `semesters_${currentUser.id}`;
+        const storedSemesters = localStorage.getItem(newSemestersKey);
+        setSemesters(storedSemesters ? JSON.parse(storedSemesters) : EXAMPLE_SEMESTERS_DATA);
 
-        const newShoppingListsKey = `shopping_lists_${currentUser.id}`;
-        const storedShoppingLists = localStorage.getItem(newShoppingListsKey);
-        setShoppingLists(storedShoppingLists ? JSON.parse(storedShoppingLists) : EXAMPLE_SHOPPING_LISTS_DATA);
+        const newSubjectsKey = `subjects_${currentUser.id}`;
+        const storedSubjects = localStorage.getItem(newSubjectsKey);
+        setSubjects(storedSubjects ? JSON.parse(storedSubjects) : EXAMPLE_SUBJECTS_DATA);
+        
+        const newExamsKey = `exams_${currentUser.id}`;
+        const storedExams = localStorage.getItem(newExamsKey);
+        setExams(storedExams ? JSON.parse(storedExams) : EXAMPLE_EXAMS_DATA);
     }
-  }, [currentUser, setEvents, setRoutines, setJournalEntries, setNotifications, setNotifiedEvents, setProjects, setTasks, setTrips, setShoppingLists]);
+  }, [currentUser, setEvents, setRoutines, setJournalEntries, setNotifications, setNotifiedEvents, setProjects, setTasks, setTrips, setSemesters, setSubjects, setExams]);
+
+  useEffect(() => {
+    // Start tour automatically if it's the first time
+    if (currentUser && !isTourCompleted) {
+        // Use a timeout to ensure the UI is rendered before the tour tries to find elements
+        const timer = setTimeout(() => setIsTourOpen(true), 500);
+        return () => clearTimeout(timer);
+    }
+  }, [currentUser, isTourCompleted]);
+  
+  const handleStartTour = () => {
+      setIsTourOpen(true);
+  };
 
   const generateId = () => uuidv4();
 
@@ -656,6 +886,14 @@ function App() {
         })
         return;
     }
+    if (event.isAcademic) {
+        addNotification({
+            type: 'generic',
+            title: 'Evento Académico',
+            message: 'Para editar este examen, ve a la sección "Académico".',
+        })
+        return;
+    }
     setEditingEvent(event);
     setIsEventModalOpen(true);
   };
@@ -684,13 +922,40 @@ function App() {
         });
         return;
     }
+     if(eventToDelete?.isAcademic) {
+        addNotification({
+            type: 'generic',
+            title: 'No se puede eliminar',
+            message: 'Para eliminar este examen, ve a la sección "Académico".',
+        });
+        return;
+    }
     setEvents(events.filter(e => e.id !== eventId));
   };
   
   const handleToggleEventCompletion = (eventId: string) => {
-    setEvents(events.map(e => 
-      e.id === eventId ? { ...e, completed: !e.completed } : e
-    ));
+    const event = allEvents.find(e => e.id === eventId);
+    if (event && event.isAcademic) {
+        const examId = event.id.replace('exam-', '');
+        const examToGrade = exams.find(e => e.id === examId);
+        if (examToGrade) {
+            if (examToGrade.grade !== null) {
+                setConfirmationState({
+                    isOpen: true,
+                    title: 'Quitar Nota',
+                    message: `¿Estás seguro de que quieres quitar la nota de este examen?`,
+                    onConfirm: () => handleSaveExam({ ...examToGrade, grade: null }, examToGrade.id),
+                    confirmText: 'Sí, quitar nota',
+                });
+            } else {
+                handlePromptForExamGrade(examToGrade);
+            }
+        }
+    } else if (event) {
+        setEvents(events.map(e => 
+            e.id === eventId ? { ...e, completed: !e.completed } : e
+        ));
+    }
   };
 
   const handleOpenRoutineCreator = () => {
@@ -773,19 +1038,17 @@ function App() {
   };
 
   const handleDeleteRoutine = (routineId: string) => {
-    if (window.confirm('¿Estás seguro? Se eliminará la rutina y todos sus eventos futuros.')) {
-        const today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
 
-        setRoutines(prev => prev.filter(r => r.id !== routineId));
-        setEvents(prev => prev.filter(e => {
-            if (e.routineId === routineId) {
-                const eventDate = new Date(e.date + 'T00:00:00Z');
-                return eventDate < today;
-            }
-            return true;
-        }));
-    }
+    setRoutines(prev => prev.filter(r => r.id !== routineId));
+    setEvents(prev => prev.filter(e => {
+        if (e.routineId === routineId) {
+            const eventDate = new Date(e.date + 'T00:00:00Z');
+            return eventDate < today;
+        }
+        return true;
+    }));
   };
 
   // Reflection & Sharing Logic
@@ -852,6 +1115,21 @@ function App() {
     setIsShareTripModalOpen(false);
   };
 
+  const handleAddReplyToNote = (noteId: string, replyText: string) => {
+    if (!currentUser) return;
+
+    const newReply: PartnerNote = {
+        id: generateId(),
+        authorId: currentUser.id,
+        text: replyText,
+        timestamp: new Date().toISOString(),
+        type: 'note',
+        replyToId: noteId,
+    };
+
+    setPartnerNotes(prev => [newReply, ...prev]);
+  };
+
   // Project & Task Logic
   const handleOpenProjectCreator = () => {
     setEditingProject(null);
@@ -874,10 +1152,8 @@ function App() {
   };
   
   const handleDeleteProject = (projectId: string) => {
-      if (window.confirm('¿Estás seguro? Esto eliminará el proyecto y todas sus tareas.')) {
-          setProjects(prev => prev.filter(p => p.id !== projectId));
-          setTasks(prev => prev.filter(t => t.projectId !== projectId));
-      }
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      setTasks(prev => prev.filter(t => t.projectId !== projectId));
   };
 
   const handleAddTask = (projectId: string, text: string) => {
@@ -928,41 +1204,52 @@ function App() {
     };
 
     const handleDeleteTrip = (tripId: string) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar este viaje y todos sus recuerdos?')) {
-            setTrips(prev => prev.filter(t => t.id !== tripId));
-        }
+        setTrips(prev => prev.filter(t => t.id !== tripId));
     };
 
     // Home / Shopping List Logic
     const handleSaveShoppingList = (title: string, icon: string, id?: string) => {
         if (id) {
-            setShoppingLists(prev => prev.map(list => list.id === id ? { ...list, title, icon } : list));
+            setAllShoppingLists(prev => prev.map(list => list.id === id ? { ...list, title, icon } : list));
         } else {
-            const newList: ShoppingList = { id: generateId(), title, icon, items: [] };
-            setShoppingLists(prev => [...prev, newList]);
+            const newList: ShoppingList = { id: generateId(), title, icon, items: [], ownerId: currentUser!.id, isShared: false };
+            setAllShoppingLists(prev => [...prev, newList]);
         }
     };
 
     const handleDeleteShoppingList = (listId: string) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar esta lista y todos sus elementos?')) {
-            setShoppingLists(prev => prev.filter(list => list.id !== listId));
-        }
+        setAllShoppingLists(prev => prev.filter(list => list.id !== listId));
+    };
+    
+    const handleToggleShareList = (listId: string) => {
+        setAllShoppingLists(prev => prev.map(list => 
+            list.id === listId && list.ownerId === currentUser?.id 
+            ? { ...list, isShared: !list.isShared } 
+            : list
+        ));
     };
 
     const handleAddShoppingListItem = (listId: string, text: string) => {
         const newItem: ShoppingListItem = { id: generateId(), text, completed: false };
-        setShoppingLists(prev => prev.map(list => 
+        setAllShoppingLists(prev => prev.map(list => 
             list.id === listId ? { ...list, items: [...list.items, newItem] } : list
         ));
     };
 
     const handleUpdateShoppingListItem = (listId: string, itemId: string, newText: string, newCompleted: boolean) => {
-        setShoppingLists(prev => prev.map(list => {
+        setAllShoppingLists(prev => prev.map(list => {
             if (list.id === listId) {
                 return {
                     ...list,
                     items: list.items.map(item => 
-                        item.id === itemId ? { ...item, text: newText, completed: newCompleted } : item
+                        item.id === itemId 
+                        ? { 
+                            ...item, 
+                            text: newText, 
+                            completed: newCompleted,
+                            completedBy: newCompleted ? currentUser!.id : undefined,
+                          } 
+                        : item
                     )
                 };
             }
@@ -971,9 +1258,179 @@ function App() {
     };
     
     const handleDeleteShoppingListItem = (listId: string, itemId: string) => {
-        setShoppingLists(prev => prev.map(list => 
+        setAllShoppingLists(prev => prev.map(list => 
             list.id === listId ? { ...list, items: list.items.filter(item => item.id !== itemId) } : list
         ));
+    };
+
+    // Academic Logic
+    const handleSaveSemester = (data: Omit<Semester, 'id'>, id?: string) => {
+        if (id) {
+            setSemesters(prev => prev.map(s => s.id === id ? { ...data, id, subjectIds: s.subjectIds } : s));
+        } else {
+            setSemesters(prev => [...prev, { ...data, id: generateId(), subjectIds: [] }]);
+        }
+    };
+    const handleDeleteSemester = (id: string) => {
+        const semesterToDelete = semesters.find(s => s.id === id);
+        if (!semesterToDelete) return;
+        
+        // Revert subjects to 'pendiente'
+        setSubjects(prev => prev.map(sub => {
+            if (semesterToDelete.subjectIds.includes(sub.id)) {
+                return { ...sub, status: 'pendiente' };
+            }
+            return sub;
+        }));
+
+        setSemesters(prev => prev.filter(s => s.id !== id));
+    };
+    const handleSaveSubject = (data: Omit<Subject, 'id'>, id?: string) => {
+        if (id) {
+            setSubjects(prev => prev.map(s => s.id === id ? { ...data, id } : s));
+        } else {
+            setSubjects(prev => [...prev, { ...data, id: generateId() }]);
+        }
+    };
+    const handleDeleteSubject = (id: string) => {
+        // Remove from semesters first
+        setSemesters(prev => prev.map(sem => ({
+            ...sem,
+            subjectIds: sem.subjectIds.filter(subId => subId !== id)
+        })));
+
+        // Then, remove the subject itself and update prerequisites in others
+        setSubjects(prev => 
+            prev
+                .filter(s => s.id !== id) // Remove the subject
+                .map(sub => ({ // Update prerequisites in remaining subjects
+                    ...sub,
+                    prerequisiteIds: sub.prerequisiteIds.filter(pId => pId !== id)
+                }))
+        );
+        
+        // Finally, remove associated exams
+        setExams(prev => prev.filter(e => e.subjectId !== id));
+    };
+    const handleSaveExam = (data: Omit<Exam, 'id'>, id?: string) => {
+         if (id) {
+            setExams(prev => prev.map(e => e.id === id ? { ...data, id } : e));
+        } else {
+            setExams(prev => [...prev, { ...data, id: generateId() }]);
+        }
+    };
+    const handleDeleteExam = (id: string) => {
+        setExams(prev => prev.filter(e => e.id !== id));
+    };
+
+    const handleAssignSubject = (subjectId: string, semesterId: string) => {
+        // Add subjectId to semester
+        setSemesters(prev => prev.map(sem => 
+            sem.id === semesterId 
+            ? { ...sem, subjectIds: [...sem.subjectIds, subjectId] }
+            : sem
+        ));
+        // Update subject status to 'cursando'
+        setSubjects(prev => prev.map(sub => 
+            sub.id === subjectId
+            ? { ...sub, status: 'cursando' }
+            : sub
+        ));
+    };
+    
+    const handleUnassignSubject = (subjectId: string, semesterId: string) => {
+        // Remove subjectId from semester
+        setSemesters(prev => prev.map(sem => 
+            sem.id === semesterId
+            ? { ...sem, subjectIds: sem.subjectIds.filter(id => id !== subjectId) }
+            : sem
+        ));
+        // Update subject status to 'pendiente'
+        setSubjects(prev => prev.map(sub =>
+            sub.id === subjectId
+            ? { ...sub, status: 'pendiente' }
+            : sub
+        ));
+    };
+
+    const handleShareSubjectUpdate = (subject: Subject) => {
+        if (!currentUser || !pairedUser) return;
+        const note: PartnerNote = {
+            id: generateId(),
+            authorId: currentUser.id,
+            text: `${currentUser.name} ha actualizado una materia.`,
+            timestamp: new Date().toISOString(),
+            type: 'subject_update',
+            subjectUpdateContent: {
+                subjectName: subject.name,
+                newStatus: subject.status,
+                finalGrade: subject.finalGrade,
+            }
+        };
+        setPartnerNotes(prev => [note, ...prev]);
+        addNotification({
+            type: 'new_partner_note',
+            title: 'Progreso Académico Compartido',
+            message: `${currentUser.name} actualizó el estado de ${subject.name}.`
+        });
+    };
+
+    const handleUpdateSubjectStatusAndGrade = (subjectId: string, newStatus: SubjectStatus, finalGrade: number | null = null) => {
+        let updatedSubject: Subject | undefined;
+        const newSubjects = subjects.map(sub => {
+            if (sub.id === subjectId) {
+                const newGrade = newStatus === 'aprobada' ? finalGrade : null;
+                updatedSubject = { ...sub, status: newStatus, finalGrade: newGrade };
+                return updatedSubject;
+            }
+            return sub;
+        });
+        setSubjects(newSubjects);
+
+        if (pairedUser && updatedSubject && (newStatus === 'aprobada' || newStatus === 'recursar')) {
+            const actionText = newStatus === 'aprobada' ? `aprobado` : `puesto a recursar`;
+            const titleText = newStatus === 'aprobada' ? '¡Felicitaciones!' : 'Actualización Académica';
+            
+            setConfirmationState({
+                isOpen: true,
+                title: `${titleText} - Compartir`,
+                message: `¿Quieres compartir con ${pairedUser.name} que has ${actionText} "${updatedSubject.name}"?`,
+                onConfirm: () => handleShareSubjectUpdate(updatedSubject!),
+                confirmText: 'Sí, compartir',
+                cancelText: 'No, gracias',
+            });
+        }
+    };
+
+    const handlePromptForGrade = (subject: Subject) => {
+        setSubjectForGrade(subject);
+        setIsGradeModalOpen(true);
+    };
+
+    const handlePromptForExamGrade = (exam: Exam) => {
+        setExamForGrade(exam);
+        setIsExamGradeModalOpen(true);
+    };
+
+    const handleSaveExamGrade = (grade: number | null) => {
+        if (examForGrade) {
+            // First, update the exam itself
+            handleSaveExam({ ...examForGrade, grade }, examForGrade.id);
+
+            // Check if it's a passing final exam grade (assuming 4 is the passing grade)
+            const isPassingFinal = examForGrade.type === 'final' && grade !== null && grade >= 4;
+
+            if (isPassingFinal) {
+                const subjectToUpdate = subjects.find(s => s.id === examForGrade.subjectId);
+                // Update the subject only if it's not already approved
+                if (subjectToUpdate && subjectToUpdate.status !== 'aprobada') {
+                    handleUpdateSubjectStatusAndGrade(subjectToUpdate.id, 'aprobada', grade);
+                }
+            }
+        }
+        // Close modal and reset state
+        setIsExamGradeModalOpen(false);
+        setExamForGrade(null);
     };
 
 
@@ -986,15 +1443,17 @@ function App() {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  // FIX: Moved `handleNotificationClick` before `addNotification` to resolve the "used before its declaration" error.
+  // The two functions had a dependency, and this reordering ensures `handleNotificationClick` is defined when `addNotification` needs it.
   const handleNotificationClick = useCallback((notification: Notification) => {
     window.focus(); // Bring window to front
     
     switch (notification.type) {
       case 'event_reminder':
         if (notification.relatedId) {
-          const event = events.find(e => e.id === notification.relatedId);
+          const event = allEvents.find(e => e.id === notification.relatedId);
           if (event) {
-            setActiveSection('planner');
+            setActiveSection(event.isAcademic ? 'academic' : 'planner');
             setMainView(MainView.Personal);
             // Use UTC to prevent timezone issues with date selection
             setSelectedDate(new Date(event.date + 'T00:00:00Z'));
@@ -1027,7 +1486,7 @@ function App() {
     handleMarkAsRead(notification.id);
     // Close modals if any are open to show the target view
     setIsNotificationsMuted(false); // Assume interaction means user wants notifications
-  }, [events, pairedUser]);
+  }, [allEvents, pairedUser]);
 
   const addNotification = useCallback((data: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     if (isNotificationsMuted && data.type !== 'generic') return;
@@ -1055,14 +1514,13 @@ function App() {
 
   }, [isNotificationsMuted, setNotifications, sendSystemNotification, handleNotificationClick]);
 
-
   // Effect for event reminders
   useEffect(() => {
     const checkReminders = () => {
       const now = new Date();
       const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000);
 
-      events.forEach(event => {
+      allEvents.forEach(event => {
         if (event.reminder && !notifiedEvents.includes(event.id)) {
           const eventTime = new Date(`${event.date}T${event.time}:00`);
           
@@ -1083,7 +1541,7 @@ function App() {
 
     const intervalId = setInterval(checkReminders, 60000); // Check every minute
     return () => clearInterval(intervalId);
-  }, [events, notifiedEvents, addNotification, setNotifiedEvents]);
+  }, [allEvents, notifiedEvents, addNotification, setNotifiedEvents]);
   
   // Effect for Daily Reflection Prompt
   useEffect(() => {
@@ -1201,6 +1659,14 @@ function App() {
 
   return (
     <>
+      <style>{`
+        .draggable-summary:active {
+          cursor: grabbing;
+          transform: scale(1.01);
+          z-index: 10;
+          box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+      `}</style>
       <NotificationHost toastNotifications={toastNotifications} setToastNotifications={setToastNotifications} />
       <div className="min-h-screen font-sans">
         <div>
@@ -1219,14 +1685,16 @@ function App() {
               onNavigateToTravelLog={() => setActiveSection('travel')}
               onNavigateToGoals={() => setActiveSection('goals')}
               onNavigateToHome={() => setActiveSection('home')}
+              onNavigateToAcademic={() => setActiveSection('academic')}
               activeSection={activeSection}
+              onStartTour={handleStartTour}
             />
         </div>
         <main className="max-w-7xl mx-auto p-2 sm:p-6 lg:p-8">
             {activeSection === 'planner' && (
                 <>
                     {pairedUser && (
-                        <div className="mb-6 border-b border-zinc-200">
+                        <div id="couple-space-tab" className="mb-6 border-b border-zinc-200">
                             <nav className="-mb-px flex space-x-4 sm:space-x-8" aria-label="Tabs">
                             <button
                                 onClick={() => setMainView(MainView.Personal)}
@@ -1256,57 +1724,123 @@ function App() {
                         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
                             {/* Columna Principal */}
                             <div className="xl:col-span-3 space-y-8">
-                                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-                                    <SchedulePanel
-                                    selectedDate={selectedDate}
-                                    events={events}
-                                    onAddEvent={handleAddEventClick}
-                                    onEditEvent={handleEditEventClick}
-                                    onDeleteEvent={handleDeleteEvent}
-                                    onManageRoutines={() => setIsRoutineManagerOpen(true)}
-                                    onToggleEventCompletion={handleToggleEventCompletion}
-                                    />
-                                </div>
-                                <DailyReflection 
-                                    journalEntries={journalEntries}
-                                    currentJournalEntry={currentJournalEntry}
-                                    selectedDate={selectedDate}
-                                    onSave={handleSaveJournal}
-                                    onOpenHistory={() => setIsReflectionLogModalOpen(true)}
-                                    onOpenShareModal={handleOpenShareModal}
-                                    partner={pairedUser}
-                                />
-                                {pairedUser && (
-                                    <PartnerNotes
-                                        partner={pairedUser}
-                                        partnerNotes={partnerNotes}
-                                        sharedEmotionStates={sharedEmotionStates}
-                                        onNavigate={handleNavigateToCoupleSpace}
-                                    />
-                                )}
+                                {(() => {
+                                    const mainPanelComponents: Record<string, React.ReactNode> = {
+                                      schedule: (
+                                        <div id="schedule-panel" className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                                            <SchedulePanel
+                                                selectedDate={selectedDate}
+                                                events={allEvents}
+                                                exams={exams}
+                                                subjects={subjects}
+                                                onAddEvent={handleAddEventClick}
+                                                onEditEvent={handleEditEventClick}
+                                                onDeleteEvent={handleDeleteEvent}
+                                                onManageRoutines={() => setIsRoutineManagerOpen(true)}
+                                                onToggleEventCompletion={handleToggleEventCompletion}
+                                            />
+                                        </div>
+                                      ),
+                                      reflection: (
+                                        <div id="reflection-panel">
+                                            <DailyReflection 
+                                                journalEntries={journalEntries}
+                                                currentJournalEntry={currentJournalEntry}
+                                                selectedDate={selectedDate}
+                                                onSave={handleSaveJournal}
+                                                onOpenHistory={() => setIsReflectionLogModalOpen(true)}
+                                                onOpenShareModal={handleOpenShareModal}
+                                                partner={pairedUser}
+                                            />
+                                        </div>
+                                      ),
+                                      partnerNotes: pairedUser ? (
+                                        <PartnerNotes
+                                            partner={pairedUser}
+                                            partnerNotes={partnerNotes}
+                                            sharedEmotionStates={sharedEmotionStates}
+                                            onNavigate={handleNavigateToCoupleSpace}
+                                        />
+                                      ) : null,
+                                    };
+
+                                    const orderedComponentKeys = mainPanelOrder.filter(key => mainPanelComponents[key]);
+
+                                    return orderedComponentKeys.map((key, index) => (
+                                       <div
+                                          key={key}
+                                          draggable
+                                          onDragStart={() => (dragMainPanelItem.current = index)}
+                                          onDragEnter={() => (dragOverMainPanelItem.current = index)}
+                                          onDragEnd={handleMainPanelDragSort}
+                                          onDragOver={(e) => e.preventDefault()}
+                                          className="draggable-summary group relative cursor-grab transition-transform"
+                                       >
+                                          <div className="absolute top-3 right-3 p-1 bg-white/50 rounded-md text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" title="Arrastrar para reordenar">
+                                            <GripVerticalIcon className="w-5 h-5"/>
+                                          </div>
+                                          {mainPanelComponents[key]}
+                                       </div>
+                                    ));
+                                })()}
                             </div>
 
                             {/* Columna Lateral */}
-                            <div className="xl:col-span-2 space-y-8">
-                                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                            <div id="summary-column" className="xl:col-span-2 space-y-8">
+                                <div id="calendar-view" className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
                                     <Calendar
                                     currentDate={currentDate}
                                     setCurrentDate={setCurrentDate}
                                     selectedDate={selectedDate}
                                     onDateSelect={setSelectedDate}
-                                    events={events}
+                                    events={allEvents}
                                     onOpenPrintView={() => setIsPrintViewOpen(true)}
                                     />
                                 </div>
-                                 <HomeSummary
-                                    shoppingLists={shoppingLists}
-                                    onNavigate={() => setActiveSection('home')}
-                                />
-                                <GoalsSummary 
-                                    projects={projects}
-                                    tasks={tasks}
-                                    onNavigate={() => setActiveSection('goals')}
-                                />
+                                 {(() => {
+                                    const summaryComponents: Record<string, React.ReactNode> = {
+                                      home: (
+                                        <HomeSummary
+                                          shoppingLists={userShoppingLists}
+                                          onNavigate={() => setActiveSection('home')}
+                                        />
+                                      ),
+                                      academic: (
+                                        <AcademicSummary
+                                          subjects={subjects}
+                                          exams={exams}
+                                          semesters={semesters}
+                                          onNavigate={() => setActiveSection('academic')}
+                                        />
+                                      ),
+                                      goals: (
+                                        <GoalsSummary 
+                                          projects={projects}
+                                          tasks={tasks}
+                                          onNavigate={() => setActiveSection('goals')}
+                                        />
+                                      ),
+                                    };
+
+                                    const orderedComponentKeys = summaryOrder.filter(key => summaryComponents[key]);
+
+                                    return orderedComponentKeys.map((key, index) => (
+                                       <div
+                                          key={key}
+                                          draggable
+                                          onDragStart={() => (dragItem.current = index)}
+                                          onDragEnter={() => (dragOverItem.current = index)}
+                                          onDragEnd={handleDragSort}
+                                          onDragOver={(e) => e.preventDefault()}
+                                          className="draggable-summary group relative cursor-grab transition-transform"
+                                       >
+                                          <div className="absolute top-3 right-3 p-1 bg-white/50 rounded-md text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" title="Arrastrar para reordenar">
+                                            <GripVerticalIcon className="w-5 h-5"/>
+                                          </div>
+                                          {summaryComponents[key]}
+                                       </div>
+                                    ));
+                                })()}
                             </div>
                         </div>
                     ) : null}
@@ -1322,6 +1856,7 @@ function App() {
                             sharedEmotionStates={sharedEmotionStates}
                             setSharedEmotionStates={setSharedEmotionStates}
                             onOpenEmotionLog={() => setIsEmotionLogModalOpen(true)}
+                            onAddReply={handleAddReplyToNote}
                         />
                     )}
                 </>
@@ -1332,10 +1867,28 @@ function App() {
                 trips={trips}
                 onSaveTrip={handleSaveTrip}
                 onDeleteTrip={handleDeleteTrip}
-                pairedUser={pairedUser}
                 onOpenShareModal={handleOpenShareTripModal}
+                pairedUser={pairedUser}
               />
            )}
+           
+           {activeSection === 'academic' && (
+              <AcademicPanel
+                semesters={semesters}
+                subjects={subjects}
+                exams={exams}
+                onSaveSemester={handleSaveSemester}
+                onDeleteSemester={handleDeleteSemester}
+                onSaveSubject={handleSaveSubject}
+                onDeleteSubject={handleDeleteSubject}
+                onSaveExam={handleSaveExam}
+                onDeleteExam={handleDeleteExam}
+                onAssignSubject={handleAssignSubject}
+                onUnassignSubject={handleUnassignSubject}
+                onUpdateSubjectStatusAndGrade={handleUpdateSubjectStatusAndGrade}
+                onPromptForGrade={handlePromptForGrade}
+              />
+            )}
 
             {activeSection === 'goals' && (
               <GoalsPanel 
@@ -1352,12 +1905,15 @@ function App() {
             )}
              {activeSection === 'home' && (
                 <HomePanel
-                    shoppingLists={shoppingLists}
+                    shoppingLists={userShoppingLists}
                     onSaveList={handleSaveShoppingList}
                     onDeleteList={handleDeleteShoppingList}
                     onAddItem={handleAddShoppingListItem}
                     onUpdateItem={handleUpdateShoppingListItem}
                     onDeleteItem={handleDeleteShoppingListItem}
+                    onToggleShareList={handleToggleShareList}
+                    currentUser={currentUser}
+                    pairedUser={pairedUser}
                 />
             )}
         </main>
@@ -1366,7 +1922,7 @@ function App() {
       <PrintableView 
         isOpen={isPrintViewOpen}
         onClose={() => setIsPrintViewOpen(false)}
-        events={events}
+        events={allEvents}
         initialDate={currentDate}
       />
 
@@ -1447,6 +2003,53 @@ function App() {
         trip={tripToShare}
         onShareWithPartner={handleShareTrip}
         partnerName={pairedUser?.name}
+      />
+      <GradeEntryModal
+        isOpen={isGradeModalOpen}
+        onClose={() => {
+            setIsGradeModalOpen(false);
+            setSubjectForGrade(null);
+        }}
+        onSave={(grade) => {
+            if (subjectForGrade) {
+                handleUpdateSubjectStatusAndGrade(subjectForGrade.id, 'aprobada', grade);
+            }
+            setIsGradeModalOpen(false);
+            setSubjectForGrade(null);
+        }}
+        subjectName={subjectForGrade?.name || ''}
+      />
+       <ExamGradeModal
+        isOpen={isExamGradeModalOpen}
+        onClose={() => {
+            setIsExamGradeModalOpen(false);
+            setExamForGrade(null);
+        }}
+        onSave={handleSaveExamGrade}
+        exam={examForGrade}
+        subjectName={subjects.find(s => s.id === examForGrade?.subjectId)?.name || ''}
+      />
+      {confirmationState?.isOpen && (
+          <ConfirmationModal 
+              isOpen={confirmationState.isOpen}
+              onClose={() => setConfirmationState(null)}
+              onConfirm={() => {
+                  confirmationState.onConfirm();
+                  setConfirmationState(null);
+              }}
+              title={confirmationState.title}
+              message={confirmationState.message}
+              confirmText={confirmationState.confirmText}
+              cancelText={confirmationState.cancelText}
+          />
+      )}
+      <Tour
+        isOpen={isTourOpen}
+        onClose={() => {
+            setIsTourOpen(false);
+            setIsTourCompleted(true);
+        }}
+        steps={tourSteps}
       />
     </>
   );

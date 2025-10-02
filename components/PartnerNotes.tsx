@@ -10,7 +10,8 @@ interface PartnerNotesProps {
 
 type SummaryItem = {
     id: string;
-    type: 'note' | 'reflection' | 'trip' | 'emotion';
+    // FIX: Add 'academic_summary' and 'subject_update' to the union type to match the possible types from PartnerNote.
+    type: 'note' | 'reflection' | 'trip' | 'emotion' | 'academic_summary' | 'subject_update';
     timestamp: string; // ISO string
     content: string;
 };
@@ -34,6 +35,9 @@ const summaryItemStyles: Record<SummaryItem['type'], { bg: string, text: string,
     emotion: { bg: 'bg-pink-200', text: 'text-pink-900', rotate: 'transform rotate-1' },
     reflection: { bg: 'bg-purple-200', text: 'text-purple-900', rotate: 'transform rotate-2' },
     trip: { bg: 'bg-sky-200', text: 'text-sky-900', rotate: 'transform -rotate-1' },
+    // FIX: Add styles for the new 'academic_summary' and 'subject_update' types to support their rendering.
+    academic_summary: { bg: 'bg-indigo-200', text: 'text-indigo-900', rotate: 'transform rotate-1' },
+    subject_update: { bg: 'bg-indigo-200', text: 'text-indigo-900', rotate: 'transform -rotate-2' },
 };
 
 export const PartnerNotes: React.FC<PartnerNotesProps> = ({ partner, partnerNotes, sharedEmotionStates, onNavigate }) => {

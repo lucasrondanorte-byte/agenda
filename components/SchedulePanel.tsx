@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import type { Event, EventCategory } from '../types';
+import type { Event, EventCategory, Exam, Subject } from '../types';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface SchedulePanelProps {
   selectedDate: Date;
   events: Event[];
+  exams: Exam[];
+  subjects: Subject[];
   onAddEvent: () => void;
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (eventId: string) => void;
@@ -61,8 +64,9 @@ const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 
-export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, events, onAddEvent, onEditEvent, onDeleteEvent, onManageRoutines, onToggleEventCompletion }) => {
+export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, events, exams, subjects, onAddEvent, onEditEvent, onDeleteEvent, onManageRoutines, onToggleEventCompletion }) => {
   const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
+  const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
   const dateString = selectedDate.toISOString().split('T')[0];
 
   const todaysEvents = events
@@ -75,99 +79,149 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
     );
   };
 
+  const requestEventDeletion = (event: Event) => {
+    if (event.routineId || event.isAcademic) return; // Should be disabled, but check again
+    setConfirmationState({
+        isOpen: true,
+        title: 'Eliminar Evento',
+        message: `¿Estás seguro de que quieres eliminar el evento "${event.title}"?`,
+        onConfirm: () => onDeleteEvent(event.id)
+    });
+  };
+
+  const getActionTitle = (event: Event): string => {
+    if (event.routineId) return 'Edita la rutina para cambiar este evento';
+    if (event.isAcademic) return 'Gestiona este examen desde la sección Académica';
+    return 'Editar evento';
+  };
+  
+  const getDeleteActionTitle = (event: Event): string => {
+      if (event.routineId) return 'Elimina la rutina para borrar este evento';
+      if (event.isAcademic) return 'Gestiona este examen desde la sección Académica';
+      return 'Eliminar evento';
+  };
+
   return (
-    <div>
+    <>
       <div>
-        <h2 className="text-2xl font-bold text-zinc-800">Agenda del Día</h2>
-        <p className="text-md text-zinc-500 mt-1">
-          {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </p>
-      </div>
-      
-      <div className="mt-6">
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h3 className="text-lg font-medium text-zinc-800">Eventos de Hoy</h3>
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                 <button onClick={onManageRoutines} className="flex items-center space-x-2 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
-                    <RepeatIcon className="w-5 h-5"/>
-                    <span>Rutinas</span>
-                </button>
-                <button onClick={onAddEvent} className="flex items-center space-x-2 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
-                  <PlusIcon className="w-5 h-5"/>
-                  <span>Añadir Evento</span>
-                </button>
+        <div>
+          <h2 className="text-2xl font-bold text-zinc-800">Agenda del Día</h2>
+          <p className="text-md text-zinc-500 mt-1">
+            {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+        
+        <div className="mt-6">
+          <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h3 className="text-lg font-medium text-zinc-800">Eventos de Hoy</h3>
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                   <button onClick={onManageRoutines} className="flex items-center space-x-2 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
+                      <RepeatIcon className="w-5 h-5"/>
+                      <span>Rutinas</span>
+                  </button>
+                  <button onClick={onAddEvent} className="flex items-center space-x-2 text-sm font-medium text-teal-600 hover:text-teal-800 transition-colors">
+                    <PlusIcon className="w-5 h-5"/>
+                    <span>Añadir Evento</span>
+                  </button>
+                </div>
               </div>
+              {todaysEvents.length > 0 ? (
+                <ul className="space-y-3">
+                  {todaysEvents.map(event => {
+                      const isExpanded = expandedEventIds.includes(event.id);
+                      const isActionDisabled = !!event.routineId || !!event.isAcademic;
+                      
+                      const examId = event.isAcademic ? event.id.replace('exam-', '') : null;
+                      const exam = examId ? exams.find(e => e.id === examId) : null;
+                      
+                      const canExpand = event.description || (event.isAcademic && exam?.topics);
+
+                      return (
+                          <li 
+                              key={event.id} 
+                              className={`p-3 rounded-lg flex flex-col group transition-all duration-300 ease-in-out border-l-4 ${
+                              event.completed
+                                  ? 'bg-green-50 border-green-400'
+                                  : 'bg-stone-50'
+                              }`}
+                              style={!event.completed ? { borderColor: event.color || categoryColors[event.category] || categoryColors.otro } : {}}
+                          >
+                              <div className="flex justify-between items-start w-full">
+                                  <div className="flex items-start space-x-3 flex-grow min-w-0" >
+                                      <input 
+                                      type="checkbox" 
+                                      checked={!!event.completed}
+                                      onChange={(e) => {
+                                          e.stopPropagation();
+                                          onToggleEventCompletion(event.id);
+                                      }}
+                                      className="mt-1 h-5 w-5 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 cursor-pointer flex-shrink-0"
+                                      aria-label={`Marcar ${event.title} como completado`}
+                                      />
+                                      <div className={`flex-grow ${canExpand ? 'cursor-pointer' : ''}`} onClick={() => canExpand && toggleExpand(event.id)}>
+                                          <div className="flex items-center space-x-2">
+                                              {event.completed && <CheckCircleIcon className="w-5 h-5 text-green-500 flex-shrink-0 transition-opacity" />}
+                                              <p className={`font-semibold text-zinc-800 truncate transition-colors ${event.completed ? 'line-through text-zinc-500' : ''}`}>{event.title}</p>
+                                          </div>
+                                          <div className={`flex items-center gap-2 text-sm transition-colors ${event.completed ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                              <span>{event.time}</span>
+                                              {event.reminder && !event.isAcademic && (
+                                                  <div title="Recordatorio en la app activado">
+                                                      <BellIcon className={`w-4 h-4 transition-colors ${event.completed ? 'text-zinc-400' : 'text-teal-500'}`} />
+                                                  </div>
+                                              )}
+                                               {exam?.grade !== null && exam?.grade !== undefined && (
+                                                    <span className={`font-bold text-base ml-2 ${exam.grade >= 4 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        Nota: {exam.grade}
+                                                    </span>
+                                                )}
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                                      {canExpand && (
+                                          <button onClick={() => toggleExpand(event.id)} className="p-1.5 text-zinc-500 rounded-md">
+                                              <ChevronDownIcon className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                          </button>
+                                      )}
+                                      <button onClick={() => onEditEvent(event)} disabled={isActionDisabled} className="p-1.5 text-zinc-500 hover:text-teal-600 rounded-md hover:bg-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-300 disabled:hover:bg-transparent" title={getActionTitle(event)}>
+                                          <PencilIcon className="w-4 h-4"/>
+                                      </button>
+                                      <button onClick={() => requestEventDeletion(event)} disabled={isActionDisabled} className="p-1.5 text-zinc-500 hover:text-red-600 rounded-md hover:bg-zinc-200 disabled:cursor-not-allowed disabled:text-zinc-300 disabled:hover:bg-transparent" title={getDeleteActionTitle(event)}>
+                                          <TrashIcon className="w-4 h-4"/>
+                                      </button>
+                                  </div>
+                              </div>
+                              {isExpanded && canExpand && (
+                                  <div className="pl-8 pt-2">
+                                      <p className={`text-sm whitespace-pre-wrap transition-colors ${event.completed ? 'text-zinc-500' : 'text-zinc-600'}`}>
+                                        {event.isAcademic ? exam?.topics : event.description}
+                                      </p>
+                                  </div>
+                              )}
+                          </li>
+                      )
+                  })}
+                </ul>
+              ) : (
+                <p className="text-center text-zinc-500 py-8">No hay eventos programados para hoy.</p>
+              )}
             </div>
-            {todaysEvents.length > 0 ? (
-              <ul className="space-y-3">
-                {todaysEvents.map(event => {
-                    const isExpanded = expandedEventIds.includes(event.id);
-                    return (
-                        <li 
-                            key={event.id} 
-                            className={`p-3 rounded-lg flex flex-col group transition-all duration-300 ease-in-out border-l-4 ${
-                            event.completed
-                                ? 'bg-green-50 border-green-400'
-                                : 'bg-stone-50'
-                            }`}
-                            style={!event.completed ? { borderColor: event.color || categoryColors[event.category] || categoryColors.otro } : {}}
-                        >
-                            <div className="flex justify-between items-start w-full">
-                                <div className="flex items-start space-x-3 flex-grow min-w-0" onClick={() => event.description && toggleExpand(event.id)}>
-                                    <input 
-                                    type="checkbox" 
-                                    checked={!!event.completed}
-                                    onChange={(e) => {
-                                        e.stopPropagation();
-                                        onToggleEventCompletion(event.id);
-                                    }}
-                                    className="mt-1 h-5 w-5 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 cursor-pointer flex-shrink-0"
-                                    aria-label={`Marcar ${event.title} como completado`}
-                                    />
-                                    <div className={`flex-grow ${event.description ? 'cursor-pointer' : ''}`}>
-                                        <div className="flex items-center space-x-2">
-                                            {event.completed && <CheckCircleIcon className="w-5 h-5 text-green-500 flex-shrink-0 transition-opacity" />}
-                                            <p className={`font-semibold text-zinc-800 truncate transition-colors ${event.completed ? 'line-through text-zinc-500' : ''}`}>{event.title}</p>
-                                        </div>
-                                        <div className={`flex items-center gap-2 text-sm transition-colors ${event.completed ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                                            <span>{event.time}</span>
-                                            {event.reminder && (
-                                                <div title="Recordatorio en la app activado">
-                                                    <BellIcon className={`w-4 h-4 transition-colors ${event.completed ? 'text-zinc-400' : 'text-teal-500'}`} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-2 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
-                                    {event.description && (
-                                        <button onClick={() => toggleExpand(event.id)} className="p-1.5 text-zinc-500 rounded-md">
-                                            <ChevronDownIcon className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                                        </button>
-                                    )}
-                                    <button onClick={() => onEditEvent(event)} className="p-1.5 text-zinc-500 hover:text-teal-600 rounded-md hover:bg-zinc-200" title={event.routineId ? 'Edita la rutina para cambiar este evento' : 'Editar evento'}>
-                                        <PencilIcon className={`w-4 h-4 ${event.routineId ? 'text-zinc-300 cursor-not-allowed' : ''}`}/>
-                                    </button>
-                                    <button onClick={() => onDeleteEvent(event.id)} className="p-1.5 text-zinc-500 hover:text-red-600 rounded-md hover:bg-zinc-200" title={event.routineId ? 'Elimina la rutina para borrar este evento' : 'Eliminar evento'}>
-                                        <TrashIcon className={`w-4 h-4 ${event.routineId ? 'text-zinc-300 cursor-not-allowed' : ''}`}/>
-                                    </button>
-                                </div>
-                            </div>
-                            {isExpanded && event.description && (
-                                <div className="pl-8 pt-2">
-                                    <p className={`text-sm whitespace-pre-wrap transition-colors ${event.completed ? 'text-zinc-500' : 'text-zinc-600'}`}>{event.description}</p>
-                                </div>
-                            )}
-                        </li>
-                    )
-                })}
-              </ul>
-            ) : (
-              <p className="text-center text-zinc-500 py-8">No hay eventos programados para hoy.</p>
-            )}
-          </div>
+        </div>
       </div>
-    </div>
+      {confirmationState?.isOpen && (
+          <ConfirmationModal 
+              isOpen={confirmationState.isOpen}
+              onClose={() => setConfirmationState(null)}
+              onConfirm={() => {
+                  confirmationState.onConfirm();
+                  setConfirmationState(null);
+              }}
+              title={confirmationState.title}
+              message={confirmationState.message}
+          />
+      )}
+    </>
   );
 };

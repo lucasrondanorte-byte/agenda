@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { User, SharedEmotionState, EmotionMoji, QASession, PartnerNote } from '../types';
+import type { User, SharedEmotionState, EmotionMoji, QASession, PartnerNote, SubjectStatus } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { TripDetailView } from './TripDetailView';
 
@@ -13,6 +13,7 @@ interface CoupleSpaceProps {
   sharedEmotionStates: SharedEmotionState[];
   setSharedEmotionStates: React.Dispatch<React.SetStateAction<SharedEmotionState[]>>;
   onOpenEmotionLog: () => void;
+  onAddReply: (noteId: string, replyText: string) => void;
 }
 
 const emotionMojis: { value: EmotionMoji; label: string; icon: string; bgColor: string }[] = [
@@ -87,6 +88,52 @@ const EnergyStatus: React.FC<{
     );
 };
 
+const SubjectUpdateNoteCard: React.FC<{ note: PartnerNote }> = ({ note }) => {
+    const { subjectName, newStatus, finalGrade } = note.subjectUpdateContent!;
+    const isApproved = newStatus === 'aprobada';
+
+    return (
+        <div className="mt-1">
+            <div className={`p-3 rounded-md border-l-4 ${isApproved ? 'bg-green-50 border-green-400' : 'bg-red-50 border-red-400'}`}>
+                <p className={`text-sm ${isApproved ? 'text-green-800' : 'text-red-800'}`}>
+                    {isApproved
+                        ? `¡Ha aprobado `
+                        : `Necesita recursar `
+                    }
+                    <strong className="font-bold">{subjectName}</strong>
+                    {isApproved && finalGrade && ` con un ${finalGrade}!`}
+                </p>
+            </div>
+        </div>
+    );
+};
+
+const ReplyForm: React.FC<{ noteId: string, onAddReply: CoupleSpaceProps['onAddReply'], onCancel: () => void }> = ({ noteId, onAddReply, onCancel }) => {
+    const [replyText, setReplyText] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!replyText.trim()) return;
+        onAddReply(noteId, replyText.trim());
+        setReplyText('');
+        onCancel();
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="mt-2 flex items-center space-x-2">
+            <input
+                type="text"
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                placeholder="Escribe una respuesta..."
+                autoFocus
+                className="w-full px-2 py-1 border border-slate-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <button type="submit" className="px-3 py-1 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700">Enviar</button>
+        </form>
+    );
+};
+
 // FIX: Add missing CoupleSpace component export
 export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
   currentUser,
@@ -98,11 +145,13 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
   sharedEmotionStates,
   setSharedEmotionStates,
   onOpenEmotionLog,
+  onAddReply,
 }) => {
   const [newQuestion, setNewQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [newNote, setNewNote] = useState('');
   const [viewingTripNote, setViewingTripNote] = useState<PartnerNote | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -142,10 +191,22 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
         .sort((a,b) => new Date(b.answeredAt!).getTime() - new Date(a.answeredAt!).getTime());
   }, [qaSessions]);
 
-  const allNotesAndSharedItems = useMemo(() => {
-      return [...partnerNotes]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [partnerNotes]);
+    const { mainNotes, repliesByNoteId } = useMemo(() => {
+        const allNotes = [...partnerNotes].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        const main = allNotes.filter(n => !n.replyToId);
+        const replies = allNotes.filter(n => n.replyToId);
+        
+        const repliesMap = replies.reduce((acc, reply) => {
+            if (!acc[reply.replyToId!]) {
+                acc[reply.replyToId!] = [];
+            }
+            acc[reply.replyToId!].push(reply);
+            return acc;
+        }, {} as Record<string, PartnerNote[]>);
+
+        return { mainNotes: main.reverse(), repliesByNoteId: repliesMap };
+
+    }, [partnerNotes]);
 
 
   const handleAskQuestion = (e: React.FormEvent) => {
@@ -265,12 +326,15 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
                 </div>
             </form>
             <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                {allNotesAndSharedItems.map(note => {
+                {mainNotes.map(note => {
                     const author = getUserById(note.authorId);
                     const isCurrentUser = author.id === currentUser.id;
+                    const noteReplies = repliesByNoteId[note.id] || [];
+
                     return (
-                        <div key={note.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`p-3 rounded-lg max-w-sm ${isCurrentUser ? 'bg-indigo-100' : 'bg-slate-100'}`}>
+                      <div key={note.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                        <div className="w-full max-w-sm">
+                            <div className={`p-3 rounded-lg ${isCurrentUser ? 'bg-indigo-100' : 'bg-slate-100'}`}>
                                 <p className="font-semibold text-sm text-slate-800">{isCurrentUser ? 'Tú' : author.name}</p>
                                 {note.type === 'reflection' && note.reflectionContent ? (
                                     <div className="mt-1">
@@ -287,6 +351,8 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
                                             <span className="text-xs text-indigo-600">Ver detalles</span>
                                         </button>
                                     </div>
+                                ) : note.type === 'subject_update' && note.subjectUpdateContent ? (
+                                    <SubjectUpdateNoteCard note={note} />
                                 ) : (
                                     <p className="text-sm text-slate-700 whitespace-pre-wrap">{note.text}</p>
                                 )}
@@ -294,7 +360,32 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
                                     {new Date(note.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </p>
                             </div>
+                             {/* Replies */}
+                            {noteReplies.length > 0 && (
+                                <div className="pl-4 mt-2 space-y-2 border-l-2 border-slate-300">
+                                    {noteReplies.map(reply => {
+                                        const replyAuthor = getUserById(reply.authorId);
+                                        const isReplyCurrentUser = replyAuthor.id === currentUser.id;
+                                        return (
+                                            <div key={reply.id} className={`p-2 rounded-lg text-sm ${isReplyCurrentUser ? 'bg-indigo-50' : 'bg-slate-50'}`}>
+                                                <p className="font-semibold text-xs text-slate-600">{replyAuthor.name} respondió:</p>
+                                                <p className="text-slate-700">{reply.text}</p>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+
+                             {/* Reply action */}
+                            {replyingTo === note.id ? (
+                                <ReplyForm noteId={note.id} onAddReply={onAddReply} onCancel={() => setReplyingTo(null)} />
+                            ) : (
+                                <div className="mt-1 text-right">
+                                    <button onClick={() => setReplyingTo(note.id)} className="text-xs font-semibold text-indigo-600 hover:underline">Responder</button>
+                                </div>
+                            )}
                         </div>
+                      </div>
                     );
                 })}
             </div>

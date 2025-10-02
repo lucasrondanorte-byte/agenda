@@ -1,4 +1,5 @@
 // This component renders the main header for the application.
+// FIX: Correctly import React hooks (useState, useEffect, useRef) within curly braces.
 import React, { useState, useEffect, useRef } from 'react';
 import type { User, Notification } from '../types';
 import { NotificationCenter } from './NotificationCenter';
@@ -18,7 +19,9 @@ interface HeaderProps {
   onNavigateToTravelLog: () => void;
   onNavigateToGoals: () => void;
   onNavigateToHome: () => void;
-  activeSection: 'planner' | 'travel' | 'goals' | 'home';
+  onNavigateToAcademic: () => void;
+  activeSection: 'planner' | 'travel' | 'goals' | 'home' | 'academic';
+  onStartTour: () => void;
 }
 
 const UserGroupIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -45,6 +48,14 @@ const HomeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
     </svg>
 );
+
+const AcademicCapIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path d="M12 14.25c-2.43 0-4.68.62-6.53 1.69.58 1.13 1.34 2.14 2.26 3.06 1.32.96 2.82 1.5 4.38 1.5s3.06-.54 4.38-1.5c.92-.92 1.68-1.93 2.26-3.06C16.68 14.87 14.43 14.25 12 14.25Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 14.25A5.25 5.25 0 0 0 17.25 9V6.75a5.25 5.25 0 0 0-5.25-5.25A5.25 5.25 0 0 0 6.75 6.75V9a5.25 5.25 0 0 0 5.25 5.25Z" />
+    </svg>
+);
+
 
 const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -73,6 +84,12 @@ const ArrowLeftStartOnRectangleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
   </svg>
 );
 
+const QuestionMarkCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+  </svg>
+);
+
 
 export const Header: React.FC<HeaderProps> = ({ 
     user, 
@@ -89,7 +106,9 @@ export const Header: React.FC<HeaderProps> = ({
     onNavigateToTravelLog,
     onNavigateToGoals,
     onNavigateToHome,
-    activeSection 
+    onNavigateToAcademic,
+    activeSection,
+    onStartTour
 }) => {
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -124,39 +143,56 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="hidden sm:block text-xl sm:text-2xl font-bold text-zinc-800 tracking-tight">ConectaMente</h1>
         </div>
         <div className="flex items-center space-x-1 sm:space-x-2">
-             <button 
-              onClick={onNavigateToHome}
-              className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                  activeSection === 'home' 
-                  ? 'bg-teal-100 text-teal-700 border-teal-200'
-                  : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
-              }`}
-            >
-              <HomeIcon className="w-5 h-5 text-teal-500"/>
-              <span className="hidden sm:inline">Mi Hogar</span>
-            </button>
-             <button 
-              onClick={onNavigateToGoals}
-              className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                  activeSection === 'goals' 
-                  ? 'bg-teal-100 text-teal-700 border-teal-200'
-                  : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
-              }`}
-            >
-              <BullseyeIcon className="w-5 h-5 text-teal-500"/>
-              <span className="hidden sm:inline">Metas</span>
-            </button>
-             <button 
-              onClick={onNavigateToTravelLog}
-              className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                  activeSection === 'travel' 
-                  ? 'bg-teal-100 text-teal-700 border-teal-200'
-                  : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
-              }`}
-            >
-              <BriefcaseIcon className="w-5 h-5 text-teal-500"/>
-              <span className="hidden sm:inline">Viajes</span>
-            </button>
+             <div id="header-nav" className="flex items-center space-x-1 sm:space-x-2">
+                <button 
+                id="header-nav-home"
+                onClick={onNavigateToHome}
+                className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                    activeSection === 'home' 
+                    ? 'bg-teal-100 text-teal-700 border-teal-200'
+                    : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                }`}
+                >
+                <HomeIcon className="w-5 h-5 text-teal-500"/>
+                <span className="hidden sm:inline">Mi Hogar</span>
+                </button>
+                <button
+                id="header-nav-goals"
+                onClick={onNavigateToGoals}
+                className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                    activeSection === 'goals' 
+                    ? 'bg-teal-100 text-teal-700 border-teal-200'
+                    : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                }`}
+                >
+                <BullseyeIcon className="w-5 h-5 text-teal-500"/>
+                <span className="hidden sm:inline">Metas</span>
+                </button>
+                <button
+                id="header-nav-academic"
+                onClick={onNavigateToAcademic}
+                className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                    activeSection === 'academic' 
+                    ? 'bg-teal-100 text-teal-700 border-teal-200'
+                    : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                }`}
+                >
+                <AcademicCapIcon className="w-5 h-5 text-teal-500"/>
+                <span className="hidden sm:inline">Académico</span>
+                </button>
+                <button
+                id="header-nav-travel"
+                onClick={onNavigateToTravelLog}
+                className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                    activeSection === 'travel' 
+                    ? 'bg-teal-100 text-teal-700 border-teal-200'
+                    : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                }`}
+                >
+                <BriefcaseIcon className="w-5 h-5 text-teal-500"/>
+                <span className="hidden sm:inline">Viajes</span>
+                </button>
+             </div>
             <div ref={notificationRef} className="relative">
               <button 
                 onClick={() => setIsNotificationCenterOpen(prev => !prev)}
@@ -183,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            <div className="relative" ref={userMenuRef}>
+            <div id="user-menu" className="relative" ref={userMenuRef}>
                  <button 
                     onClick={() => setIsUserMenuOpen(prev => !prev)}
                     className="flex items-center space-x-2 p-2 rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
@@ -211,6 +247,11 @@ export const Header: React.FC<HeaderProps> = ({
                             className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors">
                                 <KeyIcon className="w-5 h-5 text-zinc-500"/>
                                 <span>Cambiar PIN</span>
+                           </button>
+                           <button onClick={() => { onStartTour(); setIsUserMenuOpen(false); }}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors">
+                                <QuestionMarkCircleIcon className="w-5 h-5 text-zinc-500"/>
+                                <span>Tour Guiado</span>
                            </button>
                            <div className="my-1 h-px bg-zinc-100"></div>
                            <button onClick={onLogout}

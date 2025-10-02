@@ -4,6 +4,7 @@ import type { Trip, TripHighlight, User } from '../types';
 import { TripFormModal } from './TripFormModal';
 import { HighlightFormModal } from './HighlightFormModal';
 import { v4 as uuidv4 } from 'uuid';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface TravelLogProps {
     trips: Trip[];
@@ -82,6 +83,8 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [geminiError, setGeminiError] = useState('');
+    const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
+
 
     const handleEditTrip = (e: React.MouseEvent, trip: Trip) => {
         e.stopPropagation();
@@ -130,14 +133,31 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
         setEditingHighlight(null);
     };
     
-    const handleDeleteHighlight = (highlightId: string) => {
+    const handleDeleteHighlight = (highlight: TripHighlight) => {
         if (!selectedTrip) return;
-        if(window.confirm('¿Estás seguro de que quieres eliminar este recuerdo?')) {
-            const updatedHighlights = selectedTrip.highlights.filter(h => h.id !== highlightId);
-            const updatedTrip = { ...selectedTrip, highlights: updatedHighlights };
-            onSaveTrip(updatedTrip);
-            setSelectedTrip(updatedTrip);
-        }
+        setConfirmationState({
+            isOpen: true,
+            title: 'Eliminar Recuerdo',
+            message: `¿Estás seguro de que quieres eliminar el recuerdo "${highlight.title}"?`,
+            onConfirm: () => {
+                const updatedHighlights = selectedTrip.highlights.filter(h => h.id !== highlight.id);
+                const updatedTrip = { ...selectedTrip, highlights: updatedHighlights };
+                onSaveTrip(updatedTrip);
+                setSelectedTrip(updatedTrip);
+            }
+        });
+    };
+
+    const requestTripDeletion = (trip: Trip) => {
+        setConfirmationState({
+            isOpen: true,
+            title: 'Eliminar Viaje',
+            message: `¿Estás seguro de que quieres eliminar el viaje "${trip.title}" y todos sus recuerdos?`,
+            onConfirm: () => {
+                onDeleteTrip(trip.id);
+                setSelectedTrip(null);
+            }
+        });
     };
     
     const handleAddSuggestionAsHighlight = (suggestion: Suggestion) => {
@@ -202,125 +222,134 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
 
     if (selectedTrip) {
         return (
-            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md scrapbook-background">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <button onClick={() => setSelectedTrip(null)} className="flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-2">
-                           <ArrowUturnLeftIcon className="w-4 h-4 mr-1"/> Volver a todos los viajes
-                        </button>
-                        <h2 className="text-3xl font-bold text-slate-800 font-handwriting">{selectedTrip.title}</h2>
-                        <p className="text-lg text-slate-500 flex items-center mt-1">
-                            <MapPinIcon className="w-5 h-5 mr-2 text-slate-400"/> {selectedTrip.destination}
-                        </p>
-                        <p className="text-sm text-slate-500 mt-1">{formatDateRange(selectedTrip.startDate, selectedTrip.endDate)}</p>
-                    </div>
-                     <div className="flex items-center space-x-2 flex-shrink-0 mt-2">
-                        {pairedUser && (
-                            <button onClick={() => onOpenShareModal(selectedTrip)} title="Compartir viaje" className="p-2 text-slate-500 hover:text-green-600 rounded-md hover:bg-slate-100">
-                                <ShareIcon className="w-5 h-5" />
+            <>
+                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md scrapbook-background">
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <button onClick={() => setSelectedTrip(null)} className="flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-2">
+                            <ArrowUturnLeftIcon className="w-4 h-4 mr-1"/> Volver a todos los viajes
                             </button>
-                        )}
-                        <button onClick={(e) => handleEditTrip(e, selectedTrip)} className="p-2 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-100">
-                            <PencilIcon className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => {
-                            if (window.confirm('¿Estás seguro de que quieres eliminar este viaje y todos sus recuerdos?')) {
-                                onDeleteTrip(selectedTrip.id)
-                                setSelectedTrip(null)
-                            }
-                        }} className="p-2 text-slate-500 hover:text-red-600 rounded-md hover:bg-slate-100">
-                           <TrashIcon className="w-5 h-5"/>
-                        </button>
-                    </div>
-                </div>
-
-                {selectedTrip.notes && <p className="mt-4 mb-6 text-slate-600 bg-white/70 p-4 rounded-lg italic text-center text-lg font-handwriting">"{selectedTrip.notes}"</p>}
-                
-                <div className="border-t border-slate-200 pt-6">
-                    <div className="flex justify-between items-center mb-4">
-                         <h3 className="text-xl font-semibold text-slate-700">Recuerdos del Viaje</h3>
-                         <button onClick={() => { setEditingHighlight(null); setHighlightFormOpen(true); }} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                            <PlusIcon className="w-5 h-5"/>
-                            <span>Añadir Recuerdo</span>
-                        </button>
-                    </div>
-                    
-                     <div className="my-6 p-4 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
-                        <h4 className="font-semibold text-indigo-800 flex items-center"><SparklesIcon className="w-5 h-5 mr-2 text-indigo-500"/>Asistente de Viajes</h4>
-                        <p className="text-sm text-indigo-700 mt-1">¿Necesitas inspiración? Pide sugerencias de recuerdos para tu viaje.</p>
-                        <div className="mt-3 flex items-center space-x-2">
-                            <input 
-                                type="text" 
-                                value={suggestionPrompt}
-                                onChange={e => setSuggestionPrompt(e.target.value)}
-                                placeholder="p. ej., 'comida local', 'museos'"
-                                className="w-full px-3 py-1.5 border border-indigo-200 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            />
-                            <button onClick={getSuggestions} disabled={isGenerating} className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">
-                                {isGenerating ? 'Generando...' : 'Sugerir'}
+                            <h2 className="text-3xl font-bold text-slate-800 font-handwriting">{selectedTrip.title}</h2>
+                            <p className="text-lg text-slate-500 flex items-center mt-1">
+                                <MapPinIcon className="w-5 h-5 mr-2 text-slate-400"/> {selectedTrip.destination}
+                            </p>
+                            <p className="text-sm text-slate-500 mt-1">{formatDateRange(selectedTrip.startDate, selectedTrip.endDate)}</p>
+                        </div>
+                        <div className="flex items-center space-x-2 flex-shrink-0 mt-2">
+                            {pairedUser && (
+                                <button onClick={() => onOpenShareModal(selectedTrip)} title="Compartir viaje" className="p-2 text-slate-500 hover:text-green-600 rounded-md hover:bg-slate-100">
+                                    <ShareIcon className="w-5 h-5" />
+                                </button>
+                            )}
+                            <button onClick={(e) => handleEditTrip(e, selectedTrip)} className="p-2 text-slate-500 hover:text-indigo-600 rounded-md hover:bg-slate-100">
+                                <PencilIcon className="w-5 h-5" />
+                            </button>
+                            <button onClick={() => requestTripDeletion(selectedTrip)} className="p-2 text-slate-500 hover:text-red-600 rounded-md hover:bg-slate-100">
+                            <TrashIcon className="w-5 h-5"/>
                             </button>
                         </div>
-                        {geminiError && <p className="text-sm text-red-600 mt-2">{geminiError}</p>}
-                        {suggestions.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                                {suggestions.map((s, i) => (
-                                    <div key={i} className="p-3 bg-white rounded-md flex justify-between items-start shadow-sm">
-                                        <div className="flex items-start gap-3">
-                                            <span className="text-xl mt-0.5">{s.emotion}</span>
-                                            <div>
-                                                <p className="font-semibold text-slate-800">{s.title}</p>
-                                                <p className="text-sm text-slate-600">{s.description}</p>
+                    </div>
+
+                    {selectedTrip.notes && <p className="mt-4 mb-6 text-slate-600 bg-white/70 p-4 rounded-lg italic text-center text-lg font-handwriting">"{selectedTrip.notes}"</p>}
+                    
+                    <div className="border-t border-slate-200 pt-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-semibold text-slate-700">Recuerdos del Viaje</h3>
+                            <button onClick={() => { setEditingHighlight(null); setHighlightFormOpen(true); }} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                                <PlusIcon className="w-5 h-5"/>
+                                <span>Añadir Recuerdo</span>
+                            </button>
+                        </div>
+                        
+                        <div className="my-6 p-4 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
+                            <h4 className="font-semibold text-indigo-800 flex items-center"><SparklesIcon className="w-5 h-5 mr-2 text-indigo-500"/>Asistente de Viajes</h4>
+                            <p className="text-sm text-indigo-700 mt-1">¿Necesitas inspiración? Pide sugerencias de recuerdos para tu viaje.</p>
+                            <div className="mt-3 flex items-center space-x-2">
+                                <input 
+                                    type="text" 
+                                    value={suggestionPrompt}
+                                    onChange={e => setSuggestionPrompt(e.target.value)}
+                                    placeholder="p. ej., 'comida local', 'museos'"
+                                    className="w-full px-3 py-1.5 border border-indigo-200 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                                <button onClick={getSuggestions} disabled={isGenerating} className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:bg-indigo-300">
+                                    {isGenerating ? 'Generando...' : 'Sugerir'}
+                                </button>
+                            </div>
+                            {geminiError && <p className="text-sm text-red-600 mt-2">{geminiError}</p>}
+                            {suggestions.length > 0 && (
+                                <div className="mt-4 space-y-2">
+                                    {suggestions.map((s, i) => (
+                                        <div key={i} className="p-3 bg-white rounded-md flex justify-between items-start shadow-sm">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-xl mt-0.5">{s.emotion}</span>
+                                                <div>
+                                                    <p className="font-semibold text-slate-800">{s.title}</p>
+                                                    <p className="text-sm text-slate-600">{s.description}</p>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => handleAddSuggestionAsHighlight(s)} className="text-xs font-bold text-indigo-600 hover:underline ml-2 flex-shrink-0">Añadir</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {selectedTrip.highlights.length > 0 ? (
+                            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12 items-start">
+                                {selectedTrip.highlights.map((h, index) => (
+                                    <div key={h.id} className="group relative">
+                                        <div className={`bg-white p-3 pb-4 shadow-xl border-4 border-white transition-transform duration-300 group-hover:scale-105 group-hover:rotate-0 ${index % 4 === 0 ? 'rotate-2' : index % 4 === 1 ? '-rotate-3' : index % 4 === 2 ? 'rotate-1' : '-rotate-2'}`}>
+                                            {h.photo && (
+                                                <div className="mb-3 bg-slate-100">
+                                                    <img src={h.photo} alt={h.title} className="w-full h-48 object-cover" />
+                                                </div>
+                                            )}
+                                            <div className="text-center px-2">
+                                                <p className="text-sm text-slate-500">{new Date(h.date + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })}</p>
+                                                <div className="flex items-center justify-center gap-2 mt-1">
+                                                    {h.emotion && <span className="text-2xl">{h.emotion}</span>}
+                                                    <p className="font-bold text-slate-800 text-xl font-handwriting">{h.title}</p>
+                                                </div>
+                                                <p className="mt-2 text-sm text-slate-600 text-left whitespace-pre-wrap">{h.description}</p>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleAddSuggestionAsHighlight(s)} className="text-xs font-bold text-indigo-600 hover:underline ml-2 flex-shrink-0">Añadir</button>
+                                        <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                            <button onClick={() => { setEditingHighlight(h); setHighlightFormOpen(true); }} className="p-1.5 bg-white/80 text-slate-500 hover:text-indigo-600 rounded-full shadow-md">
+                                                <PencilIcon className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDeleteHighlight(h)} className="p-1.5 bg-white/80 text-slate-500 hover:text-red-600 rounded-full shadow-md">
+                                                <TrashIcon className="w-4 h-4"/>
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                        )}
+                        ) : <p className="text-center text-slate-500 py-8">Aún no has añadido ningún recuerdo a este viaje.</p>}
                     </div>
 
-                    {selectedTrip.highlights.length > 0 ? (
-                        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12 items-start">
-                             {selectedTrip.highlights.map((h, index) => (
-                                <div key={h.id} className="group relative">
-                                    <div className={`bg-white p-3 pb-4 shadow-xl border-4 border-white transition-transform duration-300 group-hover:scale-105 group-hover:rotate-0 ${index % 4 === 0 ? 'rotate-2' : index % 4 === 1 ? '-rotate-3' : index % 4 === 2 ? 'rotate-1' : '-rotate-2'}`}>
-                                        {h.photo && (
-                                            <div className="mb-3 bg-slate-100">
-                                                <img src={h.photo} alt={h.title} className="w-full h-48 object-cover" />
-                                            </div>
-                                        )}
-                                        <div className="text-center px-2">
-                                            <p className="text-sm text-slate-500">{new Date(h.date + 'T00:00:00').toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })}</p>
-                                            <div className="flex items-center justify-center gap-2 mt-1">
-                                                {h.emotion && <span className="text-2xl">{h.emotion}</span>}
-                                                <p className="font-bold text-slate-800 text-xl font-handwriting">{h.title}</p>
-                                            </div>
-                                            <p className="mt-2 text-sm text-slate-600 text-left whitespace-pre-wrap">{h.description}</p>
-                                        </div>
-                                    </div>
-                                    <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                        <button onClick={() => { setEditingHighlight(h); setHighlightFormOpen(true); }} className="p-1.5 bg-white/80 text-slate-500 hover:text-indigo-600 rounded-full shadow-md">
-                                            <PencilIcon className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => handleDeleteHighlight(h.id)} className="p-1.5 bg-white/80 text-slate-500 hover:text-red-600 rounded-full shadow-md">
-                                            <TrashIcon className="w-4 h-4"/>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : <p className="text-center text-slate-500 py-8">Aún no has añadido ningún recuerdo a este viaje.</p>}
+                    <HighlightFormModal
+                        isOpen={isHighlightFormOpen}
+                        onClose={() => { setHighlightFormOpen(false); setEditingHighlight(null); }}
+                        onSave={handleSaveHighlightForm}
+                        highlight={editingHighlight}
+                        tripStartDate={selectedTrip.startDate}
+                        tripEndDate={selectedTrip.endDate}
+                    />
                 </div>
-
-                 <HighlightFormModal
-                    isOpen={isHighlightFormOpen}
-                    onClose={() => { setHighlightFormOpen(false); setEditingHighlight(null); }}
-                    onSave={handleSaveHighlightForm}
-                    highlight={editingHighlight}
-                    tripStartDate={selectedTrip.startDate}
-                    tripEndDate={selectedTrip.endDate}
-                />
-            </div>
+                {confirmationState?.isOpen && (
+                    <ConfirmationModal 
+                        isOpen={confirmationState.isOpen}
+                        onClose={() => setConfirmationState(null)}
+                        onConfirm={() => {
+                            confirmationState.onConfirm();
+                            setConfirmationState(null);
+                        }}
+                        title={confirmationState.title}
+                        message={confirmationState.message}
+                    />
+                )}
+            </>
         );
     }
 

@@ -12,6 +12,7 @@ export interface Event {
   routineId?: string; // ID of the parent routine
   color?: string;
   completed?: boolean;
+  isAcademic?: boolean; // Flag for events generated from exams
 }
 
 export interface Routine {
@@ -82,6 +83,7 @@ export interface ShoppingListItem {
     id: string;
     text: string;
     completed: boolean;
+    completedBy?: string; // ID of the user who completed the item
 }
 
 export interface ShoppingList {
@@ -89,6 +91,8 @@ export interface ShoppingList {
     title: string;
     icon: string; // Emoji
     items: ShoppingListItem[];
+    ownerId: string;
+    isShared?: boolean;
 }
 
 export type NotificationType = 
@@ -149,15 +153,27 @@ export interface QASession {
   answeredAt?: string; // ISO timestamp
 }
 
+export interface AcademicSummaryData {
+  gpa: number;
+  progressPercentage: number;
+  approvedCount: number;
+  totalCount: number;
+  recentlyApproved: { name: string; grade: number | null }[];
+}
+
+
 // For the little notes
 export interface PartnerNote {
   id: string;
   authorId: string;
   text: string;
   timestamp: string; // ISO timestamp
-  type?: 'note' | 'reflection' | 'trip';
+  type?: 'note' | 'reflection' | 'trip' | 'academic_summary' | 'subject_update';
   reflectionContent?: Omit<JournalEntry, 'timestamp'>;
   tripContent?: Omit<Trip, 'id'>;
+  academicSummaryContent?: AcademicSummaryData;
+  subjectUpdateContent?: { subjectName: string; newStatus: SubjectStatus; finalGrade: number | null };
+  replyToId?: string;
 }
 
 
@@ -168,4 +184,40 @@ export interface SharedEmotionState {
   emotions: {
     [userId: string]: EmotionMoji;
   };
+}
+
+export interface TourStep {
+  element: string;
+  title: string;
+  content: string;
+  position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
+}
+
+// Academic Types
+export interface Semester {
+  id: string;
+  year: number;
+  term: 'Primer Cuatrimestre' | 'Segundo Cuatrimestre' | 'Verano' | 'Anual';
+  subjectIds: string[]; // Array of subject IDs assigned to this semester
+}
+
+export type SubjectStatus = 'pendiente' | 'cursando' | 'aprobada' | 'recursar' | 'final_pendiente';
+
+export interface Subject {
+  id: string;
+  name: string;
+  status: SubjectStatus;
+  finalGrade: number | null;
+  prerequisiteIds: string[]; // Array of subject IDs
+}
+
+export interface Exam {
+  id: string;
+  subjectId: string;
+  type: 'parcial' | 'final';
+  title: string; // e.g., "Primer Parcial", "Final"
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  grade: number | null;
+  topics?: string;
 }
