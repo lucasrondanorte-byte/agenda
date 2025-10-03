@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/agenda/',             // 👈 clave para GitHub Pages
+  base: '/agenda/',             // <- imprescindible para GitHub Pages
   define: { 'process.env': {} } // evita "process is not defined" en prod
 })
+
