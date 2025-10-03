@@ -38,10 +38,7 @@ import { ExamGradeModal } from './components/ExamGradeModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { Tour } from './components/Tour';
 
-const EXAMPLE_USERS: User[] = [
-  { id: 'user-1', name: 'Vicki', pairedWith: null },
-  { id: 'user-2', name: 'Lucas', pairedWith: null },
-];
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCk-2-Xq6Dke44hPNo3Zuy9RmSNPLr9-IJGafHH2UN-7jyN8kKfBySh0af2-6WoWtZjw/exec';
 
 // Reusable PIN Input component, also used in PinManagementModal
 const PinInput: React.FC<{ length: number; value: string; onChange: (pin: string) => void; error?: boolean; }> = ({ length, value, onChange, error }) => {
@@ -443,7 +440,7 @@ const GripVerticalIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [users, setUsers] = useLocalStorage<User[]>('users', EXAMPLE_USERS);
+  const [users, setUsers] = useLocalStorage<User[]>('users', []);
   const [pairingRequests, setPairingRequests] = useLocalStorage<PairingRequest[]>('pairingRequests', []);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
@@ -840,38 +837,83 @@ function App() {
   const generateId = () => uuidv4();
 
   // User and Pairing Logic
-  const handleLogin = (userId: string, pin: string): boolean => {
-    const user = users.find(u => u.id === userId);
-    if (!user) return false;
+    const handleLogin = async (email: string, password: string): Promise<{success: boolean; message?: string}> => {
+        try {
+            const response = await fetch(`${APPS_SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+            if (!response.ok) throw new Error('Network response was not ok.');
+            const result = await response.json();
 
-    // If user has no pin, this is the first login, set the pin
-    if (!user.pin) {
-        const updatedUsers = users.map(u => u.id === userId ? { ...u, pin } : u);
-        setUsers(updatedUsers);
-        setCurrentUser({ ...user, pin });
-        return true;
-    }
+            if (result.success && result.user) {
+                if (result.user.password === password) {
+                    const localUserData = users.find(u => u.id === result.user.userId);
+                    const loggedInUser: User = {
+                        id: result.user.userId,
+                        name: result.user.name,
+                        pairedWith: localUserData?.pairedWith || null,
+                        pin: localUserData?.pin,
+                    };
 
-    // Check pin if it exists
-    if (user.pin === pin) {
-      setCurrentUser(user);
-      return true;
-    }
+                    setUsers(prev => {
+                        const userInCache = prev.find(u => u.id === loggedInUser.id);
+                        if (userInCache) {
+                            return prev.map(u => u.id === loggedInUser.id ? { ...u, name: loggedInUser.name } : u);
+                        }
+                        return [...prev, loggedInUser];
+                    });
 
-    return false; // Pin incorrect
-  };
+                    setCurrentUser(loggedInUser);
+                    return { success: true };
+                } else {
+                    return { success: false, message: "Contraseña incorrecta." };
+                }
+            } else {
+                return { success: false, message: result.message || "Usuario no encontrado." };
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            return { success: false, message: "Error de red al intentar iniciar sesión." };
+        }
+    };
+
+    const handleCreateUser = async (name: string, email: string, password: string): Promise<{success: boolean; message?: string}> => {
+        try {
+            const checkResponse = await fetch(`${APPS_SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+            if(checkResponse.ok) {
+                const checkResult = await checkResponse.json();
+                if (checkResult.success) {
+                    return { success: false, message: 'Ya existe un usuario con este correo electrónico.' };
+                }
+            }
+            
+            // Using a POST request with redirect:'follow' and text/plain content type for Apps Script compatibility
+            const createResponse = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: 'saveUser', name, email, password }),
+            });
+
+            if (!createResponse.ok) throw new Error('Network response was not ok during creation.');
+            
+            const createResult = await createResponse.json();
+
+            if (createResult.success) {
+                return await handleLogin(email, password);
+            } else {
+                return { success: false, message: createResult.message || 'Error al crear el usuario.' };
+            }
+
+        } catch (error) {
+            console.error("Create user error:", error);
+            return { success: false, message: 'Error de red al crear el usuario.' };
+        }
+    };
+
 
   const handleLogout = () => {
     setCurrentUser(null);
   };
   
-  const handleCreateUser = (name: string): User => {
-    const newUser: User = { id: generateId(), name, pairedWith: null };
-    setUsers(prevUsers => [...prevUsers, newUser]);
-    // Do not log in here. Let UserAuth handle the transition to PIN setup.
-    return newUser;
-  };
-
   const handleSavePin = (newPin: string) => {
     if (!currentUser) return;
     const updatedUsers = users.map(u => u.id === currentUser.id ? { ...u, pin: newPin } : u);
@@ -880,17 +922,50 @@ function App() {
     setIsPinModalOpen(false);
   };
   
-  const handleSendRequest = (toUserId: string) => {
-    if (!currentUser) return;
-    const existingRequest = pairingRequests.find(
-      r => (r.fromUserId === currentUser.id && r.toUserId === toUserId) || 
-           (r.fromUserId === toUserId && r.toUserId === currentUser.id)
-    );
-    if (!existingRequest) {
-      const newRequest: PairingRequest = { id: generateId(), fromUserId: currentUser.id, toUserId, status: 'pending' };
-      setPairingRequests([...pairingRequests, newRequest]);
+  const handleSendRequest = async (email: string): Promise<{ success: boolean; message: string; }> => {
+    if (!currentUser) {
+        return { success: false, message: 'Debes iniciar sesión para enviar solicitudes.' };
+    }
+    
+    try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+        if (!response.ok) throw new Error('Respuesta de red no fue OK.');
+        const result = await response.json();
+
+        if (result.success && result.user) {
+            const toUserId = result.user.userId;
+
+            if (toUserId === currentUser.id) {
+                return { success: false, message: 'No puedes enviarte una solicitud a ti mismo.' };
+            }
+
+            const targetUser: User = { id: toUserId, name: result.user.name };
+            
+            // Add user to cache if not already there
+            setUsers(prev => prev.some(u => u.id === targetUser.id) ? prev : [...prev, targetUser]);
+
+            const existingRequest = pairingRequests.find(
+              r => (r.fromUserId === currentUser.id && r.toUserId === toUserId) || 
+                   (r.fromUserId === toUserId && r.toUserId === currentUser.id)
+            );
+
+            if (existingRequest) {
+                return { success: false, message: 'Ya existe una solicitud con este usuario.' };
+            }
+
+            const newRequest: PairingRequest = { id: generateId(), fromUserId: currentUser.id, toUserId, status: 'pending' };
+            setPairingRequests(prev => [...prev, newRequest]);
+            return { success: true, message: `Solicitud enviada a ${targetUser.name}.` };
+
+        } else {
+            return { success: false, message: result.message || 'Usuario no encontrado.' };
+        }
+    } catch (err) {
+        console.error("Error sending pairing request:", err);
+        return { success: false, message: 'Ocurrió un error de red.' };
     }
   };
+
 
   const handleRespondToRequest = (requestId: string, status: 'accepted' | 'declined') => {
     const request = pairingRequests.find(r => r.id === requestId);
@@ -898,24 +973,27 @@ function App() {
     
     if (status === 'accepted') {
       // Update users
-      const fromUser = users.find(u => u.id === request.fromUserId);
-      const toUser = users.find(u => u.id === request.toUserId);
-      if (fromUser && toUser) {
-        fromUser.pairedWith = toUser.id;
-        toUser.pairedWith = fromUser.id;
-        
-        const updatedUsers = users.map(u => {
-          if (u.id === fromUser.id) return fromUser;
-          if (u.id === toUser.id) return toUser;
+      let fromUser: User | undefined, toUser: User | undefined;
+      const updatedUsers = users.map(u => {
+          if (u.id === request.fromUserId) {
+              fromUser = { ...u, pairedWith: request.toUserId };
+              return fromUser;
+          }
+          if (u.id === request.toUserId) {
+              toUser = { ...u, pairedWith: request.fromUserId };
+              return toUser;
+          }
           return u;
-        });
-        setUsers(updatedUsers);
+      });
+      setUsers(updatedUsers);
 
         // Update current user state if they are involved
-        if(currentUser && (currentUser.id === fromUser.id || currentUser.id === toUser.id)) {
-            setCurrentUser(users.find(u => u.id === currentUser.id)!);
-        }
+      if(currentUser && (currentUser.id === fromUser?.id)) {
+          setCurrentUser(fromUser);
+      } else if (currentUser && (currentUser.id === toUser?.id)) {
+          setCurrentUser(toUser);
       }
+
       // Remove all requests involving these two users
       setPairingRequests(pairingRequests.filter(r => 
           !(r.fromUserId === fromUser?.id && r.toUserId === toUser?.id) &&
@@ -931,14 +1009,20 @@ function App() {
   const handleUnpair = () => {
       if (!currentUser || !currentUser.pairedWith) return;
       const partnerId = currentUser.pairedWith;
+      
+      let newCurrentUser: User | undefined;
       const updatedUsers = users.map(u => {
-          if (u.id === currentUser.id || u.id === partnerId) {
+          if (u.id === currentUser.id) {
+              newCurrentUser = { ...u, pairedWith: null };
+              return newCurrentUser;
+          }
+          if (u.id === partnerId) {
               return { ...u, pairedWith: null };
           }
           return u;
       });
       setUsers(updatedUsers);
-      setCurrentUser(updatedUsers.find(u => u.id === currentUser.id)!);
+      if(newCurrentUser) setCurrentUser(newCurrentUser);
       setIsPairingModalOpen(false);
   };
 
@@ -1716,7 +1800,7 @@ function App() {
   }
 
   if (!currentUser) {
-    return <UserAuth users={users} onLogin={handleLogin} onCreateUser={handleCreateUser} />;
+    return <UserAuth onLogin={handleLogin} onCreateUser={handleCreateUser} />;
   }
 
   const selectedDateString = selectedDate.toISOString().split('T')[0];

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { User, PairingRequest } from '../types';
 
 interface PairingManagerProps {
@@ -8,7 +8,7 @@ interface PairingManagerProps {
   pairedUser: User | null;
   users: User[];
   requests: PairingRequest[];
-  onSendRequest: (toUserId: string) => void;
+  onSendRequest: (email: string) => Promise<{ success: boolean; message: string }>;
   onRespondToRequest: (requestId: string, status: 'accepted' | 'declined') => void;
   onUnpair: () => void;
 }
@@ -24,19 +24,34 @@ export const PairingManager: React.FC<PairingManagerProps> = ({
     isOpen, onClose, currentUser, pairedUser, users, requests, 
     onSendRequest, onRespondToRequest, onUnpair 
 }) => {
+  const [email, setEmail] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [sendStatus, setSendStatus] = useState('');
+
   if (!isOpen) return null;
+
+  const handleSend = async () => {
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
+        setSendError('Por favor, introduce un correo electrónico válido.');
+        return;
+    }
+    setIsSending(true);
+    setSendError('');
+    setSendStatus('');
+    const result = await onSendRequest(email);
+    setIsSending(false);
+    if (result.success) {
+        setEmail('');
+        setSendStatus(result.message);
+    } else {
+        setSendError(result.message);
+    }
+  };
 
   const incomingRequests = requests.filter(r => r.toUserId === currentUser.id && r.status === 'pending');
   const outgoingRequests = requests.filter(r => r.fromUserId === currentUser.id && r.status === 'pending');
-  const availableUsers = users.filter(u => 
-    u.id !== currentUser.id && 
-    !u.pairedWith && 
-    !requests.some(r => 
-        (r.fromUserId === currentUser.id && r.toUserId === u.id) ||
-        (r.fromUserId === u.id && r.toUserId === currentUser.id)
-    )
-  );
-
+  
   const getUserName = (userId: string) => users.find(u => u.id === userId)?.name || 'Usuario desconocido';
 
   return (
@@ -100,19 +115,23 @@ export const PairingManager: React.FC<PairingManagerProps> = ({
                     </div>
                 )}
 
-                {availableUsers.length > 0 && (
-                    <div>
-                         <h3 className="font-semibold text-slate-700 mb-2">Vincular con un nuevo usuario</h3>
-                        <ul className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                        {availableUsers.map(user => (
-                            <li key={user.id} className="p-3 bg-slate-100 rounded-md flex justify-between items-center">
-                                <p className="text-slate-800 font-medium">{user.name}</p>
-                                <button onClick={() => onSendRequest(user.id)} className="px-3 py-1 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">Enviar Solicitud</button>
-                            </li>
-                        ))}
-                        </ul>
+                <div>
+                    <h3 className="font-semibold text-slate-700 mb-2">Vincular con un nuevo usuario por correo</h3>
+                    <div className="flex items-start sm:items-center flex-col sm:flex-row gap-2">
+                        <input 
+                            type="email" 
+                            value={email}
+                            onChange={(e) => { setEmail(e.target.value); setSendError(''); setSendStatus(''); }}
+                            placeholder="correo@ejemplo.com"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <button onClick={handleSend} disabled={isSending} className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 flex-shrink-0">
+                            {isSending ? 'Enviando...' : 'Enviar Solicitud'}
+                        </button>
                     </div>
-                )}
+                    {sendError && <p className="text-red-600 text-sm mt-2">{sendError}</p>}
+                    {sendStatus && <p className="text-green-600 text-sm mt-2">{sendStatus}</p>}
+                </div>
             </div>
         )}
 
