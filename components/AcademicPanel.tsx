@@ -4,7 +4,6 @@ import { SemesterFormModal } from './SemesterFormModal';
 import { SubjectFormModal } from './SubjectFormModal';
 import { AcademicProgressChart } from './AcademicProgressChart';
 import { DependencyViewModal } from './DependencyViewModal';
-import { ConfirmationModal } from './ConfirmationModal';
 import { SemesterDetailModal } from './SemesterDetailModal';
 
 interface AcademicPanelProps {
@@ -60,8 +59,6 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
     const [viewingSemester, setViewingSemester] = useState<Semester | null>(null);
     const [dragOverSemester, setDragOverSemester] = useState<string | null>(null);
 
-    const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
-    
     const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s])), [subjects]);
     const unassignedSubjects = useMemo(() => subjects.filter(s => !semesters.some(sem => sem.subjectIds.includes(s.id))), [subjects, semesters]);
     const sortedSemesters = useMemo(() => [...semesters].sort((a, b) => a.year - b.year || a.term.localeCompare(b.term)), [semesters]);
@@ -72,21 +69,11 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
     };
 
     const requestSemesterDeletion = (semester: Semester) => {
-        setConfirmationState({
-            isOpen: true,
-            title: `Eliminar Cuatrimestre`,
-            message: `¿Estás seguro de que quieres eliminar "${semester.term} ${semester.year}"? Las materias asignadas volverán al banco de materias.`,
-            onConfirm: () => handlers.onDeleteSemester(semester.id)
-        });
+        handlers.onDeleteSemester(semester.id);
     };
 
     const requestSubjectDeletion = (subject: Subject) => {
-        setConfirmationState({
-            isOpen: true,
-            title: 'Eliminar Materia',
-            message: `¿Estás seguro de que quieres eliminar la materia "${subject.name}"? Esta acción es permanente y la eliminará del plan de estudios y de cualquier cuatrimestre.`,
-            onConfirm: () => handlers.onDeleteSubject(subject.id)
-        });
+        handlers.onDeleteSubject(subject.id);
     };
     
     const onDragStart = (e: React.DragEvent<HTMLDivElement>, subjectId: string) => {
@@ -125,10 +112,10 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
                                     id={index === 0 ? 'draggable-subject-example' : undefined}
                                     draggable={canAssign}
                                     onDragStart={(e) => canAssign && onDragStart(e, subject.id)}
-                                    className={`p-3 rounded-md flex justify-between items-center bg-stone-50 group relative transition-colors ${canAssign ? 'cursor-grab hover:bg-stone-100' : 'cursor-not-allowed opacity-70'}`}
+                                    className={`p-3 rounded-md flex justify-between items-center bg-stone-50 group relative transition-colors ${canAssign ? 'cursor-grab hover:bg-stone-100' : 'cursor-not-allowed'}`}
                                     title={canAssign ? `Arrastra para asignar ${subject.name}`: `Requiere correlativas`}
                                 >
-                                    <div className="flex items-center gap-2">
+                                    <div className={`flex items-center gap-2 flex-grow ${!canAssign ? 'opacity-60' : ''}`}>
                                         {!canAssign && <LockClosedIcon className="w-4 h-4 text-zinc-400 flex-shrink-0" />}
                                         <div>
                                             <p className="font-medium text-zinc-800">{subject.name}</p>
@@ -136,7 +123,7 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-1 pr-3">
-                                        <button onClick={() => setViewingSubjectDeps(subject)} className="p-1 text-zinc-400 hover:text-violet-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><ShareIcon className="w-4 h-4"/></button>
+                                        <button onClick={() => setViewingSubjectDeps(subject)} title="Ver correlatividades" className="p-1 text-zinc-400 hover:text-violet-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><ShareIcon className="w-4 h-4"/></button>
                                         <button onClick={() => requestSubjectDeletion(subject)} title="Eliminar materia" className="p-1 text-zinc-400 hover:text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><TrashIcon className="w-4 h-4" /></button>
                                     </div>
                                 </div>
@@ -248,18 +235,6 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
                     onDeleteExam={handlers.onDeleteExam}
                 />
              )}
-            {confirmationState?.isOpen && (
-                <ConfirmationModal 
-                    isOpen={confirmationState.isOpen}
-                    onClose={() => setConfirmationState(null)}
-                    onConfirm={() => {
-                        confirmationState.onConfirm();
-                        setConfirmationState(null);
-                    }}
-                    title={confirmationState.title}
-                    message={confirmationState.message}
-                />
-            )}
         </>
     );
 };

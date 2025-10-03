@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Event, EventCategory, Exam, Subject } from '../types';
-import { ConfirmationModal } from './ConfirmationModal';
 
 interface SchedulePanelProps {
   selectedDate: Date;
@@ -65,8 +64,7 @@ const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 
 export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, events, exams, subjects, onAddEvent, onEditEvent, onDeleteEvent, onManageRoutines, onToggleEventCompletion }) => {
-  const [expandedEventIds, setExpandedEventIds] = useState<string[]>([]);
-  const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
+  const [expandedEventIds, setExpandedEventIds] = React.useState<string[]>([]);
   const dateString = selectedDate.toISOString().split('T')[0];
 
   const todaysEvents = events
@@ -81,12 +79,7 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
 
   const requestEventDeletion = (event: Event) => {
     if (event.routineId || event.isAcademic) return; // Should be disabled, but check again
-    setConfirmationState({
-        isOpen: true,
-        title: 'Eliminar Evento',
-        message: `¿Estás seguro de que quieres eliminar el evento "${event.title}"?`,
-        onConfirm: () => onDeleteEvent(event.id)
-    });
+    onDeleteEvent(event.id);
   };
 
   const getActionTitle = (event: Event): string => {
@@ -210,18 +203,6 @@ export const SchedulePanel: React.FC<SchedulePanelProps> = ({ selectedDate, even
             </div>
         </div>
       </div>
-      {confirmationState?.isOpen && (
-          <ConfirmationModal 
-              isOpen={confirmationState.isOpen}
-              onClose={() => setConfirmationState(null)}
-              onConfirm={() => {
-                  confirmationState.onConfirm();
-                  setConfirmationState(null);
-              }}
-              title={confirmationState.title}
-              message={confirmationState.message}
-          />
-      )}
     </>
   );
 };

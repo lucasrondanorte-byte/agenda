@@ -1011,13 +1011,7 @@ function App() {
         const examToGrade = exams.find(e => e.id === examId);
         if (examToGrade) {
             if (examToGrade.grade !== null) {
-                setConfirmationState({
-                    isOpen: true,
-                    title: 'Quitar Nota',
-                    message: `¿Estás seguro de que quieres quitar la nota de este examen?`,
-                    onConfirm: () => handleSaveExam({ ...examToGrade, grade: null }, examToGrade.id),
-                    confirmText: 'Sí, quitar nota',
-                });
+                handleSaveExam({ ...examToGrade, grade: null }, examToGrade.id);
             } else {
                 handlePromptForExamGrade(examToGrade);
             }

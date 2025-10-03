@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Routine } from '../types';
-import { ConfirmationModal } from './ConfirmationModal';
 
 interface RoutineManagerModalProps {
   isOpen: boolean;
@@ -31,17 +30,10 @@ const TrashIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 
 export const RoutineManagerModal: React.FC<RoutineManagerModalProps> = ({ isOpen, onClose, routines, onEdit, onDelete, onCreate }) => {
-  const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
-  
   if (!isOpen) return null;
 
   const requestDeletion = (routine: Routine) => {
-    setConfirmationState({
-      isOpen: true,
-      title: 'Eliminar Rutina',
-      message: `¿Estás seguro? Se eliminará la rutina "${routine.title}" y todos sus eventos futuros.`,
-      onConfirm: () => onDelete(routine.id)
-    });
+    onDelete(routine.id);
   };
 
   return (
@@ -86,18 +78,6 @@ export const RoutineManagerModal: React.FC<RoutineManagerModalProps> = ({ isOpen
           </div>
         </div>
       </div>
-      {confirmationState?.isOpen && (
-          <ConfirmationModal 
-              isOpen={confirmationState.isOpen}
-              onClose={() => setConfirmationState(null)}
-              onConfirm={() => {
-                  confirmationState.onConfirm();
-                  setConfirmationState(null);
-              }}
-              title={confirmationState.title}
-              message={confirmationState.message}
-          />
-      )}
     </>
   );
 };

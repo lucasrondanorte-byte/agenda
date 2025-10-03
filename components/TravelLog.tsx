@@ -4,7 +4,6 @@ import type { Trip, TripHighlight, User } from '../types';
 import { TripFormModal } from './TripFormModal';
 import { HighlightFormModal } from './HighlightFormModal';
 import { v4 as uuidv4 } from 'uuid';
-import { ConfirmationModal } from './ConfirmationModal';
 
 interface TravelLogProps {
     trips: Trip[];
@@ -89,7 +88,6 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [geminiError, setGeminiError] = useState('');
-    const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
 
 
     const handleEditTrip = (e: React.MouseEvent, trip: Trip) => {
@@ -141,29 +139,15 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
     
     const handleDeleteHighlight = (highlight: TripHighlight) => {
         if (!selectedTrip) return;
-        setConfirmationState({
-            isOpen: true,
-            title: 'Eliminar Recuerdo',
-            message: `¿Estás seguro de que quieres eliminar el recuerdo "${highlight.title}"?`,
-            onConfirm: () => {
-                const updatedHighlights = selectedTrip.highlights.filter(h => h.id !== highlight.id);
-                const updatedTrip = { ...selectedTrip, highlights: updatedHighlights };
-                onSaveTrip(updatedTrip);
-                setSelectedTrip(updatedTrip);
-            }
-        });
+        const updatedHighlights = selectedTrip.highlights.filter(h => h.id !== highlight.id);
+        const updatedTrip = { ...selectedTrip, highlights: updatedHighlights };
+        onSaveTrip(updatedTrip);
+        setSelectedTrip(updatedTrip);
     };
 
     const requestTripDeletion = (trip: Trip) => {
-        setConfirmationState({
-            isOpen: true,
-            title: 'Eliminar Viaje',
-            message: `¿Estás seguro de que quieres eliminar el viaje "${trip.title}" y todos sus recuerdos?`,
-            onConfirm: () => {
-                onDeleteTrip(trip.id);
-                setSelectedTrip(null);
-            }
-        });
+        onDeleteTrip(trip.id);
+        setSelectedTrip(null);
     };
     
     const handleAddSuggestionAsHighlight = (suggestion: Suggestion) => {
@@ -343,18 +327,6 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
                         tripEndDate={selectedTrip.endDate}
                     />
                 </div>
-                {confirmationState?.isOpen && (
-                    <ConfirmationModal 
-                        isOpen={confirmationState.isOpen}
-                        onClose={() => setConfirmationState(null)}
-                        onConfirm={() => {
-                            confirmationState.onConfirm();
-                            setConfirmationState(null);
-                        }}
-                        title={confirmationState.title}
-                        message={confirmationState.message}
-                    />
-                )}
             </>
         );
     }

@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Project, Task, TaskStatus } from '../types';
-import { ConfirmationModal } from './ConfirmationModal';
 
 // Props Interface
 interface GoalsPanelProps {
@@ -226,24 +225,13 @@ const ProjectDetails: React.FC<{
 
 export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddProject, onEditProject, onDeleteProject, onAddTask, onUpdateTask, onDeleteTask, onAddMultipleTasks, onStartTour }) => {
     const [expandedProjectId, setExpandedProjectId] = useState<string | null>(projects[0]?.id || null);
-    const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
 
     const requestProjectDeletion = (project: Project) => {
-        setConfirmationState({
-          isOpen: true,
-          title: 'Eliminar Proyecto',
-          message: `¿Estás seguro? Esto eliminará el proyecto "${project.title}" y todas sus tareas.`,
-          onConfirm: () => onDeleteProject(project.id)
-        });
+        onDeleteProject(project.id);
     };
     
     const requestTaskDeletion = (task: Task) => {
-        setConfirmationState({
-            isOpen: true,
-            title: 'Eliminar Tarea',
-            message: `¿Estás seguro de que quieres eliminar la tarea "${task.text}"?`,
-            onConfirm: () => onDeleteTask(task.id)
-        });
+        onDeleteTask(task.id);
     };
 
     return (
@@ -316,18 +304,6 @@ export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddPr
                     )}
                 </div>
             </div>
-            {confirmationState?.isOpen && (
-                <ConfirmationModal 
-                    isOpen={confirmationState.isOpen}
-                    onClose={() => setConfirmationState(null)}
-                    onConfirm={() => {
-                        confirmationState.onConfirm();
-                        setConfirmationState(null);
-                    }}
-                    title={confirmationState.title}
-                    message={confirmationState.message}
-                />
-            )}
         </>
     );
 };

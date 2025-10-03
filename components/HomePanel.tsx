@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import type { ShoppingList, ShoppingListItem, User } from '../types';
-import { ConfirmationModal } from './ConfirmationModal';
 
 interface HomePanelProps {
     shoppingLists: ShoppingList[];
@@ -164,7 +163,6 @@ export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser
     const [editingList, setEditingList] = useState<ShoppingList | null>(null);
     const [title, setTitle] = useState('');
     const [icon, setIcon] = useState('🛒');
-    const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
 
     const handleOpenForm = (list: ShoppingList | null = null) => {
         setEditingList(list);
@@ -189,21 +187,11 @@ export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser
     };
 
     const requestListDeletion = (list: ShoppingList) => {
-        setConfirmationState({
-            isOpen: true,
-            title: 'Eliminar Lista',
-            message: `¿Estás seguro de que quieres eliminar la lista "${list.title}" y todos sus elementos?`,
-            onConfirm: () => props.onDeleteList(list.id)
-        });
+        props.onDeleteList(list.id);
     };
     
     const requestListItemDeletion = (listId: string, item: ShoppingListItem) => {
-        setConfirmationState({
-            isOpen: true,
-            title: 'Eliminar Elemento',
-            message: `¿Estás seguro de que quieres eliminar "${item.text}"?`,
-            onConfirm: () => props.onDeleteItem(listId, item.id)
-        });
+        props.onDeleteItem(listId, item.id);
     };
     
     // FIX: Replaced inline Map creation with a more explicit approach to ensure correct type inference for `Map<string, User>`, resolving downstream type errors.
@@ -281,18 +269,6 @@ export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser
                     </div>
                 )}
             </div>
-            {confirmationState?.isOpen && (
-                <ConfirmationModal 
-                    isOpen={confirmationState.isOpen}
-                    onClose={() => setConfirmationState(null)}
-                    onConfirm={() => {
-                        confirmationState.onConfirm();
-                        setConfirmationState(null);
-                    }}
-                    title={confirmationState.title}
-                    message={confirmationState.message}
-                />
-            )}
         </>
     );
 };
