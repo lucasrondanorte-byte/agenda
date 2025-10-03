@@ -2,16 +2,17 @@ name: Deploy Vite site to GitHub Pages
 
 on:
   push:
-    branches: [ main ]     # corre con cada push a main
-  workflow_dispatch:        # permite correrlo a mano
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
-  contents: write           # permite pushear a gh-pages
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,9 +27,6 @@ jobs:
 
       - name: Build project
         run: npm run build
-        # Si tu build necesita un secret:
-        # env:
-        #   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
