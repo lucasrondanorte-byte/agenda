@@ -17,72 +17,75 @@ const TourPopover: React.FC<{
 }> = ({ step, currentStep, totalSteps, onNext, onPrev, onClose }) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const popoverRef = useRef<HTMLDivElement>(null);
-  const targetElement = document.querySelector(step.element);
 
   useLayoutEffect(() => {
-    if (!popoverRef.current) return;
-    
-    if (!targetElement) {
-        if (step.position === 'center') {
-            setPosition({
-                top: window.innerHeight / 2,
-                left: window.innerWidth / 2,
-            })
+    // This effect now only handles non-centered popovers.
+    const updatePosition = () => {
+        if (!popoverRef.current || step.position === 'center') return;
+
+        const targetElement = document.querySelector(step.element);
+        
+        if (!targetElement) return;
+
+        const targetRect = targetElement.getBoundingClientRect();
+        const popoverRect = popoverRef.current.getBoundingClientRect();
+        const margin = 12;
+
+        let top = 0, left = 0;
+
+        const verticalCenter = targetRect.top + targetRect.height / 2 - popoverRect.height / 2;
+        const horizontalCenter = targetRect.left + targetRect.width / 2 - popoverRect.width / 2;
+
+        switch (step.position) {
+          case 'top':
+            top = targetRect.top - popoverRect.height - margin;
+            left = horizontalCenter;
+            break;
+          case 'bottom':
+            top = targetRect.bottom + margin;
+            left = horizontalCenter;
+            break;
+          case 'left':
+            top = verticalCenter;
+            left = targetRect.left - popoverRect.width - margin;
+            break;
+          case 'right':
+            top = verticalCenter;
+            left = targetRect.right + margin;
+            break;
+          default: // bottom
+            top = targetRect.bottom + margin;
+            left = horizontalCenter;
+            break;
         }
-        return;
+        
+        // Adjust if off-screen
+        if (top < margin) top = margin;
+        if (left < margin) left = margin;
+        if (top + popoverRect.height > window.innerHeight - margin) top = window.innerHeight - popoverRect.height - margin;
+        if (left + popoverRect.width > window.innerWidth - margin) left = window.innerWidth - popoverRect.width - margin;
+
+        setPosition({ top, left });
     };
 
-    const targetRect = targetElement.getBoundingClientRect();
-    const popoverRect = popoverRef.current.getBoundingClientRect();
-    const margin = 12;
-
-    let top = 0, left = 0;
-
-    const verticalCenter = targetRect.top + targetRect.height / 2 - popoverRect.height / 2;
-    const horizontalCenter = targetRect.left + targetRect.width / 2 - popoverRect.width / 2;
-
-    switch (step.position) {
-      case 'top':
-        top = targetRect.top - popoverRect.height - margin;
-        left = horizontalCenter;
-        break;
-      case 'bottom':
-        top = targetRect.bottom + margin;
-        left = horizontalCenter;
-        break;
-      case 'left':
-        top = verticalCenter;
-        left = targetRect.left - popoverRect.width - margin;
-        break;
-      case 'right':
-        top = verticalCenter;
-        left = targetRect.right + margin;
-        break;
-      case 'center':
-        top = window.innerHeight / 2 - popoverRect.height / 2;
-        left = window.innerWidth / 2 - popoverRect.width / 2;
-        break;
-      default: // bottom
-        top = targetRect.bottom + margin;
-        left = horizontalCenter;
-        break;
-    }
+    // Wait for smooth scroll animation to finish before calculating position.
+    const timer = setTimeout(updatePosition, 300);
     
-    // Adjust if off-screen
-    if (top < margin) top = margin;
-    if (left < margin) left = margin;
-    if (top + popoverRect.height > window.innerHeight - margin) top = window.innerHeight - popoverRect.height - margin;
-    if (left + popoverRect.width > window.innerWidth - margin) left = window.innerWidth - popoverRect.width - margin;
+    // Reposition on window resize.
+    window.addEventListener('resize', updatePosition);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updatePosition);
+    };
 
-
-    setPosition({ top, left });
-  }, [step, targetElement]);
+  }, [step]);
 
   return (
     <div
       ref={popoverRef}
-      className={`fixed z-[1001] w-80 bg-white rounded-lg shadow-2xl p-5 transform transition-all duration-300 ${step.position === 'center' ? '-translate-x-1/2 -translate-y-1/2' : ''}`}
-      style={{ top: `${position.top}px`, left: `${position.left}px` }}
+      className={`fixed z-[1001] w-80 bg-white rounded-lg shadow-2xl p-5 transition-all duration-300 ${step.position === 'center' ? 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' : ''}`}
+      style={step.position !== 'center' ? { top: `${position.top}px`, left: `${position.left}px` } : {}}
       onClick={(e) => e.stopPropagation()}
     >
         <h3 className="text-lg font-bold text-zinc-800">{step.title}</h3>
@@ -111,6 +114,24 @@ export const Tour: React.FC<TourProps> = ({ isOpen, onClose, steps }) => {
     }
   }, [isOpen]);
 
+  // Effect to scroll the target element into view
+  useEffect(() => {
+    if (isOpen && steps[currentStep]) {
+        const step = steps[currentStep];
+        // Don't scroll for 'body' or 'center' positioned elements
+        if (step.element !== 'body' && step.position !== 'center') {
+            const targetElement = document.querySelector(step.element);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center', // 'center' tries to put it in the middle of the viewport
+                    inline: 'nearest' // handles horizontal scrolling
+                });
+            }
+        }
+    }
+  }, [currentStep, isOpen, steps]);
+
   if (!isOpen) return null;
 
   const handleNext = () => {
@@ -130,7 +151,7 @@ export const Tour: React.FC<TourProps> = ({ isOpen, onClose, steps }) => {
   const step = steps[currentStep];
   const targetElement = step ? document.querySelector(step.element) : null;
 
-  const highlightStyle: React.CSSProperties = targetElement
+  const highlightStyle: React.CSSProperties = targetElement && step.position !== 'center'
     ? {
         position: 'absolute',
         top: `${targetElement.getBoundingClientRect().top - 4}px`,

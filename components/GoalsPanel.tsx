@@ -14,6 +14,7 @@ interface GoalsPanelProps {
     onUpdateTask: (taskId: string, newStatus: TaskStatus, newText?: string) => void;
     onDeleteTask: (taskId: string) => void;
     onAddMultipleTasks: (projectId: string, taskTexts: string[]) => void;
+    onStartTour: () => void;
 }
 
 // Icons
@@ -35,6 +36,11 @@ const CheckCircleFillIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => 
 const ChevronDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+const QuestionMarkCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
   </svg>
 );
 
@@ -153,7 +159,7 @@ const ProjectDetails: React.FC<{
              {/* Tasks Section */}
             <div>
                 {/* Tabs */}
-                <div className="border-b border-slate-200">
+                <div id="project-task-tabs-example" className="border-b border-slate-200">
                     <nav className="-mb-px flex space-x-4" aria-label="Tabs">
                         {(['todo', 'inProgress', 'done'] as TaskStatus[]).map(status => (
                             <button key={status} onClick={() => setActiveTab(status)}
@@ -193,13 +199,13 @@ const ProjectDetails: React.FC<{
                 </div>
                  {/* Add Task & AI */}
                 <div className="mt-4 pt-3 border-t border-slate-200">
-                     <form onSubmit={handleAddTask} className="flex items-center space-x-2">
+                     <form onSubmit={handleAddTask} className="flex items-center space-x-2" id="add-task-form-example">
                         <input type="text" value={newTaskText} onChange={e => setNewTaskText(e.target.value)} placeholder="Añadir nueva tarea..."
                             className="w-full px-3 py-1.5 border border-slate-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"/>
                         <button type="submit" className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">Añadir</button>
                      </form>
                      <div className="mt-3">
-                        <button onClick={getAiSuggestions} disabled={isGenerating}
+                        <button id="ai-task-suggester-example" onClick={getAiSuggestions} disabled={isGenerating}
                             className="w-full flex items-center justify-center space-x-2 px-3 py-1.5 border border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-md hover:bg-indigo-100 disabled:opacity-60">
                            <SparklesIcon className="w-4 h-4"/>
                            <span>{isGenerating ? 'Generando tareas...' : 'Sugerir Tareas con IA'}</span>
@@ -218,7 +224,7 @@ const ProjectDetails: React.FC<{
 };
 
 
-export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddProject, onEditProject, onDeleteProject, onAddTask, onUpdateTask, onDeleteTask, onAddMultipleTasks }) => {
+export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddProject, onEditProject, onDeleteProject, onAddTask, onUpdateTask, onDeleteTask, onAddMultipleTasks, onStartTour }) => {
     const [expandedProjectId, setExpandedProjectId] = useState<string | null>(projects[0]?.id || null);
     const [confirmationState, setConfirmationState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; } | null>(null);
 
@@ -243,15 +249,20 @@ export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddPr
     return (
         <>
             <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-                <div className="flex justify-between items-center mb-4">
+                <div id="goals-panel-header" className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold text-slate-700">Mis Proyectos y Metas</h3>
-                    <button onClick={onAddProject} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                        <PlusIcon className="w-5 h-5"/>
-                        <span>Nuevo Proyecto</span>
-                    </button>
+                     <div className="flex items-center space-x-2">
+                        <button onClick={onStartTour} title="Iniciar tour guiado" className="p-2 text-slate-500 hover:text-indigo-600 rounded-full hover:bg-slate-100 transition-colors">
+                            <QuestionMarkCircleIcon className="w-6 h-6"/>
+                        </button>
+                        <button id="goals-add-project-btn" onClick={onAddProject} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                            <PlusIcon className="w-5 h-5"/>
+                            <span>Nuevo Proyecto</span>
+                        </button>
+                    </div>
                 </div>
                 <div className="space-y-2 overflow-y-auto pr-2">
-                    {projects.length > 0 ? projects.map(project => {
+                    {projects.length > 0 ? projects.map((project, index) => {
                         const projectTasks = tasks.filter(t => t.projectId === project.id);
                         const totalTasks = projectTasks.length;
                         const doneTasks = projectTasks.filter(t => t.status === 'done').length;
@@ -259,7 +270,7 @@ export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddPr
                         const isExpanded = expandedProjectId === project.id;
 
                         return (
-                            <div key={project.id} className="bg-slate-50/70 rounded-lg border border-slate-200 overflow-hidden">
+                            <div key={project.id} id={index === 0 ? 'project-card-example' : undefined} className="bg-slate-50/70 rounded-lg border border-slate-200 overflow-hidden">
                                 <button 
                                     onClick={() => setExpandedProjectId(isExpanded ? null : project.id)}
                                     className="w-full p-3 text-left group"
@@ -275,7 +286,7 @@ export const GoalsPanel: React.FC<GoalsPanelProps> = ({ projects, tasks, onAddPr
                                         </div>
                                     </div>
                                     <div className="mt-2 pl-10">
-                                        <div className="w-full bg-slate-200 rounded-full h-2">
+                                        <div id={index === 0 ? 'project-progress-bar-example' : undefined} className="w-full bg-slate-200 rounded-full h-2">
                                             <div className="bg-indigo-500 h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
                                         </div>
                                     </div>

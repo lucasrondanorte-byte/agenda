@@ -12,6 +12,7 @@ interface HomePanelProps {
     onToggleShareList: (listId: string) => void;
     currentUser: User;
     pairedUser: User | null;
+    onStartTour: () => void;
 }
 
 // Icons
@@ -24,11 +25,17 @@ const UserGroupIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m-7.5-2.962A3.75 3.75 0 0 1 15 12a3.75 3.75 0 0 1-2.25-6.962m8.024 10.928A9 9 0 1 0 3 18.72m10.602 0A9.01 9.01 0 0 0 18 18.72m-7.5 0v-2.25m0 2.25a3.75 3.75 0 0 0 3.75 3.75M10.5 18.75a3.75 3.75 0 0 0-3.75 3.75m0 0a3.75 3.75 0 0 0 3.75-3.75M3 13.5A3.75 3.75 0 0 1 6.75 9.75a3.75 3.75 0 0 1 3.75 3.75m-3.75 0a3.75 3.75 0 0 0-3.75 3.75" />
   </svg>
 );
+const QuestionMarkCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+  </svg>
+);
+
 
 
 const listIcons = ['🛒', '🧾', '🛠️', '💊', '🎁', '🐶', '🏠', '💡'];
 
-const ListItem: React.FC<{ listId: string; item: ShoppingListItem; onUpdate: HomePanelProps['onUpdateItem']; onRequestDelete: (listId: string, item: ShoppingListItem) => void; usersById: Map<string, User>; }> = ({ listId, item, onUpdate, onRequestDelete, usersById }) => {
+const ListItem: React.FC<{ listId: string; item: ShoppingListItem; onUpdate: HomePanelProps['onUpdateItem']; onRequestDelete: (listId: string, item: ShoppingListItem) => void; usersById: Map<string, User>; isFirst: boolean }> = ({ listId, item, onUpdate, onRequestDelete, usersById, isFirst }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState(item.text);
 
@@ -46,6 +53,7 @@ const ListItem: React.FC<{ listId: string; item: ShoppingListItem; onUpdate: Hom
     return (
         <div className="flex items-center group w-full py-1">
             <input
+                id={isFirst ? 'list-item-checkbox-example' : undefined}
                 type="checkbox"
                 checked={item.completed}
                 onChange={() => onUpdate(listId, item.id, item.text, !item.completed)}
@@ -83,7 +91,8 @@ const ListCard: React.FC<{
     isPaired: boolean;
     ownerName?: string;
     usersById: Map<string, User>;
-}> = ({ list, onAddItem, onUpdateItem, onEditList, onRequestDelete, onRequestItemDelete, isOwner, isPaired, ownerName, onToggleShare, usersById }) => {
+    isFirst: boolean;
+}> = ({ list, onAddItem, onUpdateItem, onEditList, onRequestDelete, onRequestItemDelete, isOwner, isPaired, ownerName, onToggleShare, usersById, isFirst }) => {
     const [newItemText, setNewItemText] = useState('');
     const [showCompleted, setShowCompleted] = useState(false);
 
@@ -99,7 +108,7 @@ const ListCard: React.FC<{
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-md p-4 flex flex-col">
+        <div id={isFirst ? 'list-card-example' : undefined} className="bg-white rounded-xl shadow-md p-4 flex flex-col">
             <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
                     <span className="text-2xl">{list.icon}</span>
@@ -110,7 +119,7 @@ const ListCard: React.FC<{
                 </div>
                 <div className="flex items-center">
                     {isOwner && isPaired && (
-                        <button onClick={onToggleShare} title={list.isShared ? "Dejar de compartir" : "Compartir con tu pareja"} className={`p-1.5 rounded-md ${list.isShared ? 'text-teal-500' : 'text-zinc-400 hover:text-teal-600'}`}>
+                        <button id={isFirst ? 'share-list-btn-example' : undefined} onClick={onToggleShare} title={list.isShared ? "Dejar de compartir" : "Compartir con tu pareja"} className={`p-1.5 rounded-md ${list.isShared ? 'text-teal-500' : 'text-zinc-400 hover:text-teal-600'}`}>
                             <UserGroupIcon className="w-5 h-5" />
                         </button>
                     )}
@@ -123,8 +132,8 @@ const ListCard: React.FC<{
                 </div>
             </div>
             <div className="flex-grow space-y-1 pr-1 overflow-y-auto max-h-60">
-                {pendingItems.length > 0 ? pendingItems.map(item => (
-                    <ListItem key={item.id} listId={list.id} item={item} onUpdate={onUpdateItem} onRequestDelete={onRequestItemDelete} usersById={usersById} />
+                {pendingItems.length > 0 ? pendingItems.map((item, index) => (
+                    <ListItem key={item.id} listId={list.id} item={item} onUpdate={onUpdateItem} onRequestDelete={onRequestItemDelete} usersById={usersById} isFirst={isFirst && index === 0} />
                 )) : <p className="text-center text-xs text-zinc-400 py-4">¡Todo listo!</p>}
             </div>
             {completedItems.length > 0 && (
@@ -136,13 +145,13 @@ const ListCard: React.FC<{
                     {showCompleted && (
                         <div className="mt-2 space-y-1">
                             {completedItems.map(item => (
-                                <ListItem key={item.id} listId={list.id} item={item} onUpdate={onUpdateItem} onRequestDelete={onRequestItemDelete} usersById={usersById} />
+                                <ListItem key={item.id} listId={list.id} item={item} onUpdate={onUpdateItem} onRequestDelete={onRequestItemDelete} usersById={usersById} isFirst={false} />
                             ))}
                         </div>
                     )}
                 </div>
             )}
-            <form onSubmit={handleAddItem} className="mt-3 pt-3 border-t border-zinc-200 flex items-center space-x-2">
+            <form onSubmit={handleAddItem} id={isFirst ? 'add-list-item-form-example' : undefined} className="mt-3 pt-3 border-t border-zinc-200 flex items-center space-x-2">
                 <input type="text" value={newItemText} onChange={e => setNewItemText(e.target.value)} placeholder="Añadir elemento..." className="w-full px-3 py-1.5 bg-stone-50 border border-zinc-200 rounded-md shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 <button type="submit" className="p-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"><PlusIcon className="w-4 h-4"/></button>
             </form>
@@ -150,7 +159,7 @@ const ListCard: React.FC<{
     );
 };
 
-export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser, pairedUser, onToggleShareList, ...props }) => {
+export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser, pairedUser, onToggleShareList, onStartTour, ...props }) => {
     const [showForm, setShowForm] = useState(false);
     const [editingList, setEditingList] = useState<ShoppingList | null>(null);
     const [title, setTitle] = useState('');
@@ -207,12 +216,17 @@ export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser
     return (
         <>
             <div className="bg-stone-50/50 p-4 sm:p-6 rounded-xl shadow-inner">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div id="home-panel-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h3 className="text-2xl font-bold text-zinc-800">Mi Hogar: Listas y Tareas</h3>
-                    <button onClick={() => handleOpenForm()} className="flex-shrink-0 flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium shadow-sm hover:bg-teal-700">
-                        <PlusIcon className="w-5 h-5"/>
-                        <span>Crear Nueva Lista</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                         <button onClick={onStartTour} title="Iniciar tour guiado" className="p-2 text-zinc-500 hover:text-teal-600 rounded-full hover:bg-stone-200 transition-colors">
+                            <QuestionMarkCircleIcon className="w-6 h-6"/>
+                        </button>
+                        <button id="home-add-list-btn" onClick={() => handleOpenForm()} className="flex-shrink-0 flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-medium shadow-sm hover:bg-teal-700">
+                            <PlusIcon className="w-5 h-5"/>
+                            <span>Crear Nueva Lista</span>
+                        </button>
+                    </div>
                 </div>
 
                 {showForm && (
@@ -239,7 +253,7 @@ export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser
 
                 {shoppingLists.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {shoppingLists.map(list => (
+                        {shoppingLists.map((list, index) => (
                             <ListCard 
                                 key={list.id}
                                 list={list}
@@ -253,6 +267,7 @@ export const HomePanel: React.FC<HomePanelProps> = ({ shoppingLists, currentUser
                                 ownerName={usersById.get(list.ownerId)?.name}
                                 onToggleShare={() => onToggleShareList(list.id)}
                                 usersById={usersById}
+                                isFirst={index === 0}
                             />
                         ))}
                     </div>

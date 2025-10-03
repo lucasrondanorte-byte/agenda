@@ -12,6 +12,7 @@ interface TravelLogProps {
     onDeleteTrip: (tripId: string) => void;
     onOpenShareModal: (trip: Trip) => void;
     pairedUser: User | null;
+    onStartTour: () => void;
 }
 
 // Icons remain the same as they are functional
@@ -57,6 +58,11 @@ const ShareIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.195.025.39.05.588.082a2.25 2.25 0 0 1 2.829 2.829.096.096 0 0 0 .082.082m0 0a2.25 2.25 0 1 0 2.186 0m-2.186 0a2.25 2.25 0 0 0-2.829-2.829.096.096 0 0 1-.082-.082m0 0a2.25 2.25 0 1 0 0-2.186m0 2.186c-.195-.025-.39-.05-.588-.082a2.25 2.25 0 0 1-2.829-2.829.096.096 0 0 0-.082-.082" />
     </svg>
 );
+const QuestionMarkCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+  </svg>
+);
 
 const formatDateRange = (start: string, end: string) => {
     const startDate = new Date(start + 'T00:00:00');
@@ -71,7 +77,7 @@ type Suggestion = {
     emotion: string;
 };
 
-export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDeleteTrip, onOpenShareModal, pairedUser }) => {
+export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDeleteTrip, onOpenShareModal, pairedUser, onStartTour }) => {
     const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
     const [isTripFormOpen, setTripFormOpen] = useState(false);
     const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
@@ -255,13 +261,13 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
                     <div className="border-t border-slate-200 pt-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-slate-700">Recuerdos del Viaje</h3>
-                            <button onClick={() => { setEditingHighlight(null); setHighlightFormOpen(true); }} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                            <button id="travel-add-highlight-btn" onClick={() => { setEditingHighlight(null); setHighlightFormOpen(true); }} className="flex items-center space-x-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
                                 <PlusIcon className="w-5 h-5"/>
                                 <span>Añadir Recuerdo</span>
                             </button>
                         </div>
                         
-                        <div className="my-6 p-4 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
+                        <div id="ai-highlight-suggester" className="my-6 p-4 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg">
                             <h4 className="font-semibold text-indigo-800 flex items-center"><SparklesIcon className="w-5 h-5 mr-2 text-indigo-500"/>Asistente de Viajes</h4>
                             <p className="text-sm text-indigo-700 mt-1">¿Necesitas inspiración? Pide sugerencias de recuerdos para tu viaje.</p>
                             <div className="mt-3 flex items-center space-x-2">
@@ -298,7 +304,7 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
                         {selectedTrip.highlights.length > 0 ? (
                             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12 items-start">
                                 {selectedTrip.highlights.map((h, index) => (
-                                    <div key={h.id} className="group relative">
+                                    <div key={h.id} id={index === 0 ? 'highlight-card-example' : undefined} className="group relative">
                                         <div className={`bg-white p-3 pb-4 shadow-xl border-4 border-white transition-transform duration-300 group-hover:scale-105 group-hover:rotate-0 ${index % 4 === 0 ? 'rotate-2' : index % 4 === 1 ? '-rotate-3' : index % 4 === 2 ? 'rotate-1' : '-rotate-2'}`}>
                                             {h.photo && (
                                                 <div className="mb-3 bg-slate-100">
@@ -363,18 +369,23 @@ export const TravelLog: React.FC<TravelLogProps> = ({ trips, onSaveTrip, onDelet
                 .polaroid-card:nth-child(5n+4) { transform: rotate(-1.5deg); margin-left: -1rem; }
                 .polaroid-card:nth-child(5n+5) { transform: rotate(1deg); }
             `}</style>
-            <div className="flex justify-between items-center mb-6">
+            <div id="travel-log-header" className="flex justify-between items-center mb-6">
                  <h2 className="text-3xl font-bold text-slate-800 font-handwriting">Mi Bitácora de Viajes</h2>
-                 <button onClick={handleAddNewTrip} className="flex items-center space-x-2 px-4 py-2 bg-yellow-300 text-yellow-900 rounded-md text-sm font-bold shadow-md hover:bg-yellow-400 transition-transform hover:scale-105" style={{transform: 'rotate(5deg)'}}>
-                     <PlusIcon className="w-5 h-5"/>
-                     <span>Añadir Viaje</span>
-                 </button>
+                 <div className="flex items-center space-x-2">
+                    <button onClick={onStartTour} title="Iniciar tour guiado" className="p-2 text-slate-500 hover:text-yellow-700 rounded-full hover:bg-yellow-100 transition-colors">
+                        <QuestionMarkCircleIcon className="w-6 h-6"/>
+                    </button>
+                    <button id="travel-add-trip-btn" onClick={handleAddNewTrip} className="flex items-center space-x-2 px-4 py-2 bg-yellow-300 text-yellow-900 rounded-md text-sm font-bold shadow-md hover:bg-yellow-400 transition-transform hover:scale-105" style={{transform: 'rotate(5deg)'}}>
+                        <PlusIcon className="w-5 h-5"/>
+                        <span>Añadir Viaje</span>
+                    </button>
+                 </div>
             </div>
             
             {trips.length > 0 ? (
                 <div className="flex flex-wrap justify-center gap-6 sm:gap-8 p-4">
-                    {trips.map(trip => (
-                        <div key={trip.id} onClick={() => setSelectedTrip(trip)} className="polaroid-card w-56 sm:w-64 bg-white p-3 pb-1 shadow-lg rounded-sm cursor-pointer group transition-transform hover:scale-105 hover:!rotate(0) hover:z-10">
+                    {trips.map((trip, index) => (
+                        <div key={trip.id} id={index === 0 ? 'trip-card-example' : undefined} onClick={() => setSelectedTrip(trip)} className="polaroid-card w-56 sm:w-64 bg-white p-3 pb-1 shadow-lg rounded-sm cursor-pointer group transition-transform hover:scale-105 hover:!rotate(0) hover:z-10">
                             <div className="h-40 sm:h-48 bg-slate-200 flex items-center justify-center overflow-hidden">
                                {trip.coverPhoto ? 
                                 <img src={trip.coverPhoto} alt={trip.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"/> : 

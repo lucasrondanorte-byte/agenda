@@ -143,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="hidden sm:block text-xl sm:text-2xl font-bold text-zinc-800 tracking-tight">ConectaMente</h1>
         </div>
         <div className="flex items-center space-x-1 sm:space-x-2">
-             <div id="header-nav" className="flex items-center space-x-1 sm:space-x-2">
+             <div id="header-nav" className="flex items-center flex-wrap justify-end gap-1 sm:gap-2">
                 <button 
                 id="header-nav-home"
                 onClick={onNavigateToHome}

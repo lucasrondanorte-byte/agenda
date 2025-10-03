@@ -21,6 +21,7 @@ interface AcademicPanelProps {
   onUnassignSubject: (subjectId: string, semesterId: string) => void;
   onUpdateSubjectStatusAndGrade: (subjectId: string, newStatus: SubjectStatus, finalGrade?: number | null) => void;
   onPromptForGrade: (subject: Subject) => void;
+  onStartTour: () => void;
 }
 
 const PlusIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>);
@@ -36,6 +37,11 @@ const UserGroupIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m-7.5-2.962A3.75 3.75 0 0 1 15 12a3.75 3.75 0 0 1-2.25-6.962m8.024 10.928A9 9 0 1 0 3 18.72m10.602 0A9.01 9.01 0 0 0 18 18.72m-7.5 0v-2.25m0 2.25a3.75 3.75 0 0 0 3.75 3.75M10.5 18.75a3.75 3.75 0 0 0-3.75 3.75m0 0a3.75 3.75 0 0 0 3.75-3.75M3 13.5A3.75 3.75 0 0 1 6.75 9.75a3.75 3.75 0 0 1 3.75 3.75m-3.75 0a3.75 3.75 0 0 0-3.75 3.75" />
   </svg>
 );
+const QuestionMarkCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+  </svg>
+);
 
 
 const statusStyles: Record<SubjectStatus, { bg: string, text: string, name: string }> = {
@@ -46,7 +52,7 @@ const statusStyles: Record<SubjectStatus, { bg: string, text: string, name: stri
     recursar: { bg: 'bg-red-100', text: 'text-red-800', name: 'A Recursar' },
 };
 
-export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subjects, exams, ...handlers }) => {
+export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subjects, exams, onStartTour, ...handlers }) => {
     const [modals, setModals] = useState({ semester: false, subject: false });
     const [editing, setEditing] = useState<{ semester?: Semester, subject?: Subject }>({});
     const [isProgressVisible, setIsProgressVisible] = useState(false);
@@ -101,21 +107,22 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
         <>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* Left Column: Subject Bank */}
-                <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-xl shadow-md flex flex-col">
+                <div id="subject-bank" className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-xl shadow-md flex flex-col">
                      <div className="flex justify-between items-center mb-4 flex-shrink-0">
                         <h3 className="text-xl font-semibold text-zinc-700">Banco de Materias</h3>
-                        <button onClick={() => { setEditing({}); setModals({...modals, subject: true})}} className="flex items-center space-x-2 text-sm font-medium text-violet-600 hover:text-violet-800">
+                        <button id="academic-add-subject-btn" onClick={() => { setEditing({}); setModals({...modals, subject: true})}} className="flex items-center space-x-2 text-sm font-medium text-violet-600 hover:text-violet-800">
                             <PlusIcon className="w-5 h-5"/>
                             <span>Añadir Materia</span>
                         </button>
                     </div>
                     <div className="space-y-2 flex-grow overflow-y-auto pr-2">
-                        {unassignedSubjects.length > 0 ? unassignedSubjects.map(subject => {
+                        {unassignedSubjects.length > 0 ? unassignedSubjects.map((subject, index) => {
                             const canAssign = arePrerequisitesMet(subject);
                             const statusStyle = statusStyles[subject.status] || statusStyles.pendiente;
                             return (
                                 <div 
                                     key={subject.id} 
+                                    id={index === 0 ? 'draggable-subject-example' : undefined}
                                     draggable={canAssign}
                                     onDragStart={(e) => canAssign && onDragStart(e, subject.id)}
                                     className={`p-3 rounded-md flex justify-between items-center bg-stone-50 group relative transition-colors ${canAssign ? 'cursor-grab hover:bg-stone-100' : 'cursor-not-allowed opacity-70'}`}
@@ -144,16 +151,19 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
                 </div>
 
                 {/* Right Column: Timeline */}
-                <div className="lg:col-span-3 bg-white p-4 sm:p-6 rounded-xl shadow-md">
-                     <div className="flex flex-wrap gap-4 justify-between items-center mb-4">
+                <div id="semester-timeline" className="lg:col-span-3 bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                     <div id="academic-panel-header" className="flex flex-wrap gap-4 justify-between items-center mb-4">
                         <h3 className="text-xl font-semibold text-zinc-700">Línea de Tiempo</h3>
                         <div className="flex items-center space-x-2">
-                             <button onClick={() => setIsProgressVisible(!isProgressVisible)} className="flex items-center space-x-2 text-sm font-medium text-violet-600 hover:text-violet-800">
+                             <button onClick={onStartTour} title="Iniciar tour guiado" className="p-2 text-zinc-500 hover:text-violet-600 rounded-full hover:bg-stone-100 transition-colors">
+                                <QuestionMarkCircleIcon className="w-6 h-6"/>
+                            </button>
+                             <button id="academic-progress-toggle" onClick={() => setIsProgressVisible(!isProgressVisible)} className="flex items-center space-x-2 text-sm font-medium text-violet-600 hover:text-violet-800">
                                 <ChartBarIcon className="w-5 h-5"/>
                                 <span>Progreso</span>
                                 <ChevronDownIcon className={`w-4 h-4 transition-transform ${isProgressVisible ? 'rotate-180' : ''}`} />
                             </button>
-                            <button onClick={() => { setEditing({}); setModals({...modals, semester: true})}} className="flex items-center space-x-2 text-sm font-medium text-violet-600 hover:text-violet-800">
+                            <button id="academic-add-semester-btn" onClick={() => { setEditing({}); setModals({...modals, semester: true})}} className="flex items-center space-x-2 text-sm font-medium text-violet-600 hover:text-violet-800">
                                 <PlusIcon className="w-5 h-5"/>
                                 <span>Cuatrimestre</span>
                             </button>
@@ -165,12 +175,13 @@ export const AcademicPanel: React.FC<AcademicPanelProps> = ({ semesters, subject
                     </div>
 
                     <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                        {sortedSemesters.map(semester => {
+                        {sortedSemesters.map((semester, index) => {
                             const semesterSubjects = semester.subjectIds.map(id => subjectMap.get(id)).filter((s): s is Subject => !!s);
                             const isDragOver = dragOverSemester === semester.id;
                             return (
                                 <div 
                                     key={semester.id} 
+                                    id={index === 0 ? 'semester-card-example' : undefined}
                                     onDragOver={(e) => {e.preventDefault(); setDragOverSemester(semester.id);}}
                                     onDragLeave={() => setDragOverSemester(null)}
                                     onDrop={(e) => onDrop(e, semester.id)}

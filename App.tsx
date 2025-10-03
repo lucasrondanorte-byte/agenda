@@ -526,10 +526,22 @@ function App() {
   const dragMainPanelItem = useRef<number | null>(null);
   const dragOverMainPanelItem = useRef<number | null>(null);
 
-  // Tour State
-  const tourCompletedKey = `tour_completed_${currentUser?.id}`;
+  // Main Tour State
+  const tourCompletedKey = `tour_completed_main_${currentUser?.id}`;
   const [isTourCompleted, setIsTourCompleted] = useLocalStorage<boolean>(tourCompletedKey, false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  
+  // Module Tour States
+  const [isHomeTourCompleted, setIsHomeTourCompleted] = useLocalStorage<boolean>(`tour_completed_home_${currentUser?.id}`, false);
+  const [isGoalsTourCompleted, setIsGoalsTourCompleted] = useLocalStorage<boolean>(`tour_completed_goals_${currentUser?.id}`, false);
+  const [isAcademicTourCompleted, setIsAcademicTourCompleted] = useLocalStorage<boolean>(`tour_completed_academic_${currentUser?.id}`, false);
+  const [isTravelTourCompleted, setIsTravelTourCompleted] = useLocalStorage<boolean>(`tour_completed_travel_${currentUser?.id}`, false);
+  
+  const [isHomeTourOpen, setIsHomeTourOpen] = useState(false);
+  const [isGoalsTourOpen, setIsGoalsTourOpen] = useState(false);
+  const [isAcademicTourOpen, setIsAcademicTourOpen] = useState(false);
+  const [isTravelTourOpen, setIsTravelTourOpen] = useState(false);
+
 
   const handleDragSort = () => {
     if (dragItem.current === null || dragOverItem.current === null) return;
@@ -564,67 +576,68 @@ function App() {
     return null;
   }, [currentUser, users]);
 
-    const tourSteps = useMemo((): TourStep[] => {
+    const mainTourSteps = useMemo((): TourStep[] => {
+    // FIX: Add 'as const' to all 'position' properties to prevent TypeScript from widening the string literal types to 'string'. This ensures they match the specific literal types required by the 'TourStep' interface.
     const steps: TourStep[] = [
       {
         element: 'body',
         title: '¡Bienvenido/a a ConectaMente!',
         content: 'Este tour te guiará por las funciones principales. Puedes usar los botones para navegar o hacer clic fuera para salir.',
-        position: 'center',
+        position: 'center' as const,
       },
       {
         element: '#header-nav',
         title: 'Navegación Principal',
         content: 'Desde aquí puedes navegar entre las secciones clave: tu Planificador (la vista actual), Hogar, Metas, Académico y Viajes.',
-        position: 'bottom',
+        position: 'bottom' as const,
       },
       {
         element: '#header-nav-home',
         title: 'Sección: Mi Hogar',
         content: 'Aquí puedes organizar tus listas de compras, tareas del hogar y más. Todo lo que necesitas para gestionar tu espacio personal y familiar.',
-        position: 'bottom',
+        position: 'bottom' as const,
       },
       {
         element: '#header-nav-goals',
         title: 'Sección: Metas',
         content: 'Define tus grandes proyectos y ambiciones. Desglósalos en tareas más pequeñas y sigue tu progreso para alcanzar tus sueños.',
-        position: 'bottom',
+        position: 'bottom' as const,
       },
       {
         element: '#header-nav-academic',
         title: 'Sección: Académico',
         content: 'Lleva un control completo de tu carrera. Gestiona materias, correlatividades, fechas de examen y tus calificaciones, todo en un solo lugar.',
-        position: 'bottom',
+        position: 'bottom' as const,
       },
        {
         element: '#header-nav-travel',
         title: 'Sección: Viajes',
         content: 'Crea una bitácora digital de tus aventuras. Guarda tus destinos, fechas y pega los mejores recuerdos y fotos de cada viaje.',
-        position: 'bottom',
+        position: 'bottom' as const,
       },
       {
         element: '#calendar-view',
         title: 'Tu Calendario',
         content: 'Este es tu calendario. Te da una vista general de tus eventos del mes. Haz clic en un día para ver o añadir eventos para esa fecha específica.',
-        position: 'left',
+        position: 'left' as const,
       },
       {
         element: '#schedule-panel',
         title: 'Agenda del Día',
         content: 'Aquí verás los eventos del día seleccionado. Puedes añadir nuevos eventos, gestionar rutinas y marcar tareas como completadas.',
-        position: 'right',
+        position: 'right' as const,
       },
       {
         element: '#reflection-panel',
         title: 'Reflexión Diaria',
         content: 'Tómate un momento cada día para conectar contigo. Guarda tus pensamientos, lecciones aprendidas y cómo te sentiste.',
-        position: 'right',
+        position: 'right' as const,
       },
       {
         element: '#summary-column',
         title: 'Resúmenes Rápidos',
         content: 'En esta columna tienes vistas rápidas de tus otras secciones. ¡Y puedes arrastrarlas para reordenarlas como prefieras!',
-        position: 'left',
+        position: 'left' as const,
       },
     ];
 
@@ -633,7 +646,7 @@ function App() {
         element: '#couple-space-tab',
         title: 'Espacio de Conexiones',
         content: 'Este es su espacio privado para compartir notas, cómo se sienten y conectar a un nivel más profundo.',
-        position: 'bottom',
+        position: 'bottom' as const,
       });
     }
 
@@ -641,18 +654,55 @@ function App() {
       element: '#user-menu',
       title: 'Tu Perfil y Conexiones',
       content: "Desde aquí gestionas tu perfil, la seguridad y, muy importante, tus 'Conexiones'. Puedes vincular tu cuenta con la de tu pareja para compartir un espacio privado.",
-      position: 'left',
+      position: 'left' as const,
     });
     
      steps.push({
       element: 'body',
       title: '¡Todo listo!',
       content: 'Has completado el tour. Explora y haz de ConectaMente tu espacio. Recuerda que puedes volver a hacer este tour desde el menú de usuario.',
-      position: 'center',
+      position: 'center' as const,
     });
     
     return steps;
   }, [pairedUser]);
+  
+  // Tour Steps for Modules
+  const homeTourSteps: TourStep[] = [
+    { element: '#home-panel-header', title: "Sección Mi Hogar", content: "Este espacio es para organizar las tareas y listas de tu día a día, ya sea personal o para compartir.", position: 'bottom' },
+    { element: '#home-add-list-btn', title: "Crear una Lista", content: "Usa este botón para crear cualquier tipo de lista: supermercado, cuentas por pagar, tareas del hogar, etc.", position: 'bottom' },
+    { element: '#list-card-example', title: "Tus Listas", content: "Cada lista que crees aparecerá aquí. Puedes editarla o eliminarla usando los íconos que aparecen al pasar el mouse.", position: 'bottom' },
+    { element: '#add-list-item-form-example', title: "Añadir Elementos", content: "Escribe aquí para añadir un nuevo ítem a la lista y presiona el botón '+' o Enter.", position: 'top' },
+    { element: '#list-item-checkbox-example', title: "Completar Tareas", content: "Marca la casilla para tachar un elemento. ¡Qué satisfacción!", position: 'right' },
+    ...(pairedUser ? [{ element: '#share-list-btn-example', title: "Compartir Listas", content: "Puedes compartir listas para que tu pareja pueda verlas y editarlas en tiempo real.", position: 'left' as const }] : []),
+    { element: 'body', position: 'center', title: "Hogar, dulce hogar organizado", content: "Ya estás listo/a para mantener todo en orden." }
+  ];
+
+  const goalsTourSteps: TourStep[] = [
+    { element: '#goals-panel-header', title: "Sección de Metas", content: "Aquí puedes dar vida a tus grandes ambiciones. Define proyectos, desglósalos en tareas y sigue tu progreso.", position: 'bottom' },
+    { element: '#goals-add-project-btn', title: "Crear un Proyecto", content: "Usa este botón para empezar un nuevo proyecto o meta. Dale un nombre, un ícono y una descripción motivadora.", position: 'bottom' },
+    { element: '#project-card-example', title: "Tu Proyecto", content: "Cada proyecto se muestra así. Haz clic para expandir y ver las tareas. La barra muestra tu progreso general.", position: 'bottom' },
+    { element: '#add-task-form-example', title: "Añadir Tareas", content: "Una vez expandido un proyecto, puedes añadir tareas manualmente aquí. ¡Divide y vencerás!", position: 'top' },
+    { element: '#ai-task-suggester-example', title: "Sugerencias con IA", content: "¿No sabes por dónde empezar? Pide a la IA que te sugiera los primeros pasos para tu proyecto.", position: 'top' },
+    { element: 'body', position: 'center', title: "¡A conquistar!", content: "Ya sabes cómo organizar tus metas. ¡El primer paso es el más importante!" }
+  ];
+
+  const academicTourSteps: TourStep[] = [
+    { element: '#academic-panel-header', title: "Panel Académico", content: "Gestiona toda tu carrera desde aquí. Organiza tus materias, cuatrimestres y lleva un control de tus exámenes y notas.", position: 'bottom' },
+    { element: '#subject-bank', title: "Banco de Materias", content: "Esta es tu 'caja' con todas las materias de tu plan de estudios. Añádelas con el botón de arriba.", position: 'right' },
+    { element: '#draggable-subject-example', title: "Arrastrar y Soltar", content: "Arrastra una materia desde el banco y suéltala en un cuatrimestre para asignarla. Si tiene un candado, significa que aún no cumpliste sus correlativas.", position: 'right' },
+    { element: '#semester-timeline', title: "Línea de Tiempo", content: "Aquí organizas tus cuatrimestres. Puedes crearlos, editarlos y ver qué materias cursas en cada uno.", position: 'left' },
+    { element: '#semester-card-example', title: "Detalles del Cuatrimestre", content: "Haz clic en el título de un cuatrimestre para abrir una vista detallada donde puedes gestionar exámenes y cambiar el estado de las materias.", position: 'left' },
+    { element: '#academic-progress-toggle', title: "Ver Progreso", content: "Haz clic aquí para desplegar un resumen visual de tu avance en la carrera y tu promedio general.", position: 'left' },
+    { element: 'body', position: 'center', title: "¡Éxito en tus estudios!", content: "Ahora tienes el control total de tu recorrido académico." }
+  ];
+
+  const travelTourSteps: TourStep[] = [
+    { element: '#travel-log-header', title: "Bitácora de Viajes", content: "Este es tu diario de aventuras. Guarda cada viaje y colecciona tus recuerdos más preciados.", position: 'bottom' },
+    { element: '#travel-add-trip-btn', title: "Añadir un Viaje", content: "Haz clic aquí para registrar un nuevo viaje. Podrás añadir destino, fechas y una foto de portada.", position: 'bottom' },
+    { element: '#trip-card-example', title: "Tus Viajes", content: "Cada viaje se muestra como una foto polaroid. Haz clic en una para abrirla y ver todos los detalles y recuerdos.", position: 'bottom' },
+    { element: 'body', position: 'center', title: "¡A viajar!", content: "Cuando entres a un viaje, podrás añadir 'Recuerdos' (fotos, notas, emociones) y pedirle a la IA que te dé ideas. ¡Buen viaje!" }
+  ];
 
 
   const userShoppingLists = useMemo(() => {
@@ -754,17 +804,38 @@ function App() {
   }, [currentUser, setEvents, setRoutines, setJournalEntries, setNotifications, setNotifiedEvents, setProjects, setTasks, setTrips, setSemesters, setSubjects, setExams]);
 
   useEffect(() => {
-    // Start tour automatically if it's the first time
+    // Start main tour automatically if it's the first time
     if (currentUser && !isTourCompleted) {
-        // Use a timeout to ensure the UI is rendered before the tour tries to find elements
         const timer = setTimeout(() => setIsTourOpen(true), 500);
         return () => clearTimeout(timer);
     }
   }, [currentUser, isTourCompleted]);
   
-  const handleStartTour = () => {
-      setIsTourOpen(true);
-  };
+  // Effect to trigger module tours
+  useEffect(() => {
+    if (!currentUser) return;
+    const timer = setTimeout(() => {
+      switch(activeSection) {
+        case 'home':
+          if (!isHomeTourCompleted) setIsHomeTourOpen(true);
+          break;
+        case 'goals':
+          if (!isGoalsTourCompleted) setIsGoalsTourOpen(true);
+          break;
+        case 'academic':
+          if (!isAcademicTourCompleted) setIsAcademicTourOpen(true);
+          break;
+        case 'travel':
+          if (!isTravelTourCompleted) setIsTravelTourOpen(true);
+          break;
+        default:
+          break;
+      }
+    }, 500); // Delay to allow UI to render
+
+    return () => clearTimeout(timer);
+  }, [activeSection, currentUser, isHomeTourCompleted, isGoalsTourCompleted, isAcademicTourCompleted, isTravelTourCompleted]);
+  
 
   const generateId = () => uuidv4();
 
@@ -1687,7 +1758,7 @@ function App() {
               onNavigateToHome={() => setActiveSection('home')}
               onNavigateToAcademic={() => setActiveSection('academic')}
               activeSection={activeSection}
-              onStartTour={handleStartTour}
+              onStartTour={() => setIsTourOpen(true)}
             />
         </div>
         <main className="max-w-7xl mx-auto p-2 sm:p-6 lg:p-8">
@@ -1869,6 +1940,7 @@ function App() {
                 onDeleteTrip={handleDeleteTrip}
                 onOpenShareModal={handleOpenShareTripModal}
                 pairedUser={pairedUser}
+                onStartTour={() => setIsTravelTourOpen(true)}
               />
            )}
            
@@ -1887,6 +1959,7 @@ function App() {
                 onUnassignSubject={handleUnassignSubject}
                 onUpdateSubjectStatusAndGrade={handleUpdateSubjectStatusAndGrade}
                 onPromptForGrade={handlePromptForGrade}
+                onStartTour={() => setIsAcademicTourOpen(true)}
               />
             )}
 
@@ -1901,6 +1974,7 @@ function App() {
                 onUpdateTask={handleUpdateTask}
                 onDeleteTask={handleDeleteTask}
                 onAddMultipleTasks={handleAddMultipleTasks}
+                onStartTour={() => setIsGoalsTourOpen(true)}
               />
             )}
              {activeSection === 'home' && (
@@ -1914,6 +1988,7 @@ function App() {
                     onToggleShareList={handleToggleShareList}
                     currentUser={currentUser}
                     pairedUser={pairedUser}
+                    onStartTour={() => setIsHomeTourOpen(true)}
                 />
             )}
         </main>
@@ -2049,7 +2124,27 @@ function App() {
             setIsTourOpen(false);
             setIsTourCompleted(true);
         }}
-        steps={tourSteps}
+        steps={mainTourSteps}
+      />
+      <Tour
+        isOpen={isHomeTourOpen}
+        onClose={() => { setIsHomeTourOpen(false); setIsHomeTourCompleted(true); }}
+        steps={homeTourSteps}
+      />
+      <Tour
+        isOpen={isGoalsTourOpen}
+        onClose={() => { setIsGoalsTourOpen(false); setIsGoalsTourCompleted(true); }}
+        steps={goalsTourSteps}
+      />
+       <Tour
+        isOpen={isAcademicTourOpen}
+        onClose={() => { setIsAcademicTourOpen(false); setIsAcademicTourCompleted(true); }}
+        steps={academicTourSteps}
+      />
+      <Tour
+        isOpen={isTravelTourOpen}
+        onClose={() => { setIsTravelTourOpen(false); setIsTravelTourCompleted(true); }}
+        steps={travelTourSteps}
       />
     </>
   );
