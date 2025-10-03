@@ -2,7 +2,8 @@ name: Deploy Vite site to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -47,5 +48,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-        fix(ci): update GitHub Pages deploy workflow
 
