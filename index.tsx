@@ -1,11 +1,14 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
 
-// Configuración para compilar tu proyecto
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: 'dist', // Carpeta donde se guardará el build final
-  },
-});
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("No se encontró el elemento #root");
+
+ReactDOM.createRoot(rootElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
 
