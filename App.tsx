@@ -6,7 +6,7 @@ import { SchedulePanel } from './components/SchedulePanel';
 import { EventFormModal } from './components/EventFormModal';
 import { RoutineFormModal } from './components/RoutineFormModal';
 import { NotificationHost } from './components/NotificationHost';
-import { Header } from './components/Header';
+import { Header } from './components/Header';Fffff
 import { UserAuth } from './components/UserAuth';
 import { PairingManager } from './components/PairingManager';
 import { CoupleSpace } from './components/CoupleSpace';
@@ -41,7 +41,7 @@ import { Tour } from './components/Tour';
 import { IdeaBoard } from './components/IdeaBoard';
 import { StickyNotesOverlay } from './components/StickyNotesOverlay';
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCk-2-Xq6Dke44hPNo3Zuy9RmSNPLr9-IJGafHH2UN-7jyN8kKfBySh0af2-6WoWtZjw/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzJxlA5Ql8Y9pzZ4ZIDQcUi85v4sF3RowxTs1YOb37prrxclXBWSACyXP3fhQeEXE8zA/exec';
 
 // Reusable PIN Input component, also used in PinManagementModal
 const PinInput: React.FC<{ length: number; value: string; onChange: (pin: string) => void; error?: boolean; }> = ({ length, value, onChange, error }) => {
