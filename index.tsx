@@ -1,18 +1,11 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import 'uuid'; // asegura que uuid esté disponible
-import './firebaseConfig'; // importa Firebase sin usarlo directamente, solo inicializa
+// Configuración para compilar tu proyecto
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    outDir: 'dist', // Carpeta donde se guardará el build final
+  },
+});
 
-const container = document.getElementById('root');
-if (!container) {
-  throw new Error("No se encontró el elemento root");
-}
-
-const root = createRoot(container);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
