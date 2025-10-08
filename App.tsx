@@ -1,5 +1,6 @@
 // This is the main application component. It manages state and renders all other components.
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { app, db, auth } from "./firebaseConfig";
 import { Calendar } from './components/Calendar';
 import { SchedulePanel } from './components/SchedulePanel';
 import { EventFormModal } from './components/EventFormModal';
@@ -15,7 +16,7 @@ import { TravelLog } from './components/TravelLog'; // Import new component
 import { ShareReflectionModal } from './components/ShareReflectionModal';
 import { ShareTripModal } from './components/ShareTripModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import type { Event, Notification, User, PairingRequest, SharedEmotionState, JournalEntry, Routine, Project, Task, Trip, EmotionMoji, QASession, PartnerNote, TaskStatus, ShoppingList, ShoppingListItem, Semester, Subject, Exam, SubjectStatus, AcademicSummaryData, TourStep } from './types';
+import type { Event, Notification, User, PairingRequest, SharedEmotionState, JournalEntry, Routine, Project, Task, Trip, EmotionMoji, QASession, PartnerNote, TaskStatus, ShoppingList, ShoppingListItem, Semester, Subject, Exam, SubjectStatus, AcademicSummaryData, TourStep, Idea, StickyNote } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import { ReflectionLogModal } from './components/ReflectionLogModal';
 import { EmotionLogModal } from './components/EmotionLogModal';
@@ -37,6 +38,8 @@ import { GradeEntryModal } from './components/GradeEntryModal';
 import { ExamGradeModal } from './components/ExamGradeModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { Tour } from './components/Tour';
+import { IdeaBoard } from './components/IdeaBoard';
+import { StickyNotesOverlay } from './components/StickyNotesOverlay';
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCk-2-Xq6Dke44hPNo3Zuy9RmSNPLr9-IJGafHH2UN-7jyN8kKfBySh0af2-6WoWtZjw/exec';
 
@@ -426,6 +429,30 @@ const EXAMPLE_EXAMS_DATA: Exam[] = [
     { id: 'exam-2', subjectId: 'sub-2', type: 'final', title: 'Final', date: '2023-12-15', time: '14:00', grade: 8, topics: 'Límites y Continuidad\nDerivadas y Aplicaciones\nIntegrales Simples' },
 ];
 
+const EXAMPLE_IDEAS_DATA: Idea[] = [
+    {
+        id: 'idea-1',
+        content: 'Una app para conectar a dueños de perros en el parque.',
+        color: '#FFFACD', // light yellow
+        position: { x: 100, y: 50 },
+        createdAt: new Date().toISOString(),
+    },
+    {
+        id: 'idea-2',
+        content: 'Escribir un libro de ciencia ficción sobre viajes en el tiempo.',
+        color: '#D4F0F0', // light blue
+        position: { x: 400, y: 150 },
+        createdAt: new Date().toISOString(),
+    },
+     {
+        id: 'idea-3',
+        content: 'Podcast sobre historia de la tecnología.',
+        color: '#E2F0D4', // light green
+        position: { x: 200, y: 300 },
+        createdAt: new Date().toISOString(),
+    },
+];
+
 
 enum MainView {
   Personal = 'Personal',
@@ -438,7 +465,8 @@ const GripVerticalIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-function App() {
+// FIX: Export the 'App' component as a default export to make it available for import in 'index.tsx'.
+export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useLocalStorage<User[]>('users', []);
   const [pairingRequests, setPairingRequests] = useLocalStorage<PairingRequest[]>('pairingRequests', []);
@@ -455,11 +483,15 @@ function App() {
   const userProjectsKey = `projects_${currentUser?.id}`;
   const userTasksKey = `tasks_${currentUser?.id}`;
   const userTripsKey = `trips_${currentUser?.id}`;
+  const userIdeasKey = `ideas_${currentUser?.id}`;
+  const userStickyNotesKey = `sticky_notes_${currentUser?.id}`;
+  const userStickyNotesVisibleKey = `sticky_notes_visible_${currentUser?.id}`;
   const userSemestersKey = `semesters_${currentUser?.id}`;
   const userSubjectsKey = `subjects_${currentUser?.id}`;
   const userExamsKey = `exams_${currentUser?.id}`;
   const userSummaryOrderKey = `summary_order_${currentUser?.id}`;
   const userMainPanelOrderKey = `main_panel_order_${currentUser?.id}`;
+  const userProcessedPartnerNotesKey = `processed_partner_notes_${currentUser?.id}`;
 
 
   const [events, setEvents] = useLocalStorage<Event[]>(userEventsKey, EXAMPLE_EVENTS_DATA);
@@ -468,11 +500,15 @@ function App() {
   const [projects, setProjects] = useLocalStorage<Project[]>(userProjectsKey, EXAMPLE_PROJECTS_DATA);
   const [tasks, setTasks] = useLocalStorage<Task[]>(userTasksKey, EXAMPLE_TASKS_DATA);
   const [trips, setTrips] = useLocalStorage<Trip[]>(userTripsKey, EXAMPLE_TRIPS_DATA);
+  const [ideas, setIdeas] = useLocalStorage<Idea[]>(userIdeasKey, EXAMPLE_IDEAS_DATA);
+  const [stickyNotes, setStickyNotes] = useLocalStorage<StickyNote[]>(userStickyNotesKey, []);
+  const [areStickyNotesVisible, setAreStickyNotesVisible] = useLocalStorage<boolean>(userStickyNotesVisibleKey, true);
   const [allShoppingLists, setAllShoppingLists] = useLocalStorage<ShoppingList[]>('all_shopping_lists', EXAMPLE_SHOPPING_LISTS_DATA);
   const [semesters, setSemesters] = useLocalStorage<Semester[]>(userSemestersKey, EXAMPLE_SEMESTERS_DATA);
   const [subjects, setSubjects] = useLocalStorage<Subject[]>(userSubjectsKey, EXAMPLE_SUBJECTS_DATA);
   const [exams, setExams] = useLocalStorage<Exam[]>(userExamsKey, EXAMPLE_EXAMS_DATA);
 
+  const [processedPartnerNoteIds, setProcessedPartnerNoteIds] = useLocalStorage<string[]>(userProcessedPartnerNotesKey, []);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
   const [isRoutineManagerOpen, setIsRoutineManagerOpen] = useState(false);
@@ -508,7 +544,7 @@ function App() {
   const [lastReflectionPromptDate, setLastReflectionPromptDate] = useLocalStorage<string>(`last_reflection_prompt_${currentUser?.id}`, '');
   
   // Navigation states
-  const [activeSection, setActiveSection] = useState<'planner' | 'travel' | 'goals' | 'home' | 'academic'>('planner');
+  const [activeSection, setActiveSection] = useState<'planner' | 'travel' | 'goals' | 'home' | 'academic' | 'ideas'>('planner');
   const [mainView, setMainView] = useState<MainView>(MainView.Personal);
   
   // Right Column (Summary) reordering state
@@ -533,11 +569,13 @@ function App() {
   const [isGoalsTourCompleted, setIsGoalsTourCompleted] = useLocalStorage<boolean>(`tour_completed_goals_${currentUser?.id}`, false);
   const [isAcademicTourCompleted, setIsAcademicTourCompleted] = useLocalStorage<boolean>(`tour_completed_academic_${currentUser?.id}`, false);
   const [isTravelTourCompleted, setIsTravelTourCompleted] = useLocalStorage<boolean>(`tour_completed_travel_${currentUser?.id}`, false);
+  const [isIdeasTourCompleted, setIsIdeasTourCompleted] = useLocalStorage<boolean>(`tour_completed_ideas_${currentUser?.id}`, false);
   
   const [isHomeTourOpen, setIsHomeTourOpen] = useState(false);
   const [isGoalsTourOpen, setIsGoalsTourOpen] = useState(false);
   const [isAcademicTourOpen, setIsAcademicTourOpen] = useState(false);
   const [isTravelTourOpen, setIsTravelTourOpen] = useState(false);
+  const [isIdeasTourOpen, setIsIdeasTourOpen] = useState(false);
 
 
   const handleDragSort = () => {
@@ -610,6 +648,12 @@ function App() {
         element: '#header-nav-travel',
         title: 'Sección: Viajes',
         content: 'Crea una bitácora digital de tus aventuras. Guarda tus destinos, fechas y pega los mejores recuerdos y fotos de cada viaje.',
+        position: 'bottom' as const,
+      },
+      {
+        element: '#header-nav-ideas',
+        title: 'Sección: Pizarrón de Ideas',
+        content: 'Este es tu espacio creativo. Añade notas adhesivas con ideas que se te ocurran. ¡Puedes arrastrarlas, editarlas y convertirlas en proyectos!',
         position: 'bottom' as const,
       },
       {
@@ -700,6 +744,14 @@ function App() {
     { element: '#trip-card-example', title: "Tus Viajes", content: "Cada viaje se muestra como una foto polaroid. Haz clic en una para abrirla y ver todos los detalles y recuerdos.", position: 'bottom' },
     { element: 'body', position: 'center', title: "¡A viajar!", content: "Cuando entres a un viaje, podrás añadir 'Recuerdos' (fotos, notas, emociones) y pedirle a la IA que te dé ideas. ¡Buen viaje!" }
   ];
+  
+  const ideasTourSteps: TourStep[] = [
+      { element: '#ideas-panel-header', title: "Pizarrón de Ideas", content: "¡Bienvenido a tu espacio creativo! Aquí puedes anotar cualquier idea que se te ocurra.", position: 'bottom' },
+      { element: '#add-idea-btn', title: "Añadir una Idea", content: "Usa este botón para crear una nueva nota adhesiva en tu pizarrón. ¡No dejes que se te escape ninguna idea!", position: 'bottom' },
+      { element: '.idea-note-example', title: "Tu Nota Adhesiva", content: "Cada idea es una nota. Haz doble clic para editar el texto. ¡Arrastra la nota para moverla por el pizarrón!", position: 'bottom' },
+      { element: '.idea-note-example', title: "Controles de la Nota", content: "Pasa el mouse sobre una nota para ver los controles: puedes convertirla en un proyecto, eliminarla o cambiarle el color.", position: 'top' },
+      { element: 'body', position: 'center', title: "¡Listo para crear!", content: "Ya sabes cómo funciona. ¡Ahora a llenar este pizarrón con ideas geniales!" }
+  ];
 
 
   const userShoppingLists = useMemo(() => {
@@ -755,9 +807,13 @@ function App() {
       setProjects([]);
       setTasks([]);
       setTrips([]);
+      setIdeas([]);
+      setStickyNotes([]);
+      setAreStickyNotesVisible(true);
       setSemesters([]);
       setSubjects([]);
       setExams([]);
+      setProcessedPartnerNoteIds([]);
     } else {
         // This ensures that when a user logs in, their data is loaded.
         // The useLocalStorage hook handles the initial load, but this effect
@@ -785,7 +841,19 @@ function App() {
         const newTasksKey = `tasks_${currentUser.id}`;
         const storedTasks = localStorage.getItem(newTasksKey);
         setTasks(storedTasks ? JSON.parse(storedTasks) : EXAMPLE_TASKS_DATA);
+
+        const newIdeasKey = `ideas_${currentUser.id}`;
+        const storedIdeas = localStorage.getItem(newIdeasKey);
+        setIdeas(storedIdeas ? JSON.parse(storedIdeas) : EXAMPLE_IDEAS_DATA);
         
+        const newStickyNotesKey = `sticky_notes_${currentUser.id}`;
+        const storedStickyNotes = localStorage.getItem(newStickyNotesKey);
+        setStickyNotes(storedStickyNotes ? JSON.parse(storedStickyNotes) : []);
+
+        const newVisibleKey = `sticky_notes_visible_${currentUser.id}`;
+        const storedVisible = localStorage.getItem(newVisibleKey);
+        setAreStickyNotesVisible(storedVisible ? JSON.parse(storedVisible) : true);
+
         const newSemestersKey = `semesters_${currentUser.id}`;
         const storedSemesters = localStorage.getItem(newSemestersKey);
         setSemesters(storedSemesters ? JSON.parse(storedSemesters) : EXAMPLE_SEMESTERS_DATA);
@@ -797,8 +865,12 @@ function App() {
         const newExamsKey = `exams_${currentUser.id}`;
         const storedExams = localStorage.getItem(newExamsKey);
         setExams(storedExams ? JSON.parse(storedExams) : EXAMPLE_EXAMS_DATA);
+        
+        const newProcessedKey = `processed_partner_notes_${currentUser.id}`;
+        const storedProcessed = localStorage.getItem(newProcessedKey);
+        setProcessedPartnerNoteIds(storedProcessed ? JSON.parse(storedProcessed) : []);
     }
-  }, [currentUser, setEvents, setRoutines, setJournalEntries, setNotifications, setNotifiedEvents, setProjects, setTasks, setTrips, setSemesters, setSubjects, setExams]);
+  }, [currentUser, setEvents, setRoutines, setJournalEntries, setNotifications, setNotifiedEvents, setProjects, setTasks, setTrips, setIdeas, setStickyNotes, setAreStickyNotesVisible, setSemesters, setSubjects, setExams, setProcessedPartnerNoteIds]);
 
   useEffect(() => {
     // Start main tour automatically if it's the first time
@@ -825,27 +897,74 @@ function App() {
         case 'travel':
           if (!isTravelTourCompleted) setIsTravelTourOpen(true);
           break;
+        case 'ideas':
+            if (!isIdeasTourCompleted) setIsIdeasTourOpen(true);
+            break;
         default:
           break;
       }
     }, 500); // Delay to allow UI to render
 
     return () => clearTimeout(timer);
-  }, [activeSection, currentUser, isHomeTourCompleted, isGoalsTourCompleted, isAcademicTourCompleted, isTravelTourCompleted]);
+  }, [activeSection, currentUser, isHomeTourCompleted, isGoalsTourCompleted, isAcademicTourCompleted, isTravelTourCompleted, isIdeasTourCompleted]);
   
+  const generateId = useCallback(() => uuidv4(), []);
 
-  const generateId = () => uuidv4();
+  // Effect for new partner notes to appear as sticky notes
+  useEffect(() => {
+    if (!pairedUser) return;
+
+    // Find new text notes from the partner that haven't been turned into stickies yet.
+    const newPartnerTextNotes = partnerNotes.filter(note =>
+        note.authorId === pairedUser.id &&
+        (note.type === 'note' || !note.type) && // Standard text notes
+        !processedPartnerNoteIds.includes(note.id)
+    );
+
+    if (newPartnerTextNotes.length > 0) {
+        const newStickyNotes: StickyNote[] = newPartnerTextNotes.map(note => {
+            const noteColors = ['#FFFACD', '#FFDDC1', '#D4F0F0', '#E2F0D4', '#F4C2C2'];
+            const noteWidth = 208;
+            const noteHeight = 208;
+            const bufferX = 20;
+            const bufferY = 100; // Account for header
+
+            return {
+                id: generateId(),
+                text: `Nota de ${pairedUser.name}:\n"${note.text}"`,
+                position: {
+                    x: Math.max(bufferX, Math.random() * (window.innerWidth - noteWidth - bufferX * 2)),
+                    y: Math.max(bufferY, Math.random() * (window.innerHeight - noteHeight - bufferY - bufferX))
+                },
+                color: noteColors[Math.floor(Math.random() * noteColors.length)],
+                rotation: (Math.random() * 8) - 4,
+                width: noteWidth,
+                height: noteHeight,
+            };
+        });
+
+        setStickyNotes(prev => [...prev, ...newStickyNotes]);
+        setProcessedPartnerNoteIds(prev => [...prev, ...newPartnerTextNotes.map(n => n.id)]);
+    }
+  }, [partnerNotes, pairedUser, processedPartnerNoteIds, setStickyNotes, setProcessedPartnerNoteIds, generateId]);
+
 
   // User and Pairing Logic
     const handleLogin = async (email: string, password: string): Promise<{success: boolean; message?: string}> => {
         try {
-            const response = await fetch(`${APPS_SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: 'getUser', email }),
+            });
             if (!response.ok) throw new Error('Network response was not ok.');
             const result = await response.json();
 
             if (result.success && result.user) {
                 if (result.user.password === password) {
                     const localUserData = users.find(u => u.id === result.user.userId);
+                    
                     const loggedInUser: User = {
                         id: result.user.userId,
                         name: result.user.name,
@@ -853,6 +972,56 @@ function App() {
                         pin: localUserData?.pin,
                     };
 
+                    const testEmail1 = 'lucassdiazz96@gmail.com';
+                    const testEmail2 = 'lucasrondanorte@gmail.com';
+
+                    if (email === testEmail1 || email === testEmail2) {
+                        const otherTestEmail = email === testEmail1 ? testEmail2 : testEmail1;
+                        
+                        try {
+                            const otherUserResponse = await fetch(APPS_SCRIPT_URL, {
+                                method: 'POST',
+                                redirect: 'follow',
+                                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                body: JSON.stringify({ action: 'getUser', email: otherTestEmail }),
+                            });
+                            if (otherUserResponse.ok) {
+                                const otherUserResult = await otherUserResponse.json();
+                                if (otherUserResult.success && otherUserResult.user) {
+                                    const otherUserId = otherUserResult.user.userId;
+                                    const otherUserName = otherUserResult.user.name;
+
+                                    loggedInUser.pairedWith = otherUserId;
+
+                                    setUsers(prev => {
+                                        let newUsers = [...prev];
+                                        
+                                        const loggedInUserIndex = newUsers.findIndex(u => u.id === loggedInUser.id);
+                                        if (loggedInUserIndex > -1) {
+                                            newUsers[loggedInUserIndex] = { ...newUsers[loggedInUserIndex], ...loggedInUser };
+                                        } else {
+                                            newUsers.push(loggedInUser);
+                                        }
+
+                                        const otherUserIndex = newUsers.findIndex(u => u.id === otherUserId);
+                                        if (otherUserIndex > -1) {
+                                            newUsers[otherUserIndex] = { ...newUsers[otherUserIndex], name: otherUserName, pairedWith: loggedInUser.id };
+                                        } else {
+                                            newUsers.push({ id: otherUserId, name: otherUserName, pairedWith: loggedInUser.id, pin: undefined });
+                                        }
+                                        
+                                        return newUsers;
+                                    });
+
+                                    setCurrentUser(loggedInUser);
+                                    return { success: true };
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Auto-pairing for test users failed:", error);
+                        }
+                    }
+                    
                     setUsers(prev => {
                         const userInCache = prev.find(u => u.id === loggedInUser.id);
                         if (userInCache) {
@@ -877,7 +1046,12 @@ function App() {
 
     const handleCreateUser = async (name: string, email: string, password: string): Promise<{success: boolean; message?: string}> => {
         try {
-            const checkResponse = await fetch(`${APPS_SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+            const checkResponse = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: 'getUser', email }),
+            });
             if(checkResponse.ok) {
                 const checkResult = await checkResponse.json();
                 if (checkResult.success) {
@@ -885,7 +1059,6 @@ function App() {
                 }
             }
             
-            // Using a POST request with redirect:'follow' and text/plain content type for Apps Script compatibility
             const createResponse = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 redirect: 'follow',
@@ -928,7 +1101,12 @@ function App() {
     }
     
     try {
-        const response = await fetch(`${APPS_SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: 'getUser', email }),
+        });
         if (!response.ok) throw new Error('Respuesta de red no fue OK.');
         const result = await response.json();
 
@@ -1278,6 +1456,29 @@ function App() {
 
     setPartnerNotes(prev => [newReply, ...prev]);
   };
+  
+  const handlePinPartnerNote = (note: PartnerNote) => {
+    if (!pairedUser) return;
+
+    const noteColors = ['#FFFACD', '#FFDDC1', '#D4F0F0', '#E2F0D4', '#F4C2C2'];
+    const newStickyNote: StickyNote = {
+        id: generateId(),
+        text: `Nota de ${pairedUser.name}:\n"${note.text}"`,
+        position: { x: window.innerWidth / 2 - 104, y: 100 },
+        color: noteColors[Math.floor(Math.random() * noteColors.length)],
+        rotation: (Math.random() * 6) - 3,
+        width: 208,
+        height: 208,
+    };
+    
+    setStickyNotes(prev => [...prev, newStickyNote]);
+    
+    addNotification({
+        type: 'generic',
+        title: '¡Nota Guardada!',
+        message: 'La nota de tu pareja se ha añadido a tu pizarrón.',
+    });
+  };
 
   // Project & Task Logic
   const handleOpenProjectCreator = () => {
@@ -1582,16 +1783,116 @@ function App() {
         setExamForGrade(null);
     };
 
+    // Idea Board Logic
+    const handleSaveIdea = (ideaToSave: Idea) => {
+        setIdeas(prev => {
+            const ideaIndex = prev.findIndex(i => i.id === ideaToSave.id);
+            if (ideaIndex > -1) {
+                const updatedIdeas = [...prev];
+                updatedIdeas[ideaIndex] = ideaToSave;
+                return updatedIdeas;
+            } else {
+                return [...prev, ideaToSave];
+            }
+        });
+    };
+
+    const handleDeleteIdea = (ideaId: string) => {
+        setIdeas(prev => prev.filter(i => i.id !== ideaId));
+    };
+
+    const handleConvertIdeaToProject = (idea: Idea) => {
+        setConfirmationState({
+            isOpen: true,
+            title: 'Convertir Idea en Proyecto',
+            message: `¿Estás seguro de que quieres convertir esta idea en un nuevo proyecto? La nota se eliminará del pizarrón.`,
+            onConfirm: () => {
+                const newProject: Omit<Project, 'id'> = {
+                    title: idea.content.substring(0, 100), // Use content as title
+                    description: `Proyecto generado desde la idea: "${idea.content}"`,
+                    icon: '💡',
+                };
+                handleSaveProject(newProject);
+                handleDeleteIdea(idea.id);
+                setActiveSection('goals');
+                addNotification({
+                    type: 'generic',
+                    title: '¡Idea en marcha!',
+                    message: `Tu idea se ha convertido en el proyecto "${newProject.title}".`
+                });
+            },
+            confirmText: 'Sí, convertir',
+            cancelText: 'Cancelar',
+        });
+    };
+
+    // Sticky Note Logic
+    const handleAddStickyNote = () => {
+        const noteColors = ['#FFFACD', '#FFDDC1', '#D4F0F0', '#E2F0D4', '#F4C2C2'];
+        const newNote: StickyNote = {
+            id: generateId(),
+            text: 'Escribe algo...',
+            position: { x: window.innerWidth / 2 - 104, y: window.innerHeight / 2 - 104 }, // 104 is half of 208px (w-52)
+            color: noteColors[Math.floor(Math.random() * noteColors.length)],
+            rotation: (Math.random() * 8) - 4, // -4 to 4 degrees
+            width: 208,
+            height: 208,
+        };
+        setStickyNotes(prev => [...prev, newNote]);
+    };
+
+    const handleSaveStickyNote = (noteToSave: StickyNote) => {
+        setStickyNotes(prev => prev.map(note => note.id === noteToSave.id ? noteToSave : note));
+    };
+    
+    const handleDeleteStickyNote = (noteId: string) => {
+        setStickyNotes(prev => prev.filter(note => note.id !== noteId));
+    };
+
+    const handleSaveStickyNoteToIdeas = (note: StickyNote) => {
+        const newIdea: Idea = {
+            id: generateId(),
+            content: note.text,
+            color: note.color,
+            position: { x: (Math.random() * 300) + 50, y: (Math.random() * 300) + 50 },
+            createdAt: new Date().toISOString(),
+        };
+        setIdeas(prev => [...prev, newIdea]);
+        handleDeleteStickyNote(note.id);
+
+        addNotification({
+            type: 'generic',
+            title: 'Nota Guardada',
+            message: 'Tu nota se ha guardado en el Pizarrón de Ideas.',
+            action: {
+                label: 'Ver Pizarrón',
+                callback: () => setActiveSection('ideas'),
+            }
+        });
+    };
+
+    const handleConvertStickyNoteToGoal = (note: StickyNote) => {
+        const newProject: Omit<Project, 'id'> = {
+            title: note.text.substring(0, 100),
+            description: `Proyecto generado desde una nota adhesiva.`,
+            icon: '📌',
+        };
+        handleSaveProject(newProject);
+        handleDeleteStickyNote(note.id);
+        
+        addNotification({
+            type: 'generic',
+            title: '¡Meta Creada!',
+            message: 'Tu nota se ha convertido en un nuevo proyecto.',
+            action: {
+                label: 'Ver Metas',
+                callback: () => setActiveSection('goals'),
+            }
+        });
+    };
+
 
   // Notification Logic
-  const handleMarkAsRead = (id: string) => {
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-  
-  const handleMarkAllAsRead = () => {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
   // FIX: Moved `handleNotificationClick` before `addNotification` to resolve the "used before its declaration" error.
   // The two functions had a dependency, and this reordering ensures `handleNotificationClick` is defined when `addNotification` needs it.
   const handleNotificationClick = useCallback((notification: Notification) => {
@@ -1636,6 +1937,14 @@ function App() {
     // Close modals if any are open to show the target view
     setIsNotificationsMuted(false); // Assume interaction means user wants notifications
   }, [allEvents, pairedUser]);
+  
+  const handleMarkAsRead = (id: string) => {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+  
+  const handleMarkAllAsRead = () => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   const addNotification = useCallback((data: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     if (isNotificationsMuted && data.type !== 'generic') return;
@@ -1661,7 +1970,7 @@ function App() {
       }, () => handleNotificationClick(newNotification));
     }
 
-  }, [isNotificationsMuted, setNotifications, sendSystemNotification, handleNotificationClick]);
+  }, [isNotificationsMuted, setNotifications, sendSystemNotification, handleNotificationClick, generateId]);
 
   // Effect for event reminders
   useEffect(() => {
@@ -1817,6 +2126,16 @@ function App() {
         }
       `}</style>
       <NotificationHost toastNotifications={toastNotifications} setToastNotifications={setToastNotifications} />
+      <StickyNotesOverlay
+        notes={stickyNotes}
+        onAddNote={handleAddStickyNote}
+        onSaveNote={handleSaveStickyNote}
+        onDeleteNote={handleDeleteStickyNote}
+        isVisible={areStickyNotesVisible}
+        onToggleVisibility={() => setAreStickyNotesVisible(prev => !prev)}
+        onSaveToIdeas={handleSaveStickyNoteToIdeas}
+        onConvertToGoal={handleConvertStickyNoteToGoal}
+      />
       <div className="min-h-screen font-sans">
         <div>
             <Header 
@@ -1835,6 +2154,7 @@ function App() {
               onNavigateToGoals={() => setActiveSection('goals')}
               onNavigateToHome={() => setActiveSection('home')}
               onNavigateToAcademic={() => setActiveSection('academic')}
+              onNavigateToIdeas={() => setActiveSection('ideas')}
               activeSection={activeSection}
               onStartTour={() => setIsTourOpen(true)}
             />
@@ -1908,6 +2228,7 @@ function App() {
                                             partner={pairedUser}
                                             partnerNotes={partnerNotes}
                                             sharedEmotionStates={sharedEmotionStates}
+                                            qaSessions={qaSessions}
                                             onNavigate={handleNavigateToCoupleSpace}
                                         />
                                       ) : null,
@@ -2006,6 +2327,7 @@ function App() {
                             setSharedEmotionStates={setSharedEmotionStates}
                             onOpenEmotionLog={() => setIsEmotionLogModalOpen(true)}
                             onAddReply={handleAddReplyToNote}
+                            onPinNote={handlePinPartnerNote}
                         />
                     )}
                 </>
@@ -2067,6 +2389,15 @@ function App() {
                     currentUser={currentUser}
                     pairedUser={pairedUser}
                     onStartTour={() => setIsHomeTourOpen(true)}
+                />
+            )}
+            {activeSection === 'ideas' && (
+                <IdeaBoard
+                    ideas={ideas}
+                    onSaveIdea={handleSaveIdea}
+                    onDeleteIdea={handleDeleteIdea}
+                    onConvertToProject={handleConvertIdeaToProject}
+                    onStartTour={() => setIsIdeasTourOpen(true)}
                 />
             )}
         </main>
@@ -2172,6 +2503,7 @@ function App() {
         }}
         subjectName={subjectForGrade?.name || ''}
       />
+{/* FIX: Replaced truncated/incorrect '<Exam' tag with the full, correct '<ExamGradeModal />' component and reconstructed the missing closing tags for the component. */}
        <ExamGradeModal
         isOpen={isExamGradeModalOpen}
         onClose={() => {
@@ -2182,50 +2514,26 @@ function App() {
         exam={examForGrade}
         subjectName={subjects.find(s => s.id === examForGrade?.subjectId)?.name || ''}
       />
-      {confirmationState?.isOpen && (
-          <ConfirmationModal 
-              isOpen={confirmationState.isOpen}
-              onClose={() => setConfirmationState(null)}
-              onConfirm={() => {
-                  confirmationState.onConfirm();
-                  setConfirmationState(null);
-              }}
-              title={confirmationState.title}
-              message={confirmationState.message}
-              confirmText={confirmationState.confirmText}
-              cancelText={confirmationState.cancelText}
-          />
-      )}
-      <Tour
-        isOpen={isTourOpen}
-        onClose={() => {
-            setIsTourOpen(false);
-            setIsTourCompleted(true);
+      <ConfirmationModal
+        isOpen={!!confirmationState}
+        onClose={() => setConfirmationState(null)}
+        onConfirm={() => {
+            confirmationState?.onConfirm();
+            setConfirmationState(null);
         }}
-        steps={mainTourSteps}
+        title={confirmationState?.title || ''}
+        message={confirmationState?.message || ''}
+        confirmText={confirmationState?.confirmText}
+        cancelText={confirmationState?.cancelText}
       />
-      <Tour
-        isOpen={isHomeTourOpen}
-        onClose={() => { setIsHomeTourOpen(false); setIsHomeTourCompleted(true); }}
-        steps={homeTourSteps}
-      />
-      <Tour
-        isOpen={isGoalsTourOpen}
-        onClose={() => { setIsGoalsTourOpen(false); setIsGoalsTourCompleted(true); }}
-        steps={goalsTourSteps}
-      />
-       <Tour
-        isOpen={isAcademicTourOpen}
-        onClose={() => { setIsAcademicTourOpen(false); setIsAcademicTourCompleted(true); }}
-        steps={academicTourSteps}
-      />
-      <Tour
-        isOpen={isTravelTourOpen}
-        onClose={() => { setIsTravelTourOpen(false); setIsTravelTourCompleted(true); }}
-        steps={travelTourSteps}
-      />
+
+        <Tour isOpen={isTourOpen} onClose={() => { setIsTourOpen(false); setIsTourCompleted(true); }} steps={mainTourSteps} />
+        <Tour isOpen={isHomeTourOpen} onClose={() => { setIsHomeTourOpen(false); setIsHomeTourCompleted(true); }} steps={homeTourSteps} />
+        <Tour isOpen={isGoalsTourOpen} onClose={() => { setIsGoalsTourOpen(false); setIsGoalsTourCompleted(true); }} steps={goalsTourSteps} />
+        <Tour isOpen={isAcademicTourOpen} onClose={() => { setIsAcademicTourOpen(false); setIsAcademicTourCompleted(true); }} steps={academicTourSteps} />
+        <Tour isOpen={isTravelTourOpen} onClose={() => { setIsTravelTourOpen(false); setIsTravelTourCompleted(true); }} steps={travelTourSteps} />
+        <Tour isOpen={isIdeasTourOpen} onClose={() => { setIsIdeasTourOpen(false); setIsIdeasTourCompleted(true); }} steps={ideasTourSteps} />
+
     </>
   );
 }
-
-export default App;

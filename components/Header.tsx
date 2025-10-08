@@ -20,7 +20,8 @@ interface HeaderProps {
   onNavigateToGoals: () => void;
   onNavigateToHome: () => void;
   onNavigateToAcademic: () => void;
-  activeSection: 'planner' | 'travel' | 'goals' | 'home' | 'academic';
+  onNavigateToIdeas: () => void;
+  activeSection: 'planner' | 'travel' | 'goals' | 'home' | 'academic' | 'ideas';
   onStartTour: () => void;
 }
 
@@ -54,6 +55,12 @@ const AcademicCapIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
         <path d="M12 14.25c-2.43 0-4.68.62-6.53 1.69.58 1.13 1.34 2.14 2.26 3.06 1.32.96 2.82 1.5 4.38 1.5s3.06-.54 4.38-1.5c.92-.92 1.68-1.93 2.26-3.06C16.68 14.87 14.43 14.25 12 14.25Z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 14.25A5.25 5.25 0 0 0 17.25 9V6.75a5.25 5.25 0 0 0-5.25-5.25A5.25 5.25 0 0 0 6.75 6.75V9a5.25 5.25 0 0 0 5.25 5.25Z" />
     </svg>
+);
+
+const LightbulbIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.311a7.478 7.478 0 0 1-7.5 0C4.58 19.64 3 17.534 3 14.797c0-2.326 1.236-4.445 3.15-5.694m11.7 0c1.914 1.249 3.15 3.368 3.15 5.694 0 2.737-1.58 4.843-3.75 5.981M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+  </svg>
 );
 
 
@@ -107,6 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
     onNavigateToGoals,
     onNavigateToHome,
     onNavigateToAcademic,
+    onNavigateToIdeas,
     activeSection,
     onStartTour
 }) => {
@@ -191,6 +199,18 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                 <BriefcaseIcon className="w-5 h-5 text-teal-500"/>
                 <span className="hidden sm:inline">Viajes</span>
+                </button>
+                 <button
+                    id="header-nav-ideas"
+                    onClick={onNavigateToIdeas}
+                    className={`p-2 sm:px-3 sm:py-1.5 border rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                        activeSection === 'ideas' 
+                        ? 'bg-teal-100 text-teal-700 border-teal-200'
+                        : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                    }`}
+                >
+                    <LightbulbIcon className="w-5 h-5 text-teal-500"/>
+                    <span className="hidden sm:inline">Pizarrón</span>
                 </button>
              </div>
             <div ref={notificationRef} className="relative">

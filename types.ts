@@ -221,3 +221,21 @@ export interface Exam {
   grade: number | null;
   topics?: string;
 }
+
+export interface Idea {
+  id: string;
+  content: string;
+  color: string;
+  position: { x: number; y: number };
+  createdAt: string;
+}
+
+export interface StickyNote {
+  id: string;
+  text: string;
+  position: { x: number; y: number };
+  color: string;
+  rotation: number;
+  width: number;
+  height: number;
+}

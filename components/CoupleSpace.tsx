@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import type { User, SharedEmotionState, EmotionMoji, QASession, PartnerNote, SubjectStatus } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { TripDetailView } from './TripDetailView';
+import { GoogleGenAI } from "@google/genai";
 
 interface CoupleSpaceProps {
   currentUser: User;
@@ -14,7 +15,18 @@ interface CoupleSpaceProps {
   setSharedEmotionStates: React.Dispatch<React.SetStateAction<SharedEmotionState[]>>;
   onOpenEmotionLog: () => void;
   onAddReply: (noteId: string, replyText: string) => void;
+  onPinNote: (note: PartnerNote) => void;
 }
+
+const SparklesIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" /></svg>
+);
+const ArrowPathIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.664 0l3.181-3.183m-3.181-4.991v4.99" />
+    </svg>
+);
+
 
 const emotionMojis: { value: EmotionMoji; label: string; icon: string; bgColor: string }[] = [
     { value: 'happy', label: 'Feliz', icon: '😄', bgColor: 'bg-green-200' },
@@ -134,7 +146,15 @@ const ReplyForm: React.FC<{ noteId: string, onAddReply: CoupleSpaceProps['onAddR
     );
 };
 
-// FIX: Add missing CoupleSpace component export
+const PinIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+  </svg>
+);
+
+type QuestionCategory = "Conexión Profunda" | "Recuerdos" | "¿Qué Prefieres?" | "Futuro y Sueños" | "Aleatorio";
+const questionCategories: QuestionCategory[] = ["Aleatorio", "Conexión Profunda", "Recuerdos", "¿Qué Prefieres?", "Futuro y Sueños"];
+
 export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
   currentUser,
   partner,
@@ -146,12 +166,20 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
   setSharedEmotionStates,
   onOpenEmotionLog,
   onAddReply,
+  onPinNote,
 }) => {
   const [newQuestion, setNewQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [newNote, setNewNote] = useState('');
   const [viewingTripNote, setViewingTripNote] = useState<PartnerNote | null>(null);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  
+  const [generatedQuestion, setGeneratedQuestion] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<QuestionCategory>('Aleatorio');
+  const [isWritingCustom, setIsWritingCustom] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -209,18 +237,62 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
     }, [partnerNotes]);
 
 
-  const handleAskQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newQuestion.trim()) return;
+  const handleAskQuestion = (questionText: string) => {
     const newSession: QASession = {
       id: uuidv4(),
       askerId: currentUser.id,
-      question: newQuestion.trim(),
+      question: questionText,
       askedAt: new Date().toISOString(),
     };
     setQaSessions(prev => [newSession, ...prev]);
-    setNewQuestion('');
   };
+  
+  const handleSendCustomQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newQuestion.trim()) return;
+    handleAskQuestion(newQuestion.trim());
+    setNewQuestion('');
+    setIsWritingCustom(false);
+  }
+
+  const handleSendGeneratedQuestion = () => {
+      if (!generatedQuestion) return;
+      handleAskQuestion(generatedQuestion);
+      setGeneratedQuestion(null);
+  };
+
+  const handleGenerateQuestion = async () => {
+    if (!process.env.API_KEY) {
+      setGenerationError("La clave API no está configurada para esta función.");
+      return;
+    }
+    setIsGenerating(true);
+    setGenerationError(null);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      
+      let prompt = `Creá una pregunta corta y directa para hacerle a tu pareja, usando la conjugación "vos". La pregunta debe ser simple y fomentar una conversación. No agregues ninguna explicación ni texto introductorio, solo la pregunta.`;
+      if (selectedCategory !== 'Aleatorio') {
+        prompt += ` El tema es: '${selectedCategory}'.`;
+      }
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt
+      });
+
+      const questionText = response.text;
+      const cleanedQuestion = questionText.trim().replace(/^"|"$/g, ''); // Remove quotes if AI adds them
+      setGeneratedQuestion(cleanedQuestion);
+
+    } catch (e) {
+      console.error("Error generating question:", e);
+      setGenerationError("No se pudo generar una pregunta. Inténtalo de nuevo.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
 
   const handleAnswerQuestion = (sessionId: string) => {
     if (!answer.trim()) return;
@@ -263,7 +335,7 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
         <div className="lg:col-span-2 space-y-8">
           {/* Q&A Section */}
           <div className="bg-white p-6 rounded-xl shadow-md">
-            <h3 className="text-xl font-semibold text-slate-800 mb-4">Preguntas y Respuestas</h3>
+            <h3 className="text-xl font-semibold text-slate-800 mb-4">Pregunta del Día</h3>
             {pendingQuestionForUser ? (
               <div className="p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg">
                 <p className="font-semibold text-indigo-800">{partner.name} te pregunta:</p>
@@ -279,20 +351,57 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
                   <button onClick={() => handleAnswerQuestion(pendingQuestionForUser.id)} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Enviar</button>
                 </div>
               </div>
+            ) : isWritingCustom ? (
+                <form onSubmit={handleSendCustomQuestion}>
+                    <p className="text-sm text-slate-600 mb-2">Escribe tu pregunta para {partner.name}.</p>
+                    <div className="flex space-x-2">
+                    <input
+                        type="text"
+                        value={newQuestion}
+                        onChange={(e) => setNewQuestion(e.target.value)}
+                        placeholder="p. ej., ¿Cuál fue tu parte favorita del día?"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        autoFocus
+                    />
+                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Preguntar</button>
+                    </div>
+                    <button onClick={() => setIsWritingCustom(false)} className="text-xs text-slate-500 hover:underline mt-2">Volver al juego</button>
+                </form>
             ) : (
-              <form onSubmit={handleAskQuestion}>
-                <p className="text-sm text-slate-600 mb-2">Hazle una pregunta a {partner.name} para conectar.</p>
-                <div className="flex space-x-2">
-                   <input
-                    type="text"
-                    value={newQuestion}
-                    onChange={(e) => setNewQuestion(e.target.value)}
-                    placeholder="p. ej., ¿Cuál fue tu parte favorita del día?"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Preguntar</button>
+                <div className="p-4 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-lg text-center">
+                    <div className="mb-4">
+                        <label htmlFor="category-select" className="text-sm font-medium text-indigo-800 mr-2">Elige un mazo de cartas:</label>
+                        <select
+                            id="category-select"
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory)}
+                            className="bg-white border border-indigo-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                           {questionCategories.map(deck => <option key={deck} value={deck}>{deck}</option>)}
+                        </select>
+                    </div>
+                    
+                    {generatedQuestion ? (
+                        <div className="bg-white p-4 rounded-lg shadow-md min-h-[100px] flex flex-col justify-center items-center">
+                            <p className="text-lg italic text-slate-700">"{generatedQuestion}"</p>
+                            <div className="flex gap-4 mt-4">
+                                <button onClick={handleGenerateQuestion} disabled={isGenerating} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50">
+                                    <ArrowPathIcon className="w-4 h-4" /> {isGenerating ? 'Generando...' : 'Otra'}
+                                </button>
+                                <button onClick={handleSendGeneratedQuestion} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold">
+                                    Enviar esta pregunta
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button onClick={handleGenerateQuestion} disabled={isGenerating} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold transition-transform hover:scale-105 disabled:opacity-70 disabled:scale-100">
+                            <SparklesIcon className="w-5 h-5" />
+                            {isGenerating ? 'Generando...' : 'Generar Pregunta'}
+                        </button>
+                    )}
+                     {generationError && <p className="text-xs text-red-600 mt-2">{generationError}</p>}
+                    <button onClick={() => setIsWritingCustom(true)} className="text-xs text-slate-500 hover:underline mt-4">¿Prefieres escribir la tuya?</button>
                 </div>
-              </form>
             )}
 
             {answeredQuestions.length > 0 && (
@@ -380,7 +489,12 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
                             {replyingTo === note.id ? (
                                 <ReplyForm noteId={note.id} onAddReply={onAddReply} onCancel={() => setReplyingTo(null)} />
                             ) : (
-                                <div className="mt-1 text-right">
+                                <div className="mt-1 text-right flex items-center justify-end space-x-2">
+                                    {(note.type === 'note' || !note.type) && (
+                                      <button onClick={() => onPinNote(note)} title="Guardar nota en el pizarrón" className="text-xs font-semibold text-yellow-600 hover:underline">
+                                        <PinIcon className="w-4 h-4" />
+                                      </button>
+                                    )}
                                     <button onClick={() => setReplyingTo(note.id)} className="text-xs font-semibold text-indigo-600 hover:underline">Responder</button>
                                 </div>
                             )}
@@ -402,10 +516,3 @@ export const CoupleSpace: React.FC<CoupleSpaceProps> = ({
     </>
   );
 };
-
-const PinIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
-    {/* FIX: Corrected corrupted SVG path data and removed trailing invalid characters. */}
-    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25h2.25a.75.75 0 0 0 0-1.5H12.75V9Z" clipRule="evenodd" />
-  </svg>
-);
