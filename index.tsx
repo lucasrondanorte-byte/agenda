@@ -1,15 +1,16 @@
 
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import App from './App';
-import 'uuid'; // Import uuid to ensure it's included in the bundle
+import 'uuid'; // asegura que uuid esté disponible
+import './firebaseConfig'; // importa Firebase sin usarlo directamente, solo inicializa
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+const container = document.getElementById('root');
+if (!container) {
+  throw new Error("No se encontró el elemento root");
 }
 
-const root = ReactDOM.createRoot(rootElement);
+const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <App />
