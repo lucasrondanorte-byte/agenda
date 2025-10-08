@@ -1,6 +1,7 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+// firebaseConfig.ts
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB-cp0WqCa29oHwgGkJWhhbRln17k8y9T",
@@ -11,8 +12,8 @@ const firebaseConfig = {
   appId: "1:355325606129:web:11015df6a3f32fcfab5150"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+const app = initializeApp(firebaseConfig);
 
-console.log("✅ Firebase inicializado correctamente:", app.name);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+
