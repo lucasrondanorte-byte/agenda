@@ -1,16 +1,16 @@
+// firebaseConfig.ts
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "TU_API_KEY",
-  authDomain: "conectamente-xxxx.firebaseapp.com",
-  projectId: "conectamente-xxxx",
-  storageBucket: "conectamente-xxxx.appspot.com",
-  messagingSenderId: "...",
-  appId: "..."
+  authDomain: "conectamente-41d4f.firebaseapp.com",
+  projectId: "conectamente-41d4f",
+  storageBucket: "conectamente-41d4f.appspot.com",
+  messagingSenderId: "TU_MESSAGING_ID",
+  appId: "TU_APP_ID"
 };
 
-const app = initializeApp(firebaseConfig);
+// Inicializar Firebase
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);

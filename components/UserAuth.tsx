@@ -1,5 +1,6 @@
 // This component provides UI for user authentication actions.
 import React, { useState } from 'react';
+import { useAuth } from '../UserAuth';
 
 interface UserAuthProps {
   onLogin: (email: string, password: string) => Promise<{success: boolean, message?: string}>;
@@ -10,7 +11,7 @@ const LoadingSpinner: React.FC = () => (
     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
 );
 
-export const UserAuth: React.FC<UserAuthProps> = ({ onLogin, onCreateUser }) => {
+export const UserAuth: React.FC = () => {
   const [isLoginView, setIsLoginView] = useState(true);
   
   const [name, setName] = useState('');
@@ -19,6 +20,8 @@ export const UserAuth: React.FC<UserAuthProps> = ({ onLogin, onCreateUser }) => 
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const { handleLogin, handleRegister } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,14 +35,14 @@ export const UserAuth: React.FC<UserAuthProps> = ({ onLogin, onCreateUser }) => 
             setIsLoading(false);
             return;
         }
-        result = await onLogin(email, password);
+        result = await handleLogin(email, password);
     } else {
         if (!name || !email || !password) {
             setError("Por favor, completa todos los campos.");
             setIsLoading(false);
             return;
         }
-        result = await onCreateUser(name, email, password);
+        result = await handleRegister(name, email, password);
     }
 
     setIsLoading(false);

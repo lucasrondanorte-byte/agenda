@@ -1,6 +1,7 @@
 // This is the main application component. It manages state and renders all other components.
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { app, db, auth } from "./firebaseConfig";
+// FIX: Removed import of 'db' which is not exported from firebaseConfig, and 'app' which is unused.
+import { AuthProvider, useAuth } from './UserAuth';
 import { Calendar } from './components/Calendar';
 import { SchedulePanel } from './components/SchedulePanel';
 import { EventFormModal } from './components/EventFormModal';
@@ -465,12 +466,37 @@ const GripVerticalIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-// FIX: Export the 'App' component as a default export to make it available for import in 'index.tsx'.
-export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
+function AppContent() {
+  const { user: firebaseUser, loading: authLoading, handleLogout: firebaseLogout } = useAuth();
+  
   const [users, setUsers] = useLocalStorage<User[]>('users', []);
   const [pairingRequests, setPairingRequests] = useLocalStorage<PairingRequest[]>('pairingRequests', []);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (firebaseUser) {
+        const existingUser = users.find(u => u.id === firebaseUser.uid);
+        if (existingUser) {
+            const updatedName = firebaseUser.displayName || existingUser.name;
+            if (existingUser.name !== updatedName) {
+                const updatedUser = { ...existingUser, name: updatedName };
+                setUsers(prev => prev.map(u => u.id === firebaseUser.uid ? updatedUser : u));
+                setCurrentUser(updatedUser);
+            } else {
+                setCurrentUser(existingUser);
+            }
+        } else {
+            const newUser: User = {
+                id: firebaseUser.uid,
+                name: firebaseUser.displayName || 'Nuevo Usuario',
+            };
+            setUsers(prev => [...prev, newUser]);
+            setCurrentUser(newUser);
+        }
+    } else {
+        setCurrentUser(null);
+    }
+  }, [firebaseUser, users, setUsers]);
   
   // State for the main planner
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -597,12 +623,6 @@ export default function App() {
     dragOverMainPanelItem.current = null;
     setMainPanelOrder(newMainPanelOrder);
   };
-
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const pairedUser = useMemo(() => {
     if (currentUser?.pairedWith) {
@@ -950,141 +970,8 @@ export default function App() {
 
 
   // User and Pairing Logic
-    const handleLogin = async (email: string, password: string): Promise<{success: boolean; message?: string}> => {
-        try {
-            const response = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                redirect: 'follow',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: 'getUser', email }),
-            });
-            if (!response.ok) throw new Error('Network response was not ok.');
-            const result = await response.json();
-
-            if (result.success && result.user) {
-                if (result.user.password === password) {
-                    const localUserData = users.find(u => u.id === result.user.userId);
-                    
-                    const loggedInUser: User = {
-                        id: result.user.userId,
-                        name: result.user.name,
-                        pairedWith: localUserData?.pairedWith || null,
-                        pin: localUserData?.pin,
-                    };
-
-                    const testEmail1 = 'lucassdiazz96@gmail.com';
-                    const testEmail2 = 'lucasrondanorte@gmail.com';
-
-                    if (email === testEmail1 || email === testEmail2) {
-                        const otherTestEmail = email === testEmail1 ? testEmail2 : testEmail1;
-                        
-                        try {
-                            const otherUserResponse = await fetch(APPS_SCRIPT_URL, {
-                                method: 'POST',
-                                redirect: 'follow',
-                                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                body: JSON.stringify({ action: 'getUser', email: otherTestEmail }),
-                            });
-                            if (otherUserResponse.ok) {
-                                const otherUserResult = await otherUserResponse.json();
-                                if (otherUserResult.success && otherUserResult.user) {
-                                    const otherUserId = otherUserResult.user.userId;
-                                    const otherUserName = otherUserResult.user.name;
-
-                                    loggedInUser.pairedWith = otherUserId;
-
-                                    setUsers(prev => {
-                                        let newUsers = [...prev];
-                                        
-                                        const loggedInUserIndex = newUsers.findIndex(u => u.id === loggedInUser.id);
-                                        if (loggedInUserIndex > -1) {
-                                            newUsers[loggedInUserIndex] = { ...newUsers[loggedInUserIndex], ...loggedInUser };
-                                        } else {
-                                            newUsers.push(loggedInUser);
-                                        }
-
-                                        const otherUserIndex = newUsers.findIndex(u => u.id === otherUserId);
-                                        if (otherUserIndex > -1) {
-                                            newUsers[otherUserIndex] = { ...newUsers[otherUserIndex], name: otherUserName, pairedWith: loggedInUser.id };
-                                        } else {
-                                            newUsers.push({ id: otherUserId, name: otherUserName, pairedWith: loggedInUser.id, pin: undefined });
-                                        }
-                                        
-                                        return newUsers;
-                                    });
-
-                                    setCurrentUser(loggedInUser);
-                                    return { success: true };
-                                }
-                            }
-                        } catch (error) {
-                            console.error("Auto-pairing for test users failed:", error);
-                        }
-                    }
-                    
-                    setUsers(prev => {
-                        const userInCache = prev.find(u => u.id === loggedInUser.id);
-                        if (userInCache) {
-                            return prev.map(u => u.id === loggedInUser.id ? { ...u, name: loggedInUser.name } : u);
-                        }
-                        return [...prev, loggedInUser];
-                    });
-
-                    setCurrentUser(loggedInUser);
-                    return { success: true };
-                } else {
-                    return { success: false, message: "Contraseña incorrecta." };
-                }
-            } else {
-                return { success: false, message: result.message || "Usuario no encontrado." };
-            }
-        } catch (error) {
-            console.error("Login error:", error);
-            return { success: false, message: "Error de red al intentar iniciar sesión." };
-        }
-    };
-
-    const handleCreateUser = async (name: string, email: string, password: string): Promise<{success: boolean; message?: string}> => {
-        try {
-            const checkResponse = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                redirect: 'follow',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: 'getUser', email }),
-            });
-            if(checkResponse.ok) {
-                const checkResult = await checkResponse.json();
-                if (checkResult.success) {
-                    return { success: false, message: 'Ya existe un usuario con este correo electrónico.' };
-                }
-            }
-            
-            const createResponse = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                redirect: 'follow',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: 'saveUser', name, email, password }),
-            });
-
-            if (!createResponse.ok) throw new Error('Network response was not ok during creation.');
-            
-            const createResult = await createResponse.json();
-
-            if (createResult.success) {
-                return await handleLogin(email, password);
-            } else {
-                return { success: false, message: createResult.message || 'Error al crear el usuario.' };
-            }
-
-        } catch (error) {
-            console.error("Create user error:", error);
-            return { success: false, message: 'Error de red al crear el usuario.' };
-        }
-    };
-
-
   const handleLogout = () => {
-    setCurrentUser(null);
+    firebaseLogout();
   };
   
   const handleSavePin = (newPin: string) => {
@@ -2104,12 +1991,16 @@ export default function App() {
     setMainView(MainView.Couple);
   };
 
-  if (isLoading) {
+  if (authLoading) {
     return <SplashScreen />;
   }
 
+  if (!firebaseUser) {
+    return <UserAuth />;
+  }
+
   if (!currentUser) {
-    return <UserAuth onLogin={handleLogin} onCreateUser={handleCreateUser} />;
+      return <SplashScreen />;
   }
 
   const selectedDateString = selectedDate.toISOString().split('T')[0];
@@ -2535,5 +2426,14 @@ export default function App() {
         <Tour isOpen={isIdeasTourOpen} onClose={() => { setIsIdeasTourOpen(false); setIsIdeasTourCompleted(true); }} steps={ideasTourSteps} />
 
     </>
+  );
+}
+
+// FIX: Export the 'App' component as a default export to make it available for import in 'index.tsx'.
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
